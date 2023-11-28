@@ -41,7 +41,7 @@ public struct MP4PartionedBuffer {
         return true
     }
     
-    mutating public func insert(data newData: Data, at offset: Int) {
+    public mutating func insert(data newData: Data, at offset: Int) {
         let newRange = offset..<offset+newData.count
         
         if let insertionIndex = ranges.lastIndex(where: { $0.lowerBound <= offset }) {

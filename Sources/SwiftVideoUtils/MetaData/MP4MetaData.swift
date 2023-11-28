@@ -10,7 +10,7 @@ import CoreLocation
 import CoreMedia
 
 
-struct MP4MetaData {
+public struct MP4MetaData {
     public var creationTime: Date
     public var modificationTime: Date
     
@@ -30,7 +30,7 @@ struct MP4MetaData {
         appleMetaData?.location
     }
     
-    init(moovBox: MP4MoovieBox, reader: any MP4Reader) async throws {
+    public init(moovBox: MP4MoovieBox, reader: any MP4Reader) async throws {
         guard let movieHeaderBox = moovBox.firstChild(ofType: MP4MovieHeaderBox.self) else {
             throw MP4Error.failedToFindBox(path: "moov.mvhd")
         }
@@ -75,7 +75,7 @@ struct MP4MetaData {
         self.appleMetaData = try? await .init(moovBox: moovBox, reader: reader)
     }
     
-    init(boxes: [any MP4Box], reader: any MP4Reader) async throws {
+    public init(boxes: [any MP4Box], reader: any MP4Reader) async throws {
         guard let moovBox = boxes.first(where: {$0.typeName == "moov"}) as? MP4MoovieBox else {
             throw MP4Error.failedToFindBox(path: "moov")
         }

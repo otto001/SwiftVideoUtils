@@ -21,13 +21,13 @@ public struct MP4AppleMetaData {
     public var creationDate: Date?
     public var location: CLLocation?
     
-    struct OrientationEntry: Equatable, Hashable {
-        let time: UInt32?
-        let orientation: Int16
+    public struct OrientationEntry: Equatable, Hashable {
+        public let time: UInt32?
+        public let orientation: Int16
     }
-    var orientations: [OrientationEntry] = []
+    public var orientations: [OrientationEntry] = []
     
-    init(moovBox: MP4MoovieBox, reader: any MP4Reader) async throws {
+    public init(moovBox: MP4MoovieBox, reader: any MP4Reader) async throws {
         for metaBox in moovBox.children(path: "trak.meta") {
             if let itemListBox = metaBox.firstChild(ofType: MP4MetadataItemListBox.self),
                let keysListBox = metaBox.firstChild(ofType: MP4MetadataItemKeysBox.self) {

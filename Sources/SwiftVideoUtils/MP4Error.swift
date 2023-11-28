@@ -8,7 +8,7 @@
 import Foundation
 
 
-enum MP4Error: Error {
+public enum MP4Error: Error {
     case failedToFindBox(path: String)
     case noVideoTrack
     case noDataProvided

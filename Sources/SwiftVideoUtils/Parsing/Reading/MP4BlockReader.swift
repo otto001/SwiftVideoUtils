@@ -8,25 +8,25 @@
 import Foundation
 
 
-class MP4BlockReader: MP4Reader {
-    let count: Int
+public class MP4BlockReader: MP4Reader {
+    public let count: Int
     
-    var offset: Int
+    public var offset: Int
     
-    var remainingCount: Int {
+    public var remainingCount: Int {
         count - offset
     }
     
     private let closure: (_ range: Range<Int>) async throws -> Data
     private var buffer: MP4PartionedBuffer = .init()
     
-    init(count: Int, closure: @escaping (_: Range<Int>) async throws -> Data) {
+    public init(count: Int, closure: @escaping (_: Range<Int>) async throws -> Data) {
         self.offset = 0
         self.count = count
         self.closure = closure
     }
     
-    func prepareToRead(count readCount: Int) async throws {
+    public func prepareToRead(count readCount: Int) async throws {
         var range = offset..<offset+readCount
         guard !buffer.contains(range: range) else { return }
         
@@ -38,7 +38,7 @@ class MP4BlockReader: MP4Reader {
         buffer.insert(data: data, at: range.lowerBound)
     }
     
-    func readData(count readCount: Int) async throws -> Data {
+    public func readData(count readCount: Int) async throws -> Data {
         try await prepareToRead(count: readCount)
         defer {
             offset += readCount

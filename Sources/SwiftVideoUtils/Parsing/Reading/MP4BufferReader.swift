@@ -19,18 +19,18 @@ public class MP4BufferReader: MP4Reader {
         _buffer.count - offset
     }
     
-    init(buffer: UnsafeRawBufferPointer) {
+    public init(buffer: UnsafeRawBufferPointer) {
         self.data = nil
         self._buffer = buffer
         self.offset = 0
     }
     
-    convenience init(buffer: UnsafeRawBufferPointer, count: Int) {
+    public convenience init(buffer: UnsafeRawBufferPointer, count: Int) {
         assert(buffer.count >= count)
         self.init(buffer: .init(start: buffer.baseAddress!, count: count))
     }
     
-    init(data: Data) {
+    public init(data: Data) {
         self.data = data
         self._buffer = self.data!.withUnsafeBytes { buffer in
             return buffer

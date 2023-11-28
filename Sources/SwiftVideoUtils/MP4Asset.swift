@@ -44,20 +44,20 @@ public class MP4Asset {
         }
     }
     
-    init(reader: any MP4Reader) async throws {
+    public init(reader: any MP4Reader) async throws {
         self.reader = reader
         self.parser = MP4BoxParser(reader: reader)
     }
     
-    convenience init(url: URL) async throws {
+    public convenience init(url: URL) async throws {
         try await self.init(reader: try MP4FileReader(url: url))
     }
     
-    convenience init(data: Data) async throws {
+    public convenience init(data: Data) async throws {
         try await self.init(reader: MP4BufferReader(data: data))
     }
     
-    func metaData() async throws -> MP4MetaData {
+    public func metaData() async throws -> MP4MetaData {
         try await MP4MetaData(moovBox: try await moovBox, reader: reader)
     }
     

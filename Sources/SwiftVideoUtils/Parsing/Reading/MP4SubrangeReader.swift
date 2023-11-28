@@ -8,18 +8,18 @@
 import Foundation
 
 
-class MP4SubrangeReader: MP4Reader {
-    let wrappedReader: any MP4Reader
-    let additionalOffset: Int
-    let limit: Int
+public class MP4SubrangeReader: MP4Reader {
+    public let wrappedReader: any MP4Reader
+    public let additionalOffset: Int
+    public let limit: Int
     
-    var offset: Int
+    public var offset: Int
     
-    var remainingCount: Int {
+    public var remainingCount: Int {
         limit - offset
     }
 
-    init(wrappedReader: any MP4Reader, limit: Int) {
+    public init(wrappedReader: any MP4Reader, limit: Int) {
         assert(limit <= wrappedReader.remainingCount)
         
         var underlyingReader = wrappedReader
@@ -36,7 +36,7 @@ class MP4SubrangeReader: MP4Reader {
         self.offset = 0
     }
     
-    func readInteger<T>(_ type: T.Type) async throws -> T where T : FixedWidthInteger {
+    public func readInteger<T>(_ type: T.Type) async throws -> T where T : FixedWidthInteger {
         let prevOffset = wrappedReader.offset
         defer {
             offset = wrappedReader.offset - additionalOffset
@@ -47,7 +47,7 @@ class MP4SubrangeReader: MP4Reader {
         return try await wrappedReader.readInteger()
     }
     
-    func readData(count readCount: Int) async throws -> Data {
+    public func readData(count readCount: Int) async throws -> Data {
         let prevOffset = wrappedReader.offset
         defer {
             offset = wrappedReader.offset - additionalOffset

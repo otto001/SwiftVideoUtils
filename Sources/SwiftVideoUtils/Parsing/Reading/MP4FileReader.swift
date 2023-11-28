@@ -7,30 +7,30 @@
 
 import Foundation
 
-enum MP4FileReaderError: Error {
+public enum MP4FileReaderError: Error {
     case noDataAvaliable
 }
 
-class MP4FileReader: MP4Reader {
+public class MP4FileReader: MP4Reader {
     private static let fileReaderQueue = DispatchQueue(label: "de.mludwig.MP4Utils.MP4FileReader")
     
     private let fileHandle: FileHandle
     private var fileSize: Int
     
-    var offset: Int
+    public var offset: Int
     
-    var remainingCount: Int {
+    public var remainingCount: Int {
         fileSize - offset
     }
     
-    init(url: URL) throws {
+    public init(url: URL) throws {
         self.fileHandle = try .init(forReadingFrom: url)
         self.offset = 0
         
         self.fileSize = Int(try FileManager.default.attributesOfItem(atPath: url.relativePath)[.size] as! UInt64)
     }
 
-    func readData(count readCount: Int) async throws -> Data {
+    public func readData(count readCount: Int) async throws -> Data {
         guard readCount > 0 else {
             return .init()
         }

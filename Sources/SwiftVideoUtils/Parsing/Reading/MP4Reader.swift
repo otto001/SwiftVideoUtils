@@ -68,12 +68,27 @@ public extension MP4Reader {
         return try await self.readData(count: byteRange.count)
     }
     
-    func readString(byteCount: Int, encoding: String.Encoding) async throws -> String? {
-        try await String(data: self.readData(count: byteCount), encoding: encoding)
+    func readString(byteCount: Int, encoding: String.Encoding, dropLengthPrefix: Bool = false) async throws -> String? {
+        var byteCount = byteCount
+        if dropLengthPrefix {
+            try await self.prepareToRead(count: byteCount)
+            let length: Int8 = try await self.readInteger()
+            if length == byteCount {
+                byteCount -= 1
+            } else {
+                self.offset -= 1
+            }
+        }
+        
+        if byteCount == 0 {
+            return ""
+        }
+        
+        return try await String(data: self.readData(count: byteCount), encoding: encoding)
     }
     
-    func readString(end: Int, encoding: String.Encoding) async throws -> String? {
-        try await String(data: self.readData(count: end - offset), encoding: encoding)
+    func readAscii(byteCount: Int, dropLengthPrefix: Bool = false) async throws -> String {
+        try await self.readString(byteCount: byteCount, encoding: .ascii, dropLengthPrefix: dropLengthPrefix)!
     }
 }
 
@@ -104,7 +119,7 @@ public extension MP4Reader {
             
             switch mode {
             case .ascii:
-                string = try await self.readString(byteCount: readCount, encoding: .ascii)!.map {
+                string = try await self.readAscii(byteCount: readCount).map {
                     if $0.asciiValue == 0 {
                         return "0"
                     } else if $0.isLetter || $0.isNumber {

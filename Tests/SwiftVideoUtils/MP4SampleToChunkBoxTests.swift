@@ -6,11 +6,10 @@
 //
 
 import XCTest
-@testable import MP4ThumbnailGenerator
+@testable import SwiftVideoUtils
 
 
 final class MP4SampleToChunkBoxTests: XCTestCase {
-
 
     func testSamplePosition() throws {
         let box = MP4SampleToChunkBox(version: 0, flags: .init(), firstChuck: [1, 6, 44, 62].map {.init(index1: $0)}, samplesPerChunk: [30, 29, 27, 14], sampleDescriptionID: [0, 0, 0, 0])
@@ -31,6 +30,4 @@ final class MP4SampleToChunkBoxTests: XCTestCase {
         XCTAssertEqual(box.samplePosition(for: .init(index1: 30*5 + 31)), .init(chunk: .init(index1: 7), sampleOfChunkIndex: .init(index1: 2)))
         XCTAssertEqual(box.samplePosition(for: .init(index1: 30*5 + 29*38)), .init(chunk: .init(index1: 43), sampleOfChunkIndex: .init(index1: 29*38 - 29*37)))
     }
-
-
 }

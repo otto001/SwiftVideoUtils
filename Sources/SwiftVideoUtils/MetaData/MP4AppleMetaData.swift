@@ -12,7 +12,6 @@ import CoreLocation
 public struct MP4AppleMetaData {
     static private var dateFormatter = ISO8601DateFormatter()
     
-
     public var cameraLensModel: String?
     public var focalLength35mm: Int?
     
@@ -21,6 +20,12 @@ public struct MP4AppleMetaData {
     public var software: String?
     public var creationDate: Date?
     public var location: CLLocation?
+    
+    struct OrientationEntry: Equatable, Hashable {
+        let time: UInt32?
+        let orientation: Int16
+    }
+    var orientations: [OrientationEntry] = []
     
     init(moovBox: MP4MoovieBox, reader: any MP4Reader) async throws {
         for metaBox in moovBox.children(path: "trak.meta") {
@@ -37,6 +42,24 @@ public struct MP4AppleMetaData {
                     self.focalLength35mm = item.asInteger()
                 }
             }
+        }
+        
+        for trakBox in moovBox.tracks {
+            guard let stblBox = trakBox.firstChild(path: "mdia.minf.stbl") as? MP4SampleTableBox,
+                  let keysBox = stblBox.firstChild(path: "stsd.mebx.keys") as? MP4MetadataItemKeysBox,
+                  keysBox.keys.contains(MP4MetadataItemKeysBox.Key(namespace: "mdta", value: "com.apple.quicktime.video-orientation")) else {
+                continue
+            }
+            
+            for sample in stblBox.samples {
+                let byteRange = stblBox.byteRange(for: sample)
+                let time = stblBox.timeToSampleBox?.time(for: sample)
+                reader.offset = byteRange.upperBound - 2
+                let orientation: Int16 = try await reader.readInteger(byteOrder: .bigEndian)
+                self.orientations.append(.init(time: time, orientation: orientation))
+            }
+            
+            break
         }
         
         if let metaBox = moovBox.firstChild(path: "meta"),
@@ -60,6 +83,5 @@ public struct MP4AppleMetaData {
                            timestamp: self.creationDate)
             }
         }
-                
     }
 }

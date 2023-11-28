@@ -28,15 +28,15 @@ public class MP4MetadataItemKeysBox: MP4ParsableBox {
         let entryCount: UInt32 = try await reader.readInteger(byteOrder: .bigEndian)
         for _ in 0..<entryCount {
             let keySize: UInt32 = try await reader.readInteger(byteOrder: .bigEndian)
-            var namespace = try await reader.readString(byteCount: 4, encoding: .ascii)!
+            var namespace = try await reader.readAscii(byteCount: 4)
             
             var valueLength = Int(keySize)-8
             if namespace == "keyd" {
-                namespace = try await reader.readString(byteCount: 4, encoding: .ascii)!
+                namespace = try await reader.readAscii(byteCount: 4)
                 valueLength -= 4
             }
             
-            let key = try await reader.readString(byteCount: valueLength, encoding: .ascii)!
+            let key = try await reader.readAscii(byteCount: valueLength)
             self.keys.append(.init(namespace: namespace, value: key))
         }
 //        print(kCMMetadataBaseDataType_SInt64)

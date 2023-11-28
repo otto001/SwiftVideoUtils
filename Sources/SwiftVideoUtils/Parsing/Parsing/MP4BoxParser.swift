@@ -18,6 +18,7 @@ class MP4BoxParser {
         MP4HandlerReferenceBox.self,
         MP4Hvc1Box.self,
         MP4HvcCBox.self,
+        MP4MediaHeaderBox.self,
         MP4MoovieBox.self,
         MP4MovieHeaderBox.self,
         MP4SampleDescriptionBox.self,
@@ -27,6 +28,8 @@ class MP4BoxParser {
         MP4SyncSampleBox.self,
         MP4TimeToSampleBox.self,
         MP4TrackBox.self,
+        
+        MP4ColorParameterBox.self,
         
         // Quicktime meta data
         MP4MetadataItemKeysBox.self,

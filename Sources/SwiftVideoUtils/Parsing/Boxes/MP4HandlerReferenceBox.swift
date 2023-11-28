@@ -28,17 +28,14 @@ public class MP4HandlerReferenceBox: MP4VersionedBox {
         self.version = try await reader.readInteger()
         self.flags = try await .init(readFrom: reader)
         
-        self.componentType = try await reader.readString(byteCount: 4, encoding: .ascii)!
-        self.componentSubtype = try await reader.readString(byteCount: 4, encoding: .ascii)!
+        self.componentType = try await reader.readAscii(byteCount: 4)
+        self.componentSubtype = try await reader.readAscii(byteCount: 4)
         
         self.componentManufacturer = try await reader.readInteger(byteOrder: .bigEndian)
         self.componentFlags = try await reader.readInteger(byteOrder: .bigEndian)
         self.componentFlagsMask = try await reader.readInteger(byteOrder: .bigEndian)
         
-        
-        let componentNameLength: UInt8 = try await reader.readInteger()
-        
-        self.componentName = try await reader.readString(byteCount: Int(componentNameLength), encoding: .utf8)!
+        self.componentName = try await reader.readAscii(byteCount: reader.remainingCount, dropLengthPrefix: true)
     }
 }
 

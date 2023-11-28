@@ -53,7 +53,6 @@ public class MP4Hvc1Box: MP4ParsableBox {
         self.width = try await reader.readInteger(byteOrder: .bigEndian)
         self.height = try await reader.readInteger(byteOrder: .bigEndian)
         
-        // TODO: Is this resolution? check for video format
         self.horizontalResolution = try await reader.readInteger(byteOrder: .bigEndian)
         self.verticalResolution = try await reader.readInteger(byteOrder: .bigEndian)
         
@@ -62,8 +61,9 @@ public class MP4Hvc1Box: MP4ParsableBox {
         
         self.framesPerSample = try await reader.readInteger(byteOrder: .bigEndian)
         
+        // TODO: Is this always the length of the string?
         let compressorNameLength: UInt8 = try await reader.readInteger()
-        self.compressorName = try await reader.readString(byteCount: Int(compressorNameLength), encoding: .ascii)!
+        self.compressorName = try await reader.readAscii(byteCount: Int(compressorNameLength))
         reader.offset += 32 - 1 - Int(compressorNameLength)
 
         self.bitDepth = try await reader.readInteger(byteOrder: .bigEndian)
@@ -80,7 +80,7 @@ extension MP4Hvc1Box {
     public func makeFormatDescription() throws -> CMFormatDescription {
         // TODO: Missing Extensions:
         // Do i need them all?
-        // CVImageBufferChromaLocationBottomField, VerbatimISOSampleEntry, CVImageBufferColorPrimaries, CVImageBufferChromaLocationTopField, CVFieldCount, CVPixelAspectRatio, FullRangeVideo, CVImageBufferYCbCrMatrix, CVImageBufferTransferFunction
+        // CVImageBufferChromaLocationBottomField, VerbatimISOSampleEntry, CVImageBufferChromaLocationTopField, CVFieldCount, CVPixelAspectRatio, FullRangeVideo
         
         var extensions: CMFormatDescription.Extensions = .init()
         
@@ -96,6 +96,18 @@ extension MP4Hvc1Box {
                 "hvcC": hvcCBox.data as NSData
             ]
             extensions[.sampleDescriptionExtensionAtoms] = .init(sampleDescriptionExtensionAtoms)
+        }
+        
+        if let colrBox = firstChild(ofType: MP4ColorParameterBox.self) {
+            if let primaries = colrBox.colorPrimaries {
+                extensions[.colorPrimaries] = .string(primaries)
+            }
+            if let transferFunction = colrBox.transferFunction {
+                extensions[.transferFunction] = .string(transferFunction)
+            }
+            if let yCbCrMatrix = colrBox.yCbCrMatrix {
+                extensions[.yCbCrMatrix] = .string(yCbCrMatrix)
+            }
         }
         
         return try .init(videoCodecType: .hevc, width: Int(width), height: Int(height), extensions: extensions)

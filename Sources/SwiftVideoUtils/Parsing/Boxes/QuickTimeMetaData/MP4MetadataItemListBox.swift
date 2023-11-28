@@ -78,11 +78,11 @@ public class MP4MetadataItemListBox: MP4ParsableBox {
             
             let index: UInt32 = try await reader.readInteger(byteOrder: .bigEndian)
             let itemSize: UInt32 = try await reader.readInteger(byteOrder: .bigEndian)
-            let itemType = try await reader.readString(byteCount: 4, encoding: .ascii)!
+            let itemType = try await reader.readAscii(byteCount: 4)
             let typeIndicator: UInt32 = try await reader.readInteger(byteOrder: .bigEndian)
             
             // TODO: Support locales?
-            //let localeIndicator = try await reader.readString(byteCount: 4, encoding: .ascii)!
+            //let localeIndicator = try await reader.readAscii(byteCount: 4)
             reader.offset += 4
             
             //try await reader.printBytes(count: Int(itemSize))

@@ -7,6 +7,8 @@
 
 import Foundation
 import CoreLocation
+import CoreMedia
+
 
 struct MP4MetaData {
     public var creationTime: Date
@@ -15,14 +17,12 @@ struct MP4MetaData {
     public var duration: TimeInterval
     public var nextTrackId: Int
     
-    public var videoCodec: MP4VideoCodec
+    public var videoCodec: CMFormatDescription.MediaSubType
     
     public var videoWidth: Int
     public var videoHeight: Int
     public var videoBitDepth: Int
     public var videoAverageFrameRate: Double?
-    
-    public var orientationData: MP4OrientationMetaData?
     
     public var appleMetaData: MP4AppleMetaData?
     
@@ -35,12 +35,16 @@ struct MP4MetaData {
             throw MP4Error.failedToFindBox(path: "moov.mvhd")
         }
         
-        let minfBox = moovBox.children(path: "trak.mdia.minf").first { $0.firstChild(ofType: "vmhd") != nil }
-        guard let minfBox = minfBox else {
+        let mediaBox = moovBox.children(path: "trak.mdia").first { $0.firstChild(path: "minf.vmhd") != nil }
+        guard let mediaBox = mediaBox else {
             throw MP4Error.failedToFindBox(path: "moov.trak.mdia.minf.vmhd")
         }
         
-        guard let stblBox = minfBox.firstChild(path: "stbl") else {
+        guard let mediaHeader = mediaBox.firstChild(ofType: MP4MediaHeaderBox.self) else {
+            throw MP4Error.failedToFindBox(path: "moov.trak.mdia.mdhd")
+        }
+        
+        guard let stblBox = mediaBox.firstChild(path: "minf.stbl") else {
             throw MP4Error.failedToFindBox(path: "moov.trak.mdia.minf.stbl")
         }
 
@@ -55,7 +59,7 @@ struct MP4MetaData {
             self.videoHeight = Int(avc1Box.height)
             self.videoBitDepth = Int(avc1Box.bitDepth)
         } else if let hvc1Box = stblBox.firstChild(path: "stsd.hvc1") as? MP4Hvc1Box {
-            self.videoCodec = .h265
+            self.videoCodec = .hevc
             self.videoWidth = Int(hvc1Box.width)
             self.videoHeight = Int(hvc1Box.height)
             self.videoBitDepth = Int(hvc1Box.bitDepth)
@@ -65,10 +69,9 @@ struct MP4MetaData {
         }
         
         self.videoAverageFrameRate = (moovBox.videoTrack?.sampleTableBox.timeToSampleBox?.averageSampleDuration()).map {
-            Double(movieHeaderBox.timescale)/$0
+            Double(mediaHeader.timescale)/$0
         }
         
-        self.orientationData = try? await .init(moovBox: moovBox, reader: reader)
         self.appleMetaData = try? await .init(moovBox: moovBox, reader: reader)
     }
     

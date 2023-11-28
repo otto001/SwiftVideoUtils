@@ -13,4 +13,6 @@ enum MP4Error: Error {
     case noVideoTrack
     case noDataProvided
     case failedToCreateCGImage
+    
+    case internalError(String)
 }

@@ -25,6 +25,10 @@ public class MP4SampleTableBox: MP4ParsableBox {
         sampleSizeBox.sampleCount
     }
     
+    var samples: Range<MP4Index<UInt32>> {
+        .zero..<MP4Index(index0: sampleSizeBox.sampleCount)
+    }
+    
     public init(children: [any MP4Box]) throws {
         self.children = children
         

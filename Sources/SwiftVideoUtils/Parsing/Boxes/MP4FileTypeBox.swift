@@ -18,12 +18,12 @@ public class MP4FileTypeBox: MP4ParsableBox {
     
     
     required public init(reader: any MP4Reader) async throws {
-        self.majorBrand = try await reader.readString(byteCount: 4, encoding: .ascii)!
+        self.majorBrand = try await reader.readAscii(byteCount: 4)
         self.minorBrand = try await reader.readInteger(byteOrder: .bigEndian)
         self.compatibleBrands = []
         
         while reader.remainingCount > 4 {
-            self.compatibleBrands.append(try await reader.readString(byteCount: 4, encoding: .ascii)!)
+            self.compatibleBrands.append(try await reader.readAscii(byteCount: 4))
         }
     }
 }

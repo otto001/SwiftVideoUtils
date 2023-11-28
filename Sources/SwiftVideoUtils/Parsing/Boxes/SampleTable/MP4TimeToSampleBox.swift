@@ -47,6 +47,22 @@ public class MP4TimeToSampleBox: MP4VersionedBox {
         return Double(totalSampleDuration())/Double(totalSampleCount())
     }
     
+    public func time(for sample: MP4Index<UInt32>) -> UInt32? {
+        var currentSample: MP4Index<UInt32> = .zero
+        var currentTime: UInt32 = 0
+        
+        for entry in entries {
+            if currentSample + entry.sampleCount >= sample {
+                return (sample.index0 - currentSample.index0) * entry.sampleDuration + currentTime
+            } else {
+                currentSample += entry.sampleCount
+                currentTime += entry.sampleDuration * entry.sampleCount
+            }
+        }
+        
+        return nil
+    }
+    
 //    public func sample(time: UInt32) -> MP4Index<UInt32>? {
 //        guard !entries.isEmpty else { return nil }
 //        

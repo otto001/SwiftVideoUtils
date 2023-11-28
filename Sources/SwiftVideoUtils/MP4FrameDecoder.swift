@@ -4,9 +4,13 @@
 
 import Foundation
 import CoreMedia
+import CoreVideo
 
+#if os(iOS)
+import UIKit
+#endif
 
-public class MP4ThumbnailGenerator {
+public class MP4FrameDecoder {
     public let asset: MP4Asset
     
     let moovBox: MP4MoovieBox
@@ -36,7 +40,7 @@ public class MP4ThumbnailGenerator {
         self.decompressionSession = try .init(formatDescription: try await asset.videoFormatDescription)
     }
     
-    public func thumbnail(for keyframe: Int = 0) async throws -> CGImage {
+    public func cvImageBuffer(for keyframe: Int = 0) async throws -> CVImageBuffer {
         let sampleBuffer = try await asset.videoSampleBuffer(for: self.stblBox.syncSamplesBox?.syncSamples[keyframe] ?? .init(index0: UInt32(keyframe)))
         
         return try await withCheckedThrowingContinuation { continuation in
@@ -44,15 +48,28 @@ public class MP4ThumbnailGenerator {
                 if let error = error {
                     continuation.resume(throwing: error)
                 } else if let imageBuffer = imageBuffer {
-                    if let cgImage: CGImage = .from(cvImageBuffer: imageBuffer) {
-                        continuation.resume(returning: cgImage)
-                    } else {
-                        continuation.resume(throwing: MP4Error.failedToCreateCGImage)
-                    }
+                    continuation.resume(returning: imageBuffer)
                 } else {
-                    fatalError("DecompressionSession.decode failed to return error or result.")
+                    continuation.resume(throwing: MP4Error.internalError("DecompressionSession.decode failed to return error or result."))
                 }
             }
         }
     }
+    
+    public func cgImage(for keyframe: Int = 0) async throws -> CGImage {
+        let imageBuffer = try await self.cvImageBuffer(for: keyframe)
+        
+        if let cgImage: CGImage = .from(cvImageBuffer: imageBuffer) {
+            return cgImage
+        } else {
+            throw MP4Error.failedToCreateCGImage
+        }
+    }
+    
+#if os(iOS)
+    public func uiImage(for keyframe: Int = 0) async throws -> UIImage {
+        return UIImage(ciImage: CIImage(cvImageBuffer: try await cvImageBuffer(for: keyframe)))
+    }
+#endif
+    
 }

@@ -59,7 +59,7 @@ public class MP4Avc1Box: MP4ParsableBox {
         
         self.framesPerSample = try await reader.readInteger(byteOrder: .bigEndian)
         
-        self.compressorName = try await reader.readString(byteCount: 32, encoding: .ascii)!
+        self.compressorName = try await reader.readAscii(byteCount: 32)
 
         self.bitDepth = try await reader.readInteger(byteOrder: .bigEndian)
         self.colorTableIndex = try await reader.readInteger(byteOrder: .bigEndian)
@@ -75,7 +75,7 @@ extension MP4Avc1Box {
     public func makeFormatDescription() throws -> CMFormatDescription {
         // TODO: Missing Extensions:
         // Do i need them all?
-        // CVImageBufferChromaLocationBottomField, VerbatimISOSampleEntry, CVImageBufferColorPrimaries, CVImageBufferChromaLocationTopField, CVFieldCount, CVPixelAspectRatio, FullRangeVideo, CVImageBufferYCbCrMatrix, CVImageBufferTransferFunction
+        // CVImageBufferChromaLocationBottomField, VerbatimISOSampleEntry, CVImageBufferChromaLocationTopField, CVFieldCount, CVPixelAspectRatio, FullRangeVideo
         
         var extensions: CMFormatDescription.Extensions = .init()
         
@@ -91,6 +91,18 @@ extension MP4Avc1Box {
                 "avcC": avcCBox.data as NSData
             ]
             extensions[.sampleDescriptionExtensionAtoms] = .init(sampleDescriptionExtensionAtoms)
+        }
+        
+        if let colrBox = firstChild(ofType: MP4ColorParameterBox.self) {
+            if let primaries = colrBox.colorPrimaries {
+                extensions[.colorPrimaries] = .string(primaries)
+            }
+            if let transferFunction = colrBox.transferFunction {
+                extensions[.transferFunction] = .string(transferFunction)
+            }
+            if let yCbCrMatrix = colrBox.yCbCrMatrix {
+                extensions[.yCbCrMatrix] = .string(yCbCrMatrix)
+            }
         }
         
         return try .init(videoCodecType: .h264, width: Int(width), height: Int(height), extensions: extensions)

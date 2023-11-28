@@ -7,12 +7,12 @@
 
 import XCTest
 
-@testable import MP4ThumbnailGenerator
+@testable import SwiftVideoUtils
 
 final class MP4PartionedBufferTests: XCTestCase {
 
     func testPartionedBuffer() throws {
-        let data = try Data(contentsOf: urlForFileName("TestVideo.MOV"))
+        let data = try Data(contentsOf: urlForFileName("TestVideo_iPhone_FHD.MOV"))
         
         var buffer = MP4PartionedBuffer()
         

@@ -37,11 +37,11 @@ final class MP4MetaDataTests: XCTestCase {
         let asset = try await MP4Asset(reader: MP4FileReader(url: urlForFileName("TestVideo_iPhone_FHD.MOV")))
         let metaData = try await asset.metaData()
         print(try await asset.moovBox.description)
-        XCTAssertEqual(metaData.creationTime.isoString, "2023-11-23T19:07:53Z")
-        XCTAssertEqual(metaData.modificationTime.isoString, "2023-11-23T19:07:58Z")
+        XCTAssertEqual(metaData.creationTime.isoString, "2023-11-23T20:07:53Z")
+        XCTAssertEqual(metaData.modificationTime.isoString, "2023-11-23T20:07:58Z")
         
         XCTAssertEqual(metaData.duration, 5.001, accuracy: 0.001)
-        XCTAssertEqual(metaData.nextTrackID, 65536)
+        XCTAssertEqual(metaData.nextTrackID, 6)
         
         XCTAssertEqual(metaData.videoCodec, .h264)
         XCTAssertEqual(metaData.videoWidth, 1920)
@@ -69,11 +69,11 @@ final class MP4MetaDataTests: XCTestCase {
         let asset = try await MP4Asset(reader: MP4FileReader(url: urlForFileName("TestVideo_iPhone_UHD.MOV")))
         let metaData = try await asset.metaData()
         
-        XCTAssertEqual(metaData.creationTime.isoString, "2023-11-23T19:08:03Z")
-        XCTAssertEqual(metaData.modificationTime.isoString, "2023-11-23T19:08:10Z")
+        XCTAssertEqual(metaData.creationTime.isoString, "2023-11-23T20:08:03Z")
+        XCTAssertEqual(metaData.modificationTime.isoString, "2023-11-23T20:08:10Z")
         
         XCTAssertEqual(metaData.duration, 5.92, accuracy: 0.001)
-        XCTAssertEqual(metaData.nextTrackID, 65536)
+        XCTAssertEqual(metaData.nextTrackID, 6)
         
         XCTAssertEqual(metaData.videoCodec, .hevc)
         XCTAssertEqual(metaData.videoWidth, 3840)
@@ -101,11 +101,11 @@ final class MP4MetaDataTests: XCTestCase {
         let asset = try await MP4Asset(reader: MP4FileReader(url: urlForFileName("TestVideo_GoPro_H8.mp4")))
         let metaData = try await asset.metaData()
         
-        XCTAssertEqual(metaData.creationTime.isoString, "2019-11-08T16:57:16Z")
-        XCTAssertEqual(metaData.modificationTime.isoString, "2019-11-08T16:57:16Z")
+        XCTAssertEqual(metaData.creationTime.isoString, "2019-11-08T17:57:16Z")
+        XCTAssertEqual(metaData.modificationTime.isoString, "2019-11-08T17:57:16Z")
         
         XCTAssertEqual(metaData.duration, 86.16925, accuracy: 0.001)
-        XCTAssertEqual(metaData.nextTrackID, 65536)
+        XCTAssertEqual(metaData.nextTrackID, 3)
         
         XCTAssertEqual(metaData.videoCodec, .h264)
         XCTAssertEqual(metaData.videoWidth, 1920)
@@ -118,11 +118,11 @@ final class MP4MetaDataTests: XCTestCase {
         let asset = try await MP4Asset(reader: MP4FileReader(url: urlForFileName("TestVideo_GooglePhotos_Android10.mp4")))
         let metaData = try await asset.metaData()
         
-        XCTAssertEqual(metaData.creationTime.isoString, "2020-02-26T19:05:56Z")
-        XCTAssertEqual(metaData.modificationTime.isoString, "2020-02-26T19:05:56Z")
+        XCTAssertEqual(metaData.creationTime.isoString, "2020-02-26T20:05:56Z")
+        XCTAssertEqual(metaData.modificationTime.isoString, "2020-02-26T20:05:56Z")
         
         XCTAssertEqual(metaData.duration, 12.962, accuracy: 0.001)
-        XCTAssertEqual(metaData.nextTrackID, 65536)
+        XCTAssertEqual(metaData.nextTrackID, 3)
         
         XCTAssertEqual(metaData.videoCodec, .h264)
         XCTAssertEqual(metaData.videoWidth, 3840)

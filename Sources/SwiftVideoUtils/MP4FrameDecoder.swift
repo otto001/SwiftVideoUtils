@@ -16,7 +16,7 @@ public class MP4FrameDecoder {
     let moovBox: MP4MoovieBox
     let stblBox: MP4SampleTableBox
     
-    let orientation: Int16?
+    var videoTransform: CGAffineTransform?
     
     let decompressionSession: DecompressionSession
     var videoFormat: CMFormatDescription {
@@ -38,7 +38,7 @@ public class MP4FrameDecoder {
             throw MP4Error.noVideoTrack
         }
         
-        self.orientation = try await asset.metaData().orientation
+        self.videoTransform = moovBox.videoTrack?.firstChild(ofType: MP4TrackHeaderBox.self)?.displayMatrix.affineTransform
         
         self.moovBox = moovBox
         self.stblBox = stblBox
@@ -65,7 +65,7 @@ public class MP4FrameDecoder {
     public func cgImage(for keyframe: Int = 0) async throws -> CGImage {
         let imageBuffer = try await self.cvImageBuffer(for: keyframe)
         
-        if let cgImage: CGImage = .from(cvImageBuffer: imageBuffer) {
+        if let cgImage: CGImage = .from(cvImageBuffer: imageBuffer, affineTransform: self.videoTransform) {
             return cgImage
         } else {
             throw MP4Error.failedToCreateCGImage

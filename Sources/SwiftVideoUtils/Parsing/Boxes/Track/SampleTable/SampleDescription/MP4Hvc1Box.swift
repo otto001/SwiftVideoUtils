@@ -12,7 +12,7 @@ import CoreMedia
 public class MP4Hvc1Box: MP4ParsableBox {
     public static let typeName: String = "hvc1"
     
-    public var reserved: Data
+    public var reserved1: Data
     
     public var dataReferenceIndex: UInt16
     
@@ -38,9 +38,11 @@ public class MP4Hvc1Box: MP4ParsableBox {
     
     public var children: [MP4Box]
     
+    public var reserved2: Data
+    
     required public init(reader: any MP4Reader) async throws {
         
-        self.reserved = try await reader.readData(count: 6)
+        self.reserved1 = try await reader.readData(count: 6)
 
         self.dataReferenceIndex = try await reader.readInteger(byteOrder: .bigEndian)
         
@@ -70,10 +72,12 @@ public class MP4Hvc1Box: MP4ParsableBox {
         
         assert(reader.offset == 78)
         self.children = try await MP4BoxParser(reader: reader).readBoxes()
+        
+        self.reserved2 = try await reader.readAllData()
     }
 
     public func writeContent(to writer: any MP4Writer) async throws {
-        try await writer.write(reserved)
+        try await writer.write(reserved1)
         
         try await writer.write(dataReferenceIndex, byteOrder: .bigEndian)
         
@@ -99,6 +103,8 @@ public class MP4Hvc1Box: MP4ParsableBox {
         try await writer.write(colorTableIndex, byteOrder: .bigEndian)
         
         try await writer.write(children)
+        
+        try await writer.write(reserved2)
     }
 }
 

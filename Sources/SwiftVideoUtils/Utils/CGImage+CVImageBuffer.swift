@@ -11,11 +11,15 @@ import CoreImage
 
 
 extension CGImage {
-    static func from(cvImageBuffer imageBuffer: CVImageBuffer) -> CGImage? {
-        let width = CVPixelBufferGetWidth(imageBuffer)
-        let height = CVPixelBufferGetHeight(imageBuffer)
+    static func from(cvImageBuffer imageBuffer: CVImageBuffer, affineTransform: CGAffineTransform?) -> CGImage? {
         let context = CIContext(options: nil)
         
-        return context.createCGImage(CIImage(cvImageBuffer: imageBuffer), from: CGRect(x: 0, y: 0, width: width, height: height))
+        var ciImage = CIImage(cvImageBuffer: imageBuffer)
+        
+        if let affineTransform = affineTransform {
+            ciImage = ciImage.transformed(by: affineTransform)
+        }
+        
+        return context.createCGImage(ciImage, from: ciImage.extent)
     }
 }

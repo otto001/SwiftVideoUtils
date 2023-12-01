@@ -38,26 +38,9 @@ final class MP4FrameDecoderTests: XCTestCase {
     
     func testiPhoneFHDPortait() async throws {
         let asset = try await MP4Asset(reader: MP4FileReader(url: urlForFileName("TestVideo_iPhone_FHD_Portait.MOV")))
-        print("TestVideo_iPhone_FHD_Portait")
-        print(try await asset.videoFormatDescription)
-        if #available(iOS 16, *) {
-            let asset = AVURLAsset(url: urlForFileName("TestVideo_iPhone_FHD_Portait.MOV"))
-            let track = try await asset.load(.tracks).first!
-            let fmt = try await track.load(.formatDescriptions).first!
-            let trnsfrm = track.preferredTransform
-            
-            for mfmt in try await asset.load(.availableMetadataFormats) {
-                let metadata = try await asset.loadMetadata(for: mfmt)
-                print()
-            }
-        } else {
-            // Fallback on earlier versions
-        }
-        
-        print(try await asset.moovBox.description)
         let generator = try await MP4FrameDecoder(asset: asset)
         let thumbnail = try await generator.cgImage()
-        let metaData = try await asset.metaData()
+
         XCTAssertEqual(thumbnail.width, 1080)
         XCTAssertEqual(thumbnail.height, 1920)
     }

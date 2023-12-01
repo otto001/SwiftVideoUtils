@@ -46,10 +46,18 @@ public struct MP4AppleMetaData {
         
         for trakBox in moovBox.tracks {
             guard let stblBox = trakBox.firstChild(path: "mdia.minf.stbl") as? MP4SampleTableBox,
-                  let keysBox = stblBox.firstChild(path: "stsd.mebx.keys") as? MP4MetadataItemKeysBox,
-                  keysBox.keys.contains(MP4MetadataItemKeysBox.Key(namespace: "mdta", value: "com.apple.quicktime.video-orientation")) else {
+                  let keyTableBox = stblBox.firstChild(path: "stsd.mebx.keys") as? MP4MetadataKeyTableBox else {
                 continue
             }
+            
+            let keyDeclarations = keyTableBox.children.flatMap {
+                $0.children(ofType: MP4MetadataKeyDeclarationBox.self)
+            }
+            
+            guard keyDeclarations.count == 1 && keyDeclarations.first!.stringValue == "com.apple.quicktime.video-orientation" else {
+                continue
+            }
+            
             do {
                 for sample in try stblBox.samples {
                     let byteRange = try stblBox.byteRange(for: sample)

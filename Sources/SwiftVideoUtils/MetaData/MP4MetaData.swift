@@ -17,12 +17,19 @@ public struct MP4MetaData {
     public var duration: TimeInterval
     public var nextTrackID: Int
     
+    public var videoTrackWidth: Double
+    public var videoTrackHeight: Double
+    
     public var videoCodec: CMFormatDescription.MediaSubType
     
-    public var videoWidth: Int
-    public var videoHeight: Int
+    public var videoEncodedWidth: Int
+    public var videoEncodedHeight: Int
     public var videoBitDepth: Int
     public var videoAverageFrameRate: Double?
+    
+    public var videoOrientation: ExifOrientation?
+    public var videoWidth: Double
+    public var videoHeight: Double
     
     public var appleMetaData: MP4AppleMetaData?
     
@@ -30,42 +37,64 @@ public struct MP4MetaData {
         appleMetaData?.location
     }
     
-    public var orientation: Int16? {
-        appleMetaData?.orientations.first?.orientation
-    }
+    
     
     public init(moovBox: MP4MoovieBox, reader: any MP4Reader) async throws {
-        guard let movieHeaderBox = moovBox.firstChild(ofType: MP4MovieHeaderBox.self) else {
-            throw MP4Error.failedToFindBox(path: "moov.mvhd")
-        }
+        let movieHeaderBox = try moovBox.firstChild(ofType: MP4MovieHeaderBox.self).unwrapOrFail(
+            with: MP4Error.failedToFindBox(path: "moov.mvhd")
+        )
         
-        let mediaBox = moovBox.children(path: "trak.mdia").first { $0.firstChild(path: "minf.vmhd") != nil }
-        guard let mediaBox = mediaBox else {
-            throw MP4Error.failedToFindBox(path: "moov.trak.mdia.minf.vmhd")
-        }
+        let videoTrack = try moovBox.videoTrack.unwrapOrFail(
+            with: MP4Error.noVideoTrack
+        )
         
-        guard let mediaHeader = mediaBox.firstChild(ofType: MP4MediaHeaderBox.self) else {
-            throw MP4Error.failedToFindBox(path: "moov.trak.mdia.mdhd")
-        }
+        let videoTrackHeader = try videoTrack.trackHeaderBox.unwrapOrFail(
+            with: MP4Error.failedToFindBox(path: "moov.trak.tkhd")
+        )
         
-        guard let stblBox = mediaBox.firstChild(path: "minf.stbl") else {
-            throw MP4Error.failedToFindBox(path: "moov.trak.mdia.minf.stbl")
-        }
+        let mediaBox = try videoTrack.firstChild(ofType: MP4MediaBox.self).unwrapOrFail(
+            with: MP4Error.failedToFindBox(path: "moov.trak.mdia")
+        )
+
+        let mediaHeader = try mediaBox.firstChild(ofType: MP4MediaHeaderBox.self).unwrapOrFail(
+            with: MP4Error.failedToFindBox(path: "moov.trak.mdia.mdhd")
+        )
+        
+        let stblBox = try mediaBox.firstChild(path: "minf.stbl").unwrapOrFail(
+            with: MP4Error.failedToFindBox(path: "moov.trak.mdia.minf.stbl")
+        )
+
 
         self.creationTime = movieHeaderBox.creationTime
         self.modificationTime = movieHeaderBox.modificationTime
         self.duration = movieHeaderBox.durationSeconds
         self.nextTrackID = Int(movieHeaderBox.nextTrackID)
         
+        self.videoTrackWidth = videoTrackHeader.trackWidth
+        self.videoTrackHeight = videoTrackHeader.trackHeight
+        let videoOrientation = videoTrackHeader.displayMatrix.exifOrientation
+        self.videoOrientation = videoOrientation
+        
+        switch videoOrientation {
+        case .rotate90deg, .rotate270deg, .mirrorAndRotate90deg, .mirrorAndRotate270deg:
+            self.videoWidth = videoTrackHeader.trackHeight
+            self.videoHeight = videoTrackHeader.trackWidth
+            
+        //case .identity, .rotate180deg, .mirror, .mirrorAndRotate180deg:
+        default:
+            self.videoWidth = videoTrackHeader.trackWidth
+            self.videoHeight = videoTrackHeader.trackHeight
+        }
+        
         if let avc1Box = stblBox.firstChild(path: "stsd.avc1") as? MP4Avc1Box {
             self.videoCodec = .h264
-            self.videoWidth = Int(avc1Box.width)
-            self.videoHeight = Int(avc1Box.height)
+            self.videoEncodedWidth = Int(avc1Box.width)
+            self.videoEncodedHeight = Int(avc1Box.height)
             self.videoBitDepth = Int(avc1Box.bitDepth)
         } else if let hvc1Box = stblBox.firstChild(path: "stsd.hvc1") as? MP4Hvc1Box {
             self.videoCodec = .hevc
-            self.videoWidth = Int(hvc1Box.width)
-            self.videoHeight = Int(hvc1Box.height)
+            self.videoEncodedWidth = Int(hvc1Box.width)
+            self.videoEncodedHeight = Int(hvc1Box.height)
             self.videoBitDepth = Int(hvc1Box.bitDepth)
         } else {
             // TODO: better error reporting

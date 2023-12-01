@@ -32,6 +32,4 @@ final class MP4WriteTests: XCTestCase {
 //
         XCTAssertEqual(originalData, writer.data)
     }
-
-
 }

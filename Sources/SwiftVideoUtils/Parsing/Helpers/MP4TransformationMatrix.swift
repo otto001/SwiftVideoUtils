@@ -9,39 +9,19 @@ import Foundation
 import CoreGraphics
 
 public struct MP4TransformationMatrix {
-    var a: Double
-    var b: Double
-    var c: Double
-    var d: Double
+    public var a: Double
+    public var b: Double
+    public var c: Double
+    public var d: Double
     
-    var x: Double
-    var y: Double
+    public var x: Double
+    public var y: Double
     
-    var u: Double
-    var v: Double
-    var w: Double
+    public var u: Double
+    public var v: Double
+    public var w: Double
     
-    
-//    (s_x cos(t) | s_x sin(t) | 0
-//    h s_y cos(t) - s_y sin(t) | h s_y sin(t) + s_y cos(t) | 0
-//    x | y | 1)
-    
-    /*                      |------------------ CGAffineTransformComponents ----------------|
-     *
-     *      | a  b  0 |     | sx  0  0 |   |  1  0  0 |   | cos(t)  sin(t)  0 |   | 1  0  0 |
-     *      | c  d  0 |  =  |  0 sy  0 | * | sh  1  0 | * |-sin(t)  cos(t)  0 | * | 0  1  0 |
-     *      | tx ty 1 |     |  0  0  1 |   |  0  0  1 |   |   0       0     1 |   | tx ty 1 |
-     *  CGAffineTransform      scale           shear            rotation          translation
-     *
-     *
-     *      | a  b  0 |     | sx * cos(t)                      sx * sin(t)                      0 |
-     *      | c  d  0 |  =  | sh * sy * cos(t) - sy * sin(t)   sh * sy * sin(t) + sy * cos(t)   0 |
-     *      | tx ty 1 |     | x                                y                                1 |
-     *
-     */
-    
-    
-    init(a: Double, b: Double, c: Double, d: Double, x: Double, y: Double, u: Double, v: Double, w: Double) {
+    public init(a: Double, b: Double, c: Double, d: Double, x: Double, y: Double, u: Double, v: Double, w: Double) {
         self.a = a
         self.b = b
         self.c = c
@@ -53,7 +33,7 @@ public struct MP4TransformationMatrix {
         self.w = w
     }
     
-    init(reader: any MP4Reader) async throws {
+    public init(reader: any MP4Reader) async throws {
         self.a = try await reader.readFixedPoint(underlyingType: Int32.self, fractionBits: 16, byteOrder: .bigEndian)
         self.b = try await reader.readFixedPoint(underlyingType: Int32.self, fractionBits: 16, byteOrder: .bigEndian)
         self.u = try await reader.readFixedPoint(underlyingType: Int32.self, fractionBits: 30, byteOrder: .bigEndian)
@@ -67,8 +47,26 @@ public struct MP4TransformationMatrix {
         self.w = try await reader.readFixedPoint(underlyingType: Int32.self, fractionBits: 30, byteOrder: .bigEndian)
     }
     
-    var affineTransform: CGAffineTransform {
-        .init(CGFloat(a), CGFloat(b), CGFloat(c), CGFloat(d), CGFloat(x), CGFloat(y))
+    public var affineTransform: CGAffineTransform {
+        get {
+            .init(CGFloat(a), CGFloat(b), CGFloat(c), CGFloat(d), CGFloat(x), CGFloat(y))
+        }
+        set {
+            a = newValue.a
+            b = newValue.b
+            c = newValue.c
+            d = newValue.d
+            x = newValue.tx
+            y = newValue.ty
+            
+            u = 0
+            v = 0
+            w = 0
+        }
+    }
+    
+    public var exifOrientation: ExifOrientation? {
+        return .init(matrix: self)
     }
 }
 

@@ -37,7 +37,7 @@ final class MP4FrameDecoderTests: XCTestCase {
     }
     
     func testiPhoneFHDPortait() async throws {
-        let asset = try await MP4Asset(reader: MP4FileReader(url: urlForFileName("TestVideo_iPhone_FHD_Portait.MOV")))
+        let asset = try await MP4Asset(reader: MP4FileReader(url: urlForFileName("TestVideo_iPhone_FHD_Portrait.MOV")))
         let generator = try await MP4FrameDecoder(asset: asset)
         let thumbnail = try await generator.cgImage()
 

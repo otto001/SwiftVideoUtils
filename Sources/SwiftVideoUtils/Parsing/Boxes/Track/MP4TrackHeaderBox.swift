@@ -21,12 +21,12 @@ public class MP4TrackHeaderBox: MP4VersionedBox {
     public var trackID: UInt32
     
     /// 4 byte reserved data
-    public var reserved1: Data
+    public var reserved1: UInt32
     
     public var duration: UInt32
     
     /// 8 byte reserved data
-    public var reserved2: Data
+    public var reserved2: UInt64
     
     public var layer: UInt16
     public var alternateGroup: UInt16
@@ -34,12 +34,12 @@ public class MP4TrackHeaderBox: MP4VersionedBox {
     public var volume: UInt16
     
     /// 2 byte reserved data
-    public var reserved3: Data
+    public var reserved3: UInt16
     
     public var displayMatrix: MP4TransformationMatrix
     
-    public var trackWidth: UInt32
-    public var trackHeight: UInt32
+    public var trackWidth: Double
+    public var trackHeight: Double
 
     required public init(reader: any MP4Reader) async throws {
         self.version = try await reader.readInteger()
@@ -50,23 +50,23 @@ public class MP4TrackHeaderBox: MP4VersionedBox {
         
         self.trackID = try await reader.readInteger(byteOrder: .bigEndian)
         
-        self.reserved1 = try await reader.readData(count: 4)
+        self.reserved1 = try await reader.readInteger(byteOrder: .bigEndian)
         
         self.duration = try await reader.readInteger(byteOrder: .bigEndian)
         
-        self.reserved2 = try await reader.readData(count: 8)
+        self.reserved2 = try await reader.readInteger(byteOrder: .bigEndian)
         
         self.layer = try await reader.readInteger(byteOrder: .bigEndian)
         self.alternateGroup = try await reader.readInteger(byteOrder: .bigEndian)
         
         self.volume = try await reader.readInteger(byteOrder: .bigEndian)
         
-        self.reserved3 = try await reader.readData(count: 2)
+        self.reserved3 = try await reader.readInteger(byteOrder: .bigEndian)
         
         self.displayMatrix = try await .init(reader: reader)
         
-        self.trackWidth = try await reader.readInteger(byteOrder: .bigEndian)
-        self.trackHeight = try await reader.readInteger(byteOrder: .bigEndian)
+        self.trackWidth = try await reader.readFixedPoint(underlyingType: UInt32.self, fractionBits: 16, byteOrder: .bigEndian)
+        self.trackHeight = try await reader.readFixedPoint(underlyingType: UInt32.self, fractionBits: 16, byteOrder: .bigEndian)
     }
     
     public func writeContent(to writer: MP4Writer) async throws {
@@ -78,22 +78,22 @@ public class MP4TrackHeaderBox: MP4VersionedBox {
 
         try await writer.write(trackID, byteOrder: .bigEndian)
         
-        try await writer.write(reserved1)
+        try await writer.write(reserved1, byteOrder: .bigEndian)
         
         try await writer.write(duration, byteOrder: .bigEndian)
         
-        try await writer.write(reserved2)
+        try await writer.write(reserved2, byteOrder: .bigEndian)
         
         try await writer.write(layer, byteOrder: .bigEndian)
         try await writer.write(alternateGroup, byteOrder: .bigEndian)
         
         try await writer.write(volume, byteOrder: .bigEndian)
         
-        try await writer.write(reserved3)
+        try await writer.write(reserved3, byteOrder: .bigEndian)
         
         try await writer.write(displayMatrix)
         
-        try await writer.write(trackWidth, byteOrder: .bigEndian)
-        try await writer.write(trackHeight, byteOrder: .bigEndian)
+        try await writer.write(fixedPoint: trackWidth, UInt32.self, fractionBits: 16, byteOrder: .bigEndian)
+        try await writer.write(fixedPoint: trackHeight, UInt32.self, fractionBits: 16, byteOrder: .bigEndian)
     }
 }

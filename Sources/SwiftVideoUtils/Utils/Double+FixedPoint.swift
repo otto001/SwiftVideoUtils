@@ -31,7 +31,7 @@ extension Double {
         
         let result = integerPart << fractionBits + fractionPart
         // TODO: remove assert
-        assert(Double(fixedPoint: result, fractionBits: fractionBits) == self)
+        assert(abs(Double(fixedPoint: result, fractionBits: fractionBits) - self) < 0.00001)
         return result
     }
 }

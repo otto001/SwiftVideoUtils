@@ -15,7 +15,7 @@ public class MP4TrackBox: MP4ParsableBox {
     public var children: [any MP4Box]
     
     public var mediaBox: MP4MediaBox? { firstChild(ofType: MP4MediaBox.self) }
-    
+    public var trackHeaderBox: MP4TrackHeaderBox? { firstChild(ofType: MP4TrackHeaderBox.self) }
     
     public init(children: [any MP4Box]) throws {
         self.children = children

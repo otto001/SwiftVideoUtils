@@ -21,6 +21,8 @@ public class MP4MoovieBox: MP4ParsableBox {
         }
     }
     
+    public var moovieHeaderBox: MP4MovieHeaderBox? { firstChild(ofType: MP4MovieHeaderBox.self) }
+    
     public init(children: [any MP4Box]) throws {
         self.children = children
     }

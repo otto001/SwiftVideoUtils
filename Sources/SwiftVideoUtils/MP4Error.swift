@@ -19,4 +19,6 @@ public enum MP4Error: Error {
     case internalError(String)
     
     case stringEncodingError
+    
+    case fixedPointOverflow
 }

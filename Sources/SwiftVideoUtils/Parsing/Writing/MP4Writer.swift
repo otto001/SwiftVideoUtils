@@ -19,7 +19,7 @@ public protocol MP4Writer {
     
     func write<T: FixedWidthInteger>(_ date: Date, referenceDate: Date, _ type: T.Type, byteOrder: ByteOrder) async throws
     
-    func write<T: FixedWidthInteger>(fixedPoint value: Double, _ underlyingType: T.Type, fractionBits: Int, byteOrder: ByteOrder) async throws
+    func write<T: FixedWidthInteger & UnsignedInteger>(fixedPoint value: Double, _ underlyingType: T.Type, fractionBits: Int, byteOrder: ByteOrder) async throws
     
     func write(_ writeable: any MP4Writeable) async throws
     func write(_ writeables: [any MP4Writeable]) async throws
@@ -79,8 +79,8 @@ public extension MP4Writer {
         }
     }
     
-    func write<T: FixedWidthInteger>(fixedPoint value: Double, _ underlyingType: T.Type, fractionBits: Int, byteOrder: ByteOrder) async throws {
-        let integer: T = value.fixedPoint(fractionBits: fractionBits)
+    func write<T: FixedWidthInteger & UnsignedInteger>(fixedPoint value: Double, _ underlyingType: T.Type, fractionBits: Int, byteOrder: ByteOrder) async throws {
+        let integer: T = try value.fixedPoint(fractionBits: fractionBits)
         try await self.write(integer, byteOrder: byteOrder)
     }
 }

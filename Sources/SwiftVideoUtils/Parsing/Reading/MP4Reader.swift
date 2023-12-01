@@ -19,7 +19,7 @@ public protocol MP4Reader: AnyObject {
     
     func readData(count readCount: Int) async throws -> Data
     
-    func readFixedPoint<T: FixedWidthInteger>(underlyingType: T.Type, fractionBits: Int, byteOrder: ByteOrder) async throws -> Double
+    func readFixedPoint<T: FixedWidthInteger & UnsignedInteger>(underlyingType: T.Type, fractionBits: Int, byteOrder: ByteOrder) async throws -> Double
 }
 
 // MARK: Integers
@@ -63,7 +63,7 @@ public extension MP4Reader {
 
 // MARK: Fixed Point
 public extension MP4Reader {
-    func readFixedPoint<T: FixedWidthInteger>(underlyingType: T.Type, fractionBits: Int, byteOrder: ByteOrder) async throws -> Double {
+    func readFixedPoint<T: FixedWidthInteger & UnsignedInteger>(underlyingType: T.Type, fractionBits: Int, byteOrder: ByteOrder) async throws -> Double {
         let underlyingInteger: T = try await self.readInteger(byteOrder: byteOrder)
         return Double(fixedPoint: underlyingInteger, fractionBits: fractionBits)
     }

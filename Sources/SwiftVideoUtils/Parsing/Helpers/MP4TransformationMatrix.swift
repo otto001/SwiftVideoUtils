@@ -34,17 +34,17 @@ public struct MP4TransformationMatrix {
     }
     
     public init(reader: any MP4Reader) async throws {
-        self.a = try await reader.readFixedPoint(underlyingType: Int32.self, fractionBits: 16, byteOrder: .bigEndian)
-        self.b = try await reader.readFixedPoint(underlyingType: Int32.self, fractionBits: 16, byteOrder: .bigEndian)
-        self.u = try await reader.readFixedPoint(underlyingType: Int32.self, fractionBits: 30, byteOrder: .bigEndian)
+        self.a = try await reader.readFixedPoint(underlyingType: UInt32.self, fractionBits: 16, byteOrder: .bigEndian)
+        self.b = try await reader.readFixedPoint(underlyingType: UInt32.self, fractionBits: 16, byteOrder: .bigEndian)
+        self.u = try await reader.readFixedPoint(underlyingType: UInt32.self, fractionBits: 30, byteOrder: .bigEndian)
         
-        self.c = try await reader.readFixedPoint(underlyingType: Int32.self, fractionBits: 16, byteOrder: .bigEndian)
-        self.d = try await reader.readFixedPoint(underlyingType: Int32.self, fractionBits: 16, byteOrder: .bigEndian)
-        self.v = try await reader.readFixedPoint(underlyingType: Int32.self, fractionBits: 30, byteOrder: .bigEndian)
+        self.c = try await reader.readFixedPoint(underlyingType: UInt32.self, fractionBits: 16, byteOrder: .bigEndian)
+        self.d = try await reader.readFixedPoint(underlyingType: UInt32.self, fractionBits: 16, byteOrder: .bigEndian)
+        self.v = try await reader.readFixedPoint(underlyingType: UInt32.self, fractionBits: 30, byteOrder: .bigEndian)
         
-        self.x = try await reader.readFixedPoint(underlyingType: Int32.self, fractionBits: 16, byteOrder: .bigEndian)
-        self.y = try await reader.readFixedPoint(underlyingType: Int32.self, fractionBits: 16, byteOrder: .bigEndian)
-        self.w = try await reader.readFixedPoint(underlyingType: Int32.self, fractionBits: 30, byteOrder: .bigEndian)
+        self.x = try await reader.readFixedPoint(underlyingType: UInt32.self, fractionBits: 16, byteOrder: .bigEndian)
+        self.y = try await reader.readFixedPoint(underlyingType: UInt32.self, fractionBits: 16, byteOrder: .bigEndian)
+        self.w = try await reader.readFixedPoint(underlyingType: UInt32.self, fractionBits: 30, byteOrder: .bigEndian)
     }
     
     public var affineTransform: CGAffineTransform {
@@ -72,17 +72,17 @@ public struct MP4TransformationMatrix {
 
 extension MP4TransformationMatrix: MP4Writeable {
     public func write(to writer: MP4Writer) async throws {
-        try await writer.write(fixedPoint: a, Int32.self, fractionBits: 16, byteOrder: .bigEndian)
-        try await writer.write(fixedPoint: b, Int32.self, fractionBits: 16, byteOrder: .bigEndian)
-        try await writer.write(fixedPoint: u, Int32.self, fractionBits: 30, byteOrder: .bigEndian)
+        try await writer.write(fixedPoint: a, UInt32.self, fractionBits: 16, byteOrder: .bigEndian)
+        try await writer.write(fixedPoint: b, UInt32.self, fractionBits: 16, byteOrder: .bigEndian)
+        try await writer.write(fixedPoint: u, UInt32.self, fractionBits: 30, byteOrder: .bigEndian)
         
-        try await writer.write(fixedPoint: c, Int32.self, fractionBits: 16, byteOrder: .bigEndian)
-        try await writer.write(fixedPoint: d, Int32.self, fractionBits: 16, byteOrder: .bigEndian)
-        try await writer.write(fixedPoint: v, Int32.self, fractionBits: 30, byteOrder: .bigEndian)
+        try await writer.write(fixedPoint: c, UInt32.self, fractionBits: 16, byteOrder: .bigEndian)
+        try await writer.write(fixedPoint: d, UInt32.self, fractionBits: 16, byteOrder: .bigEndian)
+        try await writer.write(fixedPoint: v, UInt32.self, fractionBits: 30, byteOrder: .bigEndian)
         
-        try await writer.write(fixedPoint: x, Int32.self, fractionBits: 16, byteOrder: .bigEndian)
-        try await writer.write(fixedPoint: y, Int32.self, fractionBits: 16, byteOrder: .bigEndian)
-        try await writer.write(fixedPoint: w, Int32.self, fractionBits: 30, byteOrder: .bigEndian)
+        try await writer.write(fixedPoint: x, UInt32.self, fractionBits: 16, byteOrder: .bigEndian)
+        try await writer.write(fixedPoint: y, UInt32.self, fractionBits: 16, byteOrder: .bigEndian)
+        try await writer.write(fixedPoint: w, UInt32.self, fractionBits: 30, byteOrder: .bigEndian)
     }
 }
 

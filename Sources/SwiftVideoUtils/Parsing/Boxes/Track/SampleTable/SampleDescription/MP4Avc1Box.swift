@@ -11,7 +11,8 @@ import CoreMedia
 
 public class MP4Avc1Box: MP4ParsableBox {
     public static let typeName: String = "avc1"
-    public static let fullyParsable: Bool = true
+    
+    public var reserved1: Data
     
     public var dataReferenceIndex: UInt16
     
@@ -37,10 +38,12 @@ public class MP4Avc1Box: MP4ParsableBox {
     
     public var children: [MP4Box]
     
+    public var reserved2: Data
+    
     required public init(reader: any MP4Reader) async throws {
-        // First 6 bytes are reserved
-        reader.offset = 6
-
+        
+        self.reserved1 = try await reader.readData(count: 6)
+        
         self.dataReferenceIndex = try await reader.readInteger(byteOrder: .bigEndian)
         
         self.version = try await reader.readInteger(byteOrder: .bigEndian)
@@ -66,8 +69,40 @@ public class MP4Avc1Box: MP4ParsableBox {
         
         assert(reader.offset == 78)
         self.children = try await MP4BoxParser(reader: reader).readBoxes()
+        
+        self.reserved2 = try await reader.readAllData()
     }
 
+    public func writeContent(to writer: any MP4Writer) async throws {
+        try await writer.write(reserved1)
+        
+        try await writer.write(dataReferenceIndex, byteOrder: .bigEndian)
+        
+        try await writer.write(version, byteOrder: .bigEndian)
+        try await writer.write(revisionLevel, byteOrder: .bigEndian)
+        try await writer.write(vendor, byteOrder: .bigEndian)
+        
+        try await writer.write(temporalQuality, byteOrder: .bigEndian)
+        try await writer.write(spatialQuality, byteOrder: .bigEndian)
+        
+        try await writer.write(width, byteOrder: .bigEndian)
+        try await writer.write(height, byteOrder: .bigEndian)
+        
+        try await writer.write(horizontalResolution, byteOrder: .bigEndian)
+        try await writer.write(verticalResolution, byteOrder: .bigEndian)
+        try await writer.write(entryDataSize, byteOrder: .bigEndian)
+        
+        try await writer.write(framesPerSample, byteOrder: .bigEndian)
+        
+        try await writer.write(compressorName, encoding: .ascii, length: 32)
+        
+        try await writer.write(bitDepth, byteOrder: .bigEndian)
+        try await writer.write(colorTableIndex, byteOrder: .bigEndian)
+        
+        try await writer.write(children)
+        
+        try await writer.write(reserved2)
+    }
 }
 
 

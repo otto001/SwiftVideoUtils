@@ -92,3 +92,14 @@ extension Data {
         
     }
 }
+
+extension FixedWidthInteger {
+    var data: Data {
+        var data = Data(capacity: MemoryLayout<Self>.size)
+        for byte in 0..<MemoryLayout<Self>.size {
+            let byte = UInt8(Self(self >> Int(byte*8)) & 0xFF)
+            data.append(byte)
+        }
+        return data
+    }
+}

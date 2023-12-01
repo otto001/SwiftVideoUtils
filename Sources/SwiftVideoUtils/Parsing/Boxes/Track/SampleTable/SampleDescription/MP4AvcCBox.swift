@@ -17,4 +17,8 @@ public class MP4AvcCBox: MP4ParsableBox {
     required public init(reader: any MP4Reader) async throws {
         self.data = try await reader.readAllData()
     }
+    
+    public func writeContent(to writer: MP4Writer) async throws {
+        try await writer.write(data)
+    }
 }

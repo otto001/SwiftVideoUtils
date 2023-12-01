@@ -17,7 +17,7 @@ public class MP4FileReader: MP4Reader {
     private let fileHandle: FileHandle
     private var fileSize: Int
     
-    public var offset: Int
+    public var offset: Int = 0
     
     public var remainingCount: Int {
         fileSize - offset
@@ -25,8 +25,6 @@ public class MP4FileReader: MP4Reader {
     
     public init(url: URL) throws {
         self.fileHandle = try .init(forReadingFrom: url)
-        self.offset = 0
-        
         self.fileSize = Int(try FileManager.default.attributesOfItem(atPath: url.relativePath)[.size] as! UInt64)
     }
 

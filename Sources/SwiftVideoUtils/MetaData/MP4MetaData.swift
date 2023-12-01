@@ -15,7 +15,7 @@ public struct MP4MetaData {
     public var modificationTime: Date
     
     public var duration: TimeInterval
-    public var nextTrackId: Int
+    public var nextTrackID: Int
     
     public var videoCodec: CMFormatDescription.MediaSubType
     
@@ -28,6 +28,10 @@ public struct MP4MetaData {
     
     public var location: CLLocation? {
         appleMetaData?.location
+    }
+    
+    public var orientation: Int16? {
+        appleMetaData?.orientations.first?.orientation
     }
     
     public init(moovBox: MP4MoovieBox, reader: any MP4Reader) async throws {
@@ -50,8 +54,8 @@ public struct MP4MetaData {
 
         self.creationTime = movieHeaderBox.creationTime
         self.modificationTime = movieHeaderBox.modificationTime
-        self.duration = movieHeaderBox.duration
-        self.nextTrackId = Int(movieHeaderBox.nextTrackId)
+        self.duration = movieHeaderBox.durationSeconds
+        self.nextTrackID = Int(movieHeaderBox.nextTrackID)
         
         if let avc1Box = stblBox.firstChild(path: "stsd.avc1") as? MP4Avc1Box {
             self.videoCodec = .h264
@@ -68,7 +72,7 @@ public struct MP4MetaData {
             throw MP4Error.failedToFindBox(path: "stsd.hvc1")
         }
         
-        self.videoAverageFrameRate = (moovBox.videoTrack?.sampleTableBox.timeToSampleBox?.averageSampleDuration()).map {
+        self.videoAverageFrameRate = (moovBox.videoTrack?.mediaBox?.mediaInformationBox?.sampleTableBox?.timeToSampleBox?.averageSampleDuration()).map {
             Double(mediaHeader.timescale)/$0
         }
         

@@ -1,25 +1,19 @@
 //
-//  MP4MoovieBox.swift
-//  
+//  MP4MediaBox.swift
 //
-//  Created by Matteo Ludwig on 23.11.23.
+//
+//  Created by Matteo Ludwig on 30.11.23.
 //
 
 import Foundation
 
-
-public class MP4MoovieBox: MP4ParsableBox {
-    public static let typeName: String = "moov"
+public class MP4MediaBox: MP4ParsableBox {
+    public static let typeName: String = "mdia"
 
     
     public var children: [any MP4Box]
     
-    public var tracks: [MP4TrackBox] { children(ofType: MP4TrackBox.self) }
-    public var videoTrack: MP4TrackBox? {
-        tracks.first {
-            $0.firstChild(path: "mdia.minf.vmhd") != nil
-        }
-    }
+    public var mediaInformationBox: MP4MediaInformationBox? { firstChild(ofType: MP4MediaInformationBox.self) }
     
     public init(children: [any MP4Box]) throws {
         self.children = children

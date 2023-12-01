@@ -8,12 +8,15 @@
 import Foundation
 
 
-public protocol MP4Box: CustomStringConvertible {
+public protocol MP4Box: CustomStringConvertible, MP4Writeable {
     var typeName: String { get }
     
     var children: [MP4Box] { get }
     
     func indentedString(level: Int) -> String
+    
+    func write(to writer: any MP4Writer) async throws
+    func writeContent(to writer: any MP4Writer) async throws
 }
 
 // MARK: Child accessors
@@ -34,6 +37,10 @@ public extension MP4Box {
     
     func firstChild<T: MP4ParsableBox>(ofType type: T.Type) -> T? {
         children.first { $0.typeName == type.typeName } as? T
+    }
+    
+    func requiredChild<T: MP4ParsableBox>(ofType type: T.Type) throws -> T {
+        try firstChild(ofType: T.self).unwrapOrFail()
     }
 }
 
@@ -71,6 +78,10 @@ public extension MP4Box {
     func firstChild(path: String) -> (any MP4Box)? {
         firstChild(path: path.split(separator: "."))
     }
+    
+    func requiredChild(path: String) throws -> (any MP4Box) {
+        try firstChild(path: path.split(separator: ".")).unwrapOrFail(with: MP4Error.failedToFindBox(path: path))
+    }
 }
 
 // MARK: CustomStringConvertible
@@ -85,5 +96,35 @@ public extension MP4Box {
     
     var description: String {
         self.indentedString()
+    }
+}
+
+public extension MP4Box {
+    
+    func writeSizeAndTypename(to writer: any MP4Writer, contentSize: Int) async throws {
+        
+        var size = contentSize + 8
+        
+        if size <= UInt32.max {
+            try await writer.write(UInt32(size), byteOrder: .bigEndian)
+        } else {
+            try await writer.write(UInt32(1), byteOrder: .bigEndian)
+            size += 8
+        }
+        
+        try await writer.write(typeName, encoding: .ascii, length: 4)
+        
+        if size > UInt32.max {
+            try await writer.write(UInt64(size), byteOrder: .bigEndian)
+        }
+    }
+    
+    func write(to writer: any MP4Writer) async throws {
+        let contentWriter = MP4BufferWriter()
+        try await writeContent(to: contentWriter)
+        
+        try await self.writeSizeAndTypename(to: writer, contentSize: contentWriter.data.count)
+        
+        try await writer.write(contentWriter.data)
     }
 }

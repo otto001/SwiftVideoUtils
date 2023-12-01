@@ -16,13 +16,17 @@ public class MP4FrameDecoder {
     let moovBox: MP4MoovieBox
     let stblBox: MP4SampleTableBox
     
+    let orientation: Int16?
+    
     let decompressionSession: DecompressionSession
     var videoFormat: CMFormatDescription {
         decompressionSession.formatDescription
     }
     
     var numberOfKeyframes: Int {
-        self.stblBox.syncSamplesBox?.syncSamples.count ?? Int(self.stblBox.sampleCount)
+        get throws {
+            try self.stblBox.syncSamplesBox?.syncSamples.count ?? Int(try self.stblBox.sampleCount)
+        }
     }
     
     public init(asset: MP4Asset) async throws {
@@ -30,9 +34,11 @@ public class MP4FrameDecoder {
         
         let moovBox = try await asset.moovBox
         
-        guard let stblBox = moovBox.videoTrack?.sampleTableBox else {
+        guard let stblBox = moovBox.videoTrack?.mediaBox?.mediaInformationBox?.sampleTableBox else {
             throw MP4Error.noVideoTrack
         }
+        
+        self.orientation = try await asset.metaData().orientation
         
         self.moovBox = moovBox
         self.stblBox = stblBox

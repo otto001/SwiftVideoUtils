@@ -12,7 +12,7 @@ import XCTest
 final class MP4SampleToChunkBoxTests: XCTestCase {
 
     func testSamplePosition() throws {
-        let box = MP4SampleToChunkBox(version: 0, flags: .init(), firstChuck: [1, 6, 44, 62].map {.init(index1: $0)}, samplesPerChunk: [30, 29, 27, 14], sampleDescriptionID: [0, 0, 0, 0])
+        let box = MP4SampleToChunkBox(version: 0, flags: .init(), firstChunk: [1, 6, 44, 62].map {.init(index1: $0)}, samplesPerChunk: [30, 29, 27, 14], sampleDescriptionID: [0, 0, 0, 0])
         
         // 30 samples per chunk (first group)
         XCTAssertEqual(box.samplePosition(for: .init(index1: 1)), .init(chunk: .init(index1: 1), sampleOfChunkIndex: .init(index1: 1)))

@@ -17,25 +17,39 @@ public class MP4SampleSizeBox: MP4VersionedBox {
     
     public var sampleUniformSize: UInt32
     public var sampleCount: UInt32
-    public var sampleSize: [UInt32]
+    public var sampleSizes: [UInt32]
     
     public required init(reader: any MP4Reader) async throws {
         self.version = try await reader.readInteger()
-        self.flags = try await .init(readFrom: reader)
+        self.flags = try await reader.readBoxFlags()
         
         self.sampleUniformSize = try await reader.readInteger(byteOrder: .bigEndian)
         self.sampleCount = try await reader.readInteger(byteOrder: .bigEndian)
 
-        self.sampleSize = []
+        self.sampleSizes = []
         
         if reader.remainingCount > 0 {
             for _ in 0..<self.sampleCount {
-                self.sampleSize.append(try await reader.readInteger(byteOrder: .bigEndian))
+                self.sampleSizes.append(try await reader.readInteger(byteOrder: .bigEndian))
             }
         }
     }
     
+    public func writeContent(to writer: MP4Writer) async throws {
+        try await writer.write(version)
+        try await writer.write(flags)
+        
+        try await writer.write(UInt32(sampleUniformSize), byteOrder: .bigEndian)
+        try await writer.write(UInt32(sampleCount), byteOrder: .bigEndian)
+        
+        // TODO: validate sampleCount
+        
+        for sampleSize in sampleSizes {
+            try await writer.write(sampleSize, byteOrder: .bigEndian)
+        }
+    }
+    
     public func sampleSize<T>(for sample: MP4Index<T>) -> UInt32 {
-        sampleSize.isEmpty ? sampleUniformSize : sampleSize[sample]
+        sampleSizes.isEmpty ? sampleUniformSize : sampleSizes[sample]
     }
 }

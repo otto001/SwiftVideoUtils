@@ -28,16 +28,22 @@ class MP4BoxParser {
         MP4SyncSampleBox.self,
         MP4TimeToSampleBox.self,
         MP4TrackBox.self,
+        MP4TrackHeaderBox.self,
+        
+        MP4MediaBox.self,
+        MP4MediaInformationBox.self,
         
         MP4ColorParameterBox.self,
         
         // Quicktime meta data
+        MP4MetadataDatatypeDefinitionBox.self,
         MP4MetadataItemKeysBox.self,
         MP4MetadataItemListBox.self,
+        MP4MetadataKeyDeclarationBox.self,
         MP4TimedMetadataMediaBox.self,
     ]
     
-    static let boxTypesMap: [String: MP4ParsableBox.Type] = {
+    static let defaultBoxTypesMap: [String: MP4ParsableBox.Type] = {
         boxTypes.reduce(into: .init()) { partialResult, boxType in
             partialResult[boxType.typeName] = boxType
         }
@@ -47,17 +53,27 @@ class MP4BoxParser {
     private let reader: any MP4Reader
     private var nextBoxOffset: Int = 0
     
+    var boxTypeMapOverrides: [String: MP4ParsableBox.Type]?
+    
+    func boxType(for typeName: String) -> MP4ParsableBox.Type? {
+        boxTypeMapOverrides?[typeName] ?? Self.defaultBoxTypesMap[typeName]
+    }
+    
     public private(set) var endOfFile: Bool = false
 
-    init(reader: any MP4Reader) {
+    init(reader: any MP4Reader, boxTypeMapOverrides: [String: MP4ParsableBox.Type]? = nil) {
         self.reader = reader
         self.nextBoxOffset = reader.offset
+        self.boxTypeMapOverrides = boxTypeMapOverrides
     }
     
     func readBox() async throws -> (any MP4Box)? {
         guard !self.endOfFile else { return nil }
         
         self.reader.offset = self.nextBoxOffset
+        defer {
+            self.reader.offset = self.nextBoxOffset
+        }
         
         guard reader.remainingCount >= 8 else {
             self.endOfFile = true
@@ -83,12 +99,19 @@ class MP4BoxParser {
             size = Int(try await reader.readInteger(UInt64.self, byteOrder: .bigEndian))
         }
         
-        if Self.boxTypesMap[typeName]?.fullyParsable == true {
-            let remainingSizeOfBox = size - (reader.offset - startOffset)
+        let remainingSizeOfBox = size - (reader.offset - startOffset)
+        
+        guard remainingSizeOfBox <= reader.remainingCount else {
+            return nil
+        }
+        
+        if self.boxType(for: typeName) != nil {
+            // If the box is parsable, we can prepare the reader to read the full box
             try await self.reader.prepareToRead(count: min(remainingSizeOfBox + 16, reader.remainingCount))
         }
         
-        let box = try await readBoxContent(typeName: typeName, size: size, contentOffset: reader.offset - startOffset, lazy: true)
+        let box = try await readBoxContent(typeName: typeName, size: size, 
+                                           contentOffset: reader.offset - startOffset, lazy: true)
         
         self.nextBoxOffset = startOffset + size
         
@@ -97,16 +120,25 @@ class MP4BoxParser {
     
     private func readBoxContent(typeName: String, size: Int, contentOffset: Int, lazy: Bool) async throws -> any MP4Box {
         
-        let contentReader: MP4SubrangeReader = .init(wrappedReader: reader, limit: min(size - contentOffset, reader.remainingCount))
+        let contentReader: MP4SubrangeReader = .init(wrappedReader: reader, 
+                                                     limit: min(size - contentOffset, reader.remainingCount))
         
-        if let boxType = Self.boxTypesMap[typeName] {
-            return try await boxType.init(reader: contentReader)
+        let result: any MP4Box
+        if let boxType = self.boxType(for: typeName) {
+            result = try await boxType.init(reader: contentReader)
+            if contentReader.remainingCount != 0 {
+                try await contentReader.printBytes()
+            }
+            assert(contentReader.remainingCount == 0)
         } else if let containerBox = try await MP4SimpleContainerBox(typeName: typeName, reader: contentReader) {
-            return containerBox
+            result = containerBox
+            assert(contentReader.remainingCount == 0)
         } else {
             contentReader.offset = 0
-            return try await MP4SimpleDataBox(typeName: typeName, reader: contentReader, lazy: true)
+            result = try await MP4SimpleDataBox(typeName: typeName, reader: contentReader, lazy: true)
         }
+        
+        return result
     }
     
     func readBoxes() async throws -> [any MP4Box] {

@@ -20,11 +20,15 @@ public class MP4SimpleContainerBox: MP4Box {
     public convenience init?(typeName: String, reader: any MP4Reader) async throws {
         let children = try await MP4BoxParser(reader: reader).readBoxes()
         
-        if children.isEmpty && reader.remainingCount >= 8 {
+        if children.isEmpty && reader.remainingCount > 0 {
             return nil
         }
         
         self.init(typeName: typeName, children: children)
+    }
+    
+    public func writeContent(to writer: MP4Writer) async throws {
+        try await writer.write(children)
     }
 }
 

@@ -81,25 +81,26 @@ public class MP4Asset {
     }
     
     public func makeVideoFormatDescription() async throws -> CMFormatDescription {
-        if let avc1Box = try await moovBox.videoTrack?.sampleTableBox.sampleDescriptionBox.firstChild(ofType: MP4Avc1Box.self) {
+        let videoTrack = try await self.moovBox.videoTrack.unwrapOrFail(with: MP4Error.failedToFindBox(path: "moov.trak.mdia.minf.vmhd"))
+        let sampleDescriptionBox = try (videoTrack.mediaBox?.mediaInformationBox?.sampleTableBox?.sampleDescriptionBox).unwrapOrFail(with: MP4Error.failedToFindBox(path: "moov.trak.mdia.minf.stbl.stsd"))
+        
+        if let avc1Box = sampleDescriptionBox.firstChild(ofType: MP4Avc1Box.self) {
             return try avc1Box.makeFormatDescription()
-        } else if let hvc1Box = try await moovBox.videoTrack?.sampleTableBox.sampleDescriptionBox.firstChild(ofType: MP4Hvc1Box.self) {
+        } else if let hvc1Box = sampleDescriptionBox.firstChild(ofType: MP4Hvc1Box.self) {
             return try hvc1Box.makeFormatDescription()
         } else {
             throw MP4Error.failedToFindBox(path: "moov.trak.mdia.minf.stbl.stsd.avc1")
         }
-       
     }
     
     
     public func videoSampleBuffer(for sample: MP4Index<UInt32>) async throws -> CMSampleBuffer {
         let videoFormatDescription = try await self.videoFormatDescription
         
-        guard let stblBox = try await moovBox.videoTrack?.sampleTableBox else {
-            throw MP4Error.failedToFindBox(path: "moov.trak.mdia.minf.stbl")
-        }
+        let videoTrack = try await self.moovBox.videoTrack.unwrapOrFail(with: MP4Error.failedToFindBox(path: "moov.trak.mdia.minf.vmhd"))
+        let sampleTableBox = try (videoTrack.mediaBox?.mediaInformationBox?.sampleTableBox).unwrapOrFail(with: MP4Error.failedToFindBox(path: "moov.trak.mdia.minf.stbl"))
         
-        let sampleRange = stblBox.byteRange(for: sample)
+        let sampleRange = try sampleTableBox.byteRange(for: sample)
         let sampleSize = sampleRange.count
         let sampleData = try await self.data(byteRange: sampleRange)
         
@@ -115,5 +116,12 @@ public class MP4Asset {
                                   sampleTimings: [.init(duration: .zero, presentationTimeStamp: .zero, decodeTimeStamp: .zero)],
                                   sampleSizes: [sampleSize])
 
+    }
+}
+
+
+extension MP4Asset: MP4Writeable {
+    public func write(to writer: MP4Writer) async throws {
+        try await writer.write(try await boxes)
     }
 }

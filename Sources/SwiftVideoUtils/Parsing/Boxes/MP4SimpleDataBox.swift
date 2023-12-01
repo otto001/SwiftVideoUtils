@@ -16,9 +16,14 @@ public class MP4SimpleDataBox: MP4Box {
     private var reader: (any MP4Reader)?
     private var _data: Data?
     
+    public var size: Int {
+        _data?.count ?? reader!.remainingCount
+    }
+    
     public var data: Data {
         get async throws {
             if let reader = reader {
+                defer { reader.offset = 0 }
                 return try await reader.readAllData()
             }
             return _data!
@@ -30,26 +35,41 @@ public class MP4SimpleDataBox: MP4Box {
         self._data = data
     }
     
-    public init(typeName: String, reader: any MP4Reader, lazy: Bool = false) async throws {
+    public init(typeName: String, reader: any MP4Reader, lazy: Bool = true) async throws {
         self.typeName = typeName
         
-        if lazy {
-            self.reader = reader
-        } else {
-            self._data = try await reader.readAllData()
+        var fetchNow = !lazy
+        
+        if lazy && reader.remainingCount <= 1024 {
+            fetchNow = try await reader.bytesAreAvaliable(count: reader.remainingCount)
         }
         
-        if typeName == "mebx" {
+
+        if fetchNow {
+            self._data = try await reader.readAllData()
+        } else {
+            self.reader = reader
+        }
+    }
+    
+    public func write(to writer: any MP4Writer) async throws {
+        reader?.offset = 0
+        let size = reader?.remainingCount ?? _data!.count
+        try await writeSizeAndTypename(to: writer, contentSize: size)
+        try await writeContent(to: writer)
+    }
+    
+    public func writeContent(to writer: MP4Writer) async throws {
+        if let data = _data {
+            try await writer.write(data)
+        } else {
+            let blockSize = 4*1024*1024 // 4MB
+            let reader = reader!
             reader.offset = 0
-            //let size = reader.remainingCount
-            //try await reader.printBytes()
-            //print()
-//            if content.contains("iPhone") {
-//                reader.offset = 0
-//                print(try await reader.readInteger(UInt32.self, byteOrder: .bigEndian), size)
-//                print(try await reader.readInteger(UInt32.self, byteOrder: .bigEndian))
-//                print("A")
-//            }
+            while reader.remainingCount > 0 {
+                let block = try await reader.readData(count: min(blockSize, reader.remainingCount))
+                try await writer.write(block)
+            }
         }
     }
     

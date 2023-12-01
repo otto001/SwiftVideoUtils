@@ -24,7 +24,7 @@ public class MP4TimeToSampleBox: MP4VersionedBox {
     
     public required init(reader: any MP4Reader) async throws {
         self.version = try await reader.readInteger()
-        self.flags = try await .init(readFrom: reader)
+        self.flags = try await reader.readBoxFlags()
         
         let entryCount: UInt32 = try await reader.readInteger(byteOrder: .bigEndian)
         
@@ -32,6 +32,18 @@ public class MP4TimeToSampleBox: MP4VersionedBox {
         for _ in 0..<entryCount {
             self.entries.append(TimeToSampleEntry(sampleCount: try await reader.readInteger(byteOrder: .bigEndian),
                                                   sampleDuration: try await reader.readInteger(byteOrder: .bigEndian)))
+        }
+    }
+    
+    public func writeContent(to writer: MP4Writer) async throws {
+        try await writer.write(version)
+        try await writer.write(flags)
+        
+        try await writer.write(UInt32(entries.count), byteOrder: .bigEndian)
+        
+        for entry in entries {
+            try await writer.write(entry.sampleCount, byteOrder: .bigEndian)
+            try await writer.write(entry.sampleDuration, byteOrder: .bigEndian)
         }
     }
     

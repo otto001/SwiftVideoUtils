@@ -11,7 +11,7 @@ import Foundation
 public class MP4BlockReader: MP4Reader {
     public let count: Int
     
-    public var offset: Int
+    public var offset: Int = 0
     
     public var remainingCount: Int {
         count - offset
@@ -21,7 +21,6 @@ public class MP4BlockReader: MP4Reader {
     private var buffer: MP4PartionedBuffer = .init()
     
     public init(count: Int, closure: @escaping (_: Range<Int>) async throws -> Data) {
-        self.offset = 0
         self.count = count
         self.closure = closure
     }
@@ -36,6 +35,10 @@ public class MP4BlockReader: MP4Reader {
         
         let data = try await closure(range)
         buffer.insert(data: data, at: range.lowerBound)
+    }
+    
+    public func bytesAreAvaliable(count readCount: Int) async throws -> Bool {
+        return buffer.contains(range: offset..<offset+readCount)
     }
     
     public func readData(count readCount: Int) async throws -> Data {

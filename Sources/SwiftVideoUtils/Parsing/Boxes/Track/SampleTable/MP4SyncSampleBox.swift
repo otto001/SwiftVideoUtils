@@ -19,12 +19,23 @@ public class MP4SyncSampleBox: MP4VersionedBox {
     
     public required init(reader: any MP4Reader) async throws {
         self.version = try await reader.readInteger()
-        self.flags = try await .init(readFrom: reader)
+        self.flags = try await reader.readBoxFlags()
         
         self.syncSamples = []
         let entryCount: UInt32 = try await reader.readInteger(byteOrder: .bigEndian)
         for _ in 0..<entryCount {
             self.syncSamples.append(.init(index1: try await reader.readInteger(byteOrder: .bigEndian)))
+        }
+    }
+    
+    public func writeContent(to writer: MP4Writer) async throws {
+        try await writer.write(version)
+        try await writer.write(flags)
+        
+        try await writer.write(UInt32(syncSamples.count), byteOrder: .bigEndian)
+        
+        for syncSample in syncSamples {
+            try await writer.write(syncSample.index1, byteOrder: .bigEndian)
         }
     }
 }

@@ -36,6 +36,10 @@ public class MP4SubrangeReader: MP4Reader {
         self.offset = 0
     }
     
+    public func prepareToRead(count readCount: Int) async throws {
+        // FIXME: use this to prepare the underlying reader!
+    }
+    
     public func readInteger<T>(_ type: T.Type) async throws -> T where T : FixedWidthInteger {
         let prevOffset = wrappedReader.offset
         defer {

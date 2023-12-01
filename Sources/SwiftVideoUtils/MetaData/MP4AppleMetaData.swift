@@ -50,13 +50,16 @@ public struct MP4AppleMetaData {
                   keysBox.keys.contains(MP4MetadataItemKeysBox.Key(namespace: "mdta", value: "com.apple.quicktime.video-orientation")) else {
                 continue
             }
-            
-            for sample in stblBox.samples {
-                let byteRange = stblBox.byteRange(for: sample)
-                let time = stblBox.timeToSampleBox?.time(for: sample)
-                reader.offset = byteRange.upperBound - 2
-                let orientation: Int16 = try await reader.readInteger(byteOrder: .bigEndian)
-                self.orientations.append(.init(time: time, orientation: orientation))
+            do {
+                for sample in try stblBox.samples {
+                    let byteRange = try stblBox.byteRange(for: sample)
+                    let time = stblBox.timeToSampleBox?.time(for: sample)
+                    reader.offset = byteRange.upperBound - 2
+                    let orientation: Int16 = try await reader.readInteger(byteOrder: .bigEndian)
+                    self.orientations.append(.init(time: time, orientation: orientation))
+                }
+            } catch {
+                
             }
             
             break
@@ -84,4 +87,5 @@ public struct MP4AppleMetaData {
             }
         }
     }
+    
 }

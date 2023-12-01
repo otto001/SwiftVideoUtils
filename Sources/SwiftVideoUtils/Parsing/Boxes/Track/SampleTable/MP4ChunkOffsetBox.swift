@@ -18,21 +18,32 @@ public class MP4ChunkOffset32Box: MP4ChunkOffsetBox {
     public var version: UInt8
     public var flags: MP4BoxFlags
     
-    public var chunkOffset: [UInt32]
+    public var chunkOffsets: [UInt32]
     
     public required init(reader: any MP4Reader) async throws {
         self.version = try await reader.readInteger()
-        self.flags = try await .init(readFrom: reader)
+        self.flags = try await reader.readBoxFlags()
         
-        self.chunkOffset = []
+        self.chunkOffsets = []
         let entryCount: UInt32 = try await reader.readInteger(byteOrder: .bigEndian)
         for _ in 0..<entryCount {
-            self.chunkOffset.append(try await reader.readInteger(byteOrder: .bigEndian))
+            self.chunkOffsets.append(try await reader.readInteger(byteOrder: .bigEndian))
+        }
+    }
+    
+    public func writeContent(to writer: MP4Writer) async throws {
+        try await writer.write(version)
+        try await writer.write(flags)
+        
+        try await writer.write(UInt32(chunkOffsets.count), byteOrder: .bigEndian)
+        
+        for chunkOffset in chunkOffsets {
+            try await writer.write(chunkOffset, byteOrder: .bigEndian)
         }
     }
     
     public func chunkOffset(of chunk: MP4Index<UInt32>) -> Int {
-        return Int(chunkOffset[chunk])
+        return Int(chunkOffsets[chunk])
     }
 }
 
@@ -44,20 +55,31 @@ public class MP4ChunkOffset64Box: MP4ChunkOffsetBox {
     public var version: UInt8
     public var flags: MP4BoxFlags
     
-    public var chunkOffset: [UInt64]
+    public var chunkOffsets: [UInt64]
     
     public required init(reader: any MP4Reader) async throws {
         self.version = try await reader.readInteger()
-        self.flags = try await .init(readFrom: reader)
+        self.flags = try await reader.readBoxFlags()
         
-        self.chunkOffset = []
+        self.chunkOffsets = []
         let entryCount: UInt32 = try await reader.readInteger(byteOrder: .bigEndian)
         for _ in 0..<entryCount {
-            self.chunkOffset.append(try await reader.readInteger(byteOrder: .bigEndian))
+            self.chunkOffsets.append(try await reader.readInteger(byteOrder: .bigEndian))
+        }
+    }
+    
+    public func writeContent(to writer: MP4Writer) async throws {
+        try await writer.write(version)
+        try await writer.write(flags)
+        
+        try await writer.write(UInt32(chunkOffsets.count), byteOrder: .bigEndian)
+        
+        for chunkOffset in chunkOffsets {
+            try await writer.write(chunkOffset, byteOrder: .bigEndian)
         }
     }
     
     public func chunkOffset(of chunk: MP4Index<UInt32>) -> Int {
-        return Int(chunkOffset[chunk])
+        return Int(chunkOffsets[chunk])
     }
 }

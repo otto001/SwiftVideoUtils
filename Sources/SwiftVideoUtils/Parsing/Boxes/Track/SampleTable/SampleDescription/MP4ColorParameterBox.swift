@@ -27,6 +27,14 @@ public class MP4ColorParameterBox: MP4ParsableBox {
         self.matrixIndex = try await reader.readInteger(byteOrder: .bigEndian)
     }
     
+    public func writeContent(to writer: MP4Writer) async throws {
+        try await writer.write(colorParameterType, encoding: .ascii, length: 4)
+        
+        try await writer.write(primariesIndex, byteOrder: .bigEndian)
+        try await writer.write(transferFunctionIndex, byteOrder: .bigEndian)
+        try await writer.write(matrixIndex, byteOrder: .bigEndian)
+    }
+    
     var colorPrimaries: CFString? {
         switch primariesIndex {
         case 1:

@@ -41,7 +41,7 @@ final class MP4MetaDataTests: XCTestCase {
         XCTAssertEqual(metaData.modificationTime.isoString, "2023-11-23T19:07:58Z")
         
         XCTAssertEqual(metaData.duration, 5.001, accuracy: 0.001)
-        XCTAssertEqual(metaData.nextTrackId, 65536)
+        XCTAssertEqual(metaData.nextTrackID, 65536)
         
         XCTAssertEqual(metaData.videoCodec, .h264)
         XCTAssertEqual(metaData.videoWidth, 1920)
@@ -73,7 +73,7 @@ final class MP4MetaDataTests: XCTestCase {
         XCTAssertEqual(metaData.modificationTime.isoString, "2023-11-23T19:08:10Z")
         
         XCTAssertEqual(metaData.duration, 5.92, accuracy: 0.001)
-        XCTAssertEqual(metaData.nextTrackId, 65536)
+        XCTAssertEqual(metaData.nextTrackID, 65536)
         
         XCTAssertEqual(metaData.videoCodec, .hevc)
         XCTAssertEqual(metaData.videoWidth, 3840)
@@ -105,7 +105,7 @@ final class MP4MetaDataTests: XCTestCase {
         XCTAssertEqual(metaData.modificationTime.isoString, "2019-11-08T16:57:16Z")
         
         XCTAssertEqual(metaData.duration, 86.16925, accuracy: 0.001)
-        XCTAssertEqual(metaData.nextTrackId, 65536)
+        XCTAssertEqual(metaData.nextTrackID, 65536)
         
         XCTAssertEqual(metaData.videoCodec, .h264)
         XCTAssertEqual(metaData.videoWidth, 1920)
@@ -122,7 +122,7 @@ final class MP4MetaDataTests: XCTestCase {
         XCTAssertEqual(metaData.modificationTime.isoString, "2020-02-26T19:05:56Z")
         
         XCTAssertEqual(metaData.duration, 12.962, accuracy: 0.001)
-        XCTAssertEqual(metaData.nextTrackId, 65536)
+        XCTAssertEqual(metaData.nextTrackID, 65536)
         
         XCTAssertEqual(metaData.videoCodec, .h264)
         XCTAssertEqual(metaData.videoWidth, 3840)

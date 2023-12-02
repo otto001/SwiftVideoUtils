@@ -18,6 +18,21 @@ public enum ExifOrientation: Int16 {
     case mirrorAndRotate90deg = 5
     case mirrorAndRotate180deg = 4
     case mirrorAndRotate270deg = 7
+    
+    public var swapWidthAndHeight: Bool {
+        switch self {
+        case .rotate90deg, .rotate270deg, .mirrorAndRotate90deg, .mirrorAndRotate270deg:
+            return true
+            
+        //case .identity, .rotate180deg, .mirror, .mirrorAndRotate180deg:
+        default:
+            return false
+        }
+    }
+}
+
+extension ExifOrientation: Codable {
+    
 }
 
 private let epsilon: CGFloat = 0.00001

@@ -18,8 +18,7 @@ extension Date {
     }
 }
 
-final class MP4MetaDataTests: XCTestCase {
-    
+extension XCTestCase {
     func assertLocationEqual(_ lhd: CLLocation?, _ rhd: CLLocation, file: StaticString = #filePath, line: UInt = #line) {
         XCTAssertNotNil(lhd, file: file, line: line)
         
@@ -32,7 +31,10 @@ final class MP4MetaDataTests: XCTestCase {
             XCTAssertEqual(lhd.timestamp, rhd.timestamp, file: file, line: line)
         }
     }
+}
 
+final class MP4MetaDataTests: XCTestCase {
+    
     func testiPhoneFHD() async throws {
         let asset = try await MP4Asset(reader: MP4FileReader(url: urlForFileName("TestVideo_iPhone_FHD.MOV")))
         let metaData = try await asset.metaData()

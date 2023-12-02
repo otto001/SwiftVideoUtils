@@ -28,16 +28,18 @@ public struct MP4MetaData {
     public var videoAverageFrameRate: Double?
     
     public var videoOrientation: ExifOrientation?
-    public var videoWidth: Double
-    public var videoHeight: Double
+    public var videoWidth: Double {
+        videoOrientation?.swapWidthAndHeight == true ? videoTrackHeight : videoTrackWidth
+    }
+    public var videoHeight: Double {
+        videoOrientation?.swapWidthAndHeight == true ? videoTrackWidth : videoTrackHeight
+    }
     
     public var appleMetaData: MP4AppleMetaData?
     
     public var location: CLLocation? {
         appleMetaData?.location
     }
-    
-    
     
     public init(moovBox: MP4MoovieBox, reader: any MP4Reader) async throws {
         let movieHeaderBox = try moovBox.firstChild(ofType: MP4MovieHeaderBox.self).unwrapOrFail(
@@ -74,17 +76,6 @@ public struct MP4MetaData {
         self.videoTrackHeight = videoTrackHeader.trackHeight
         let videoOrientation = videoTrackHeader.displayMatrix.exifOrientation
         self.videoOrientation = videoOrientation
-        
-        switch videoOrientation {
-        case .rotate90deg, .rotate270deg, .mirrorAndRotate90deg, .mirrorAndRotate270deg:
-            self.videoWidth = videoTrackHeader.trackHeight
-            self.videoHeight = videoTrackHeader.trackWidth
-            
-        //case .identity, .rotate180deg, .mirror, .mirrorAndRotate180deg:
-        default:
-            self.videoWidth = videoTrackHeader.trackWidth
-            self.videoHeight = videoTrackHeader.trackHeight
-        }
         
         if let avc1Box = stblBox.firstChild(path: "stsd.avc1") as? MP4Avc1Box {
             self.videoCodec = .h264

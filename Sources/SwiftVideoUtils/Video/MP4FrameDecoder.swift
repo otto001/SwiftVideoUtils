@@ -74,7 +74,11 @@ public class MP4FrameDecoder {
     
 #if os(iOS)
     public func uiImage(for keyframe: Int = 0) async throws -> UIImage {
-        return UIImage(ciImage: CIImage(cvImageBuffer: try await cvImageBuffer(for: keyframe)))
+        var ciImage = CIImage(cvImageBuffer: try await cvImageBuffer(for: keyframe))
+        if let videoTransform = self.videoTransform {
+            ciImage = ciImage.transformed(by: videoTransform)
+        }
+        return UIImage(ciImage: ciImage)
     }
 #endif
     

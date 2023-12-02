@@ -40,7 +40,7 @@ final class DoubleFixedWidthTests: XCTestCase {
         
     }
     
-    func testExample() throws {
+    func testFixedWidthDecodeEncode() throws {
         
 
         assert(value: 0, type: UInt32.self, maxFractionBytes: 31)

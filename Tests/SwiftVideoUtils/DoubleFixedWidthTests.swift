@@ -41,9 +41,13 @@ final class DoubleFixedWidthTests: XCTestCase {
     }
     
     func testFixedWidthDecodeEncode() throws {
-        
-
         assert(value: 0, type: UInt32.self, maxFractionBytes: 31)
+        
+        assert(value: 1, type: UInt32.self, maxFractionBytes: 30)
+        assert(value: -1, type: UInt32.self, maxFractionBytes: 30)
+        
+        assert(value: 0.5, type: UInt32.self, maxFractionBytes: 31)
+        assert(value: -0.5, type: UInt32.self, maxFractionBytes: 31)
 
         for frac in 2...100 {
             assert(value: 1.0/Double(frac), type: UInt32.self, maxFractionBytes: 32)

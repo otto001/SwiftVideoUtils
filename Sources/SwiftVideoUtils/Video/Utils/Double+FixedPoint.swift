@@ -15,12 +15,13 @@ extension Double {
         assert(fractionBits <= totalBits, "Cannot have more than \(totalBits) fraction bits in an \(totalBits) integer")
         assert(fractionBits >= 0, "fractionBits may not be negative")
         
-        let signMask = T(1) << (totalBits-1)
-        let sign: Double = (fixedPoint & signMask) == 0 ? 1 : -1
-        let integerPart = (fixedPoint << 1) >> (fractionBits + 1)
+        let negative = (fixedPoint >> (totalBits-1)) == 1
+        let fixedPoint = (negative ? ~fixedPoint : fixedPoint) + (negative ? 1 : 0)
+        
+        let integerPart = (fixedPoint >> fractionBits)
         let fractionPart = (fixedPoint << (totalBits-fractionBits)) >> (totalBits-fractionBits)
 
-        self = sign * (Double(integerPart) + Double(fractionPart)/pow(2, Double(fractionBits)))
+        self = (negative ? -1 : 1) * (Double(integerPart) + Double(fractionPart)/pow(2, Double(fractionBits)))
     }
     
     func fixedPoint<T: FixedWidthInteger & UnsignedInteger>(fractionBits: Int) throws -> T {
@@ -31,7 +32,7 @@ extension Double {
         
         let absoluteSelf = abs(self)
         
-        guard absoluteSelf < Double(T.max/2) else {
+        guard absoluteSelf < Double(T.max) else {
             throw MP4Error.fixedPointOverflow
         }
         
@@ -42,13 +43,13 @@ extension Double {
         if integerPart >> (totalBits - fractionBits - 1) != 0 {
             throw MP4Error.fixedPointOverflow
         }
+
+        let result: T = (integerPart << fractionBits) + fractionPart
         
-        var result: T = (integerPart << fractionBits) + fractionPart
-        
-        if self < 0 {
-            result = result | T(1) << (totalBits-1)
+        if self < 0 && result > 0 {
+            return ~result + 1
+        } else {
+            return result
         }
-        
-        return result
     }
 }

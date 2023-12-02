@@ -38,10 +38,6 @@ public struct MP4TransformationMatrix {
         self.b = try await reader.readFixedPoint(underlyingType: UInt32.self, fractionBits: 16, byteOrder: .bigEndian)
         self.u = try await reader.readFixedPoint(underlyingType: UInt32.self, fractionBits: 30, byteOrder: .bigEndian)
         
-        let x1: UInt16 = try await reader.readInteger(byteOrder: .bigEndian)
-        let x2: UInt16 = try await reader.readInteger(byteOrder: .bigEndian)
-        reader.offset -= 4
-        print(x1, x2)
         self.c = try await reader.readFixedPoint(underlyingType: UInt32.self, fractionBits: 16, byteOrder: .bigEndian)
         self.d = try await reader.readFixedPoint(underlyingType: UInt32.self, fractionBits: 16, byteOrder: .bigEndian)
         self.v = try await reader.readFixedPoint(underlyingType: UInt32.self, fractionBits: 30, byteOrder: .bigEndian)

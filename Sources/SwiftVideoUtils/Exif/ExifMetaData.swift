@@ -83,7 +83,7 @@ public struct ExifMetaData {
         dateTimeOriginal ?? dateTimeTiff
     }
     
-    init(imageProperties: [String: AnyObject]) {
+    public init(imageProperties: [String: AnyObject]) {
         if let tiffData = imageProperties["{TIFF}"] as? [String: AnyObject] {
             self.make = tiffData["Make"] as? String
             self.model = tiffData["Model"] as? String
@@ -160,7 +160,7 @@ public struct ExifMetaData {
         self.bitDepth = imageProperties["Depth"] as? Int32
     }
     
-    init?(imageData: Data) {
+    public init?(imageData: Data) {
         guard let imageProperties = Self.getImageProperties(data: imageData) else {
             return nil
         }

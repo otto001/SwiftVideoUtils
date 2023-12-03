@@ -24,6 +24,7 @@ final class ExifMetaDataTests: XCTestCase {
             
             XCTAssertEqual(metaData.make, "NIKON CORPORATION")
             XCTAssertEqual(metaData.model, "NIKON D800E")
+            XCTAssertEqual(metaData.lensMake, nil)
             XCTAssertEqual(metaData.lensModel, "16.0-35.0 mm f/4.0")
             
             XCTAssertEqual(metaData.artist, "Nicolas Cornet")
@@ -71,7 +72,8 @@ final class ExifMetaDataTests: XCTestCase {
             
             XCTAssertEqual(metaData.make, "Apple")
             XCTAssertEqual(metaData.model, "iPhone X")
-            XCTAssertEqual(metaData.lensModel, nil)
+            XCTAssertEqual(metaData.lensMake, "Apple")
+            XCTAssertEqual(metaData.lensModel, "iPhone X back dual camera 6mm f/2.4")
             
             XCTAssertEqual(metaData.artist, nil)
             XCTAssertEqual(metaData.software, "12.0")

@@ -25,6 +25,7 @@ public struct ExifMetaData {
     
     public var make: String?
     public var model: String?
+    public var lensMake: String?
     public var lensModel: String?
     
     public var artist: String?
@@ -85,6 +86,17 @@ public struct ExifMetaData {
     }
     
     public init(imageProperties: [String: AnyObject]) {
+        self.dataWidth = imageProperties["PixelWidth"] as? Int32
+        self.dataHeight = imageProperties["PixelHeight"] as? Int32
+        
+        self.orientation = (imageProperties["Orientation"] as? Int32).flatMap { .init(rawValue: Int16(truncatingIfNeeded: $0)) }
+        
+        self.profileName = imageProperties["ProfileName"] as? String
+        
+        self.horizontalResolution = imageProperties["DPIWidth"] as? Double
+        self.verticalResolution = imageProperties["DPIHeight"] as? Double
+        self.bitDepth = imageProperties["Depth"] as? Int32
+
         if let tiffData = imageProperties["{TIFF}"] as? [String: AnyObject] {
             self.make = tiffData["Make"] as? String
             self.model = tiffData["Model"] as? String
@@ -100,7 +112,9 @@ public struct ExifMetaData {
                 exifDateFormatter.date(from: $0)
             }
             
-            self.orientation = (tiffData["Orientation"] as? Int32).flatMap { .init(rawValue: Int16(truncatingIfNeeded: $0)) }
+            if self.orientation == nil {
+                self.orientation = (tiffData["Orientation"] as? Int32).flatMap { .init(rawValue: Int16(truncatingIfNeeded: $0)) }
+            }
         }
         
         if let exifData = imageProperties["{Exif}"] as? [String: AnyObject] {
@@ -112,11 +126,11 @@ public struct ExifMetaData {
                 exifDateFormatter.date(from: $0)
             }
             
-            if self.make == nil {
-                self.make = exifData["LensMake"] as? String
+            if self.lensMake == nil {
+                self.lensMake = exifData["LensMake"] as? String
             }
-            if self.model == nil {
-                self.model = exifData["LensModel"] as? String
+            if self.lensModel == nil {
+                self.lensModel = exifData["LensModel"] as? String
             }
             
             
@@ -129,10 +143,22 @@ public struct ExifMetaData {
             self.exposureMode = exifData["ExposureMode"] as? Double
             self.isoSpeedRatings = exifData["ISOSpeedRatings"] as? [Double]
             self.exposureTime = exifData["ExposureTime"] as? Double
+            
+            if self.dataWidth == nil {
+                self.dataWidth = exifData["PixelXDimension"] as? Int32
+            }
+            if self.dataHeight == nil {
+                self.dataHeight = exifData["PixelYDimension"] as? Int32
+            }
         }
         
         if let exifAuxData = imageProperties["{ExifAux}"] as? [String: AnyObject] {
-            self.lensModel = exifAuxData["LensModel"] as? String
+            if self.lensModel == nil {
+                self.lensModel = exifAuxData["LensModel"] as? String
+            }
+            if self.lensMake == nil {
+                self.lensMake = exifAuxData["LensMake"] as? String
+            }
         }
         
         if let gpsData = imageProperties["{GPS}"]  as? [String: AnyObject] {
@@ -149,17 +175,6 @@ public struct ExifMetaData {
                 self.longitude = longitude * (longitudeRef == "E" ? 1 : -1)
             }
         }
-        
-        self.profileName = imageProperties["ProfileName"] as? String
-        
-        self.dataWidth = imageProperties["PixelWidth"] as? Int32
-        self.dataHeight = imageProperties["PixelHeight"] as? Int32
-        
-        self.orientation = (imageProperties["Orientation"] as? Int32).flatMap { .init(rawValue: Int16(truncatingIfNeeded: $0)) }
-        
-        self.horizontalResolution = imageProperties["DPIWidth"] as? Double
-        self.verticalResolution = imageProperties["DPIHeight"] as? Double
-        self.bitDepth = imageProperties["Depth"] as? Int32
     }
     
     public init?(imageData: Data) {

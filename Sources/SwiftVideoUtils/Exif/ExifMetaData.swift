@@ -46,16 +46,17 @@ public struct ExifMetaData {
     
     public var bitDepth: Int32?
     
-    public var horizontalResolution: Int32?
-    public var verticalResolution: Int32?
+    public var horizontalResolution: Double?
+    public var verticalResolution: Double?
     
-    public var focalLength35mm: Int32?
+    public var focalLength: Double?
+    public var focalLength35mm: Double?
     public var aperatureValue: Double?
-    public var contrast: Int32?
-    public var saturation: Int32?
-    public var sharpness: Int32?
-    public var exposureMode: Int32?
-    public var isoSpeedRating: Int32?
+    public var contrast: Double?
+    public var saturation: Double?
+    public var sharpness: Double?
+    public var exposureMode: Double?
+    public var isoSpeedRatings: [Double]?
     public var exposureTime: Double?
     
     public var fValue: Double? {
@@ -92,8 +93,8 @@ public struct ExifMetaData {
             self.software = tiffData["Software"] as? String
             self.copyright = tiffData["Copyright"] as? String
             
-            self.horizontalResolution = tiffData["XResolution"] as? Int32
-            self.verticalResolution = tiffData["YResolution"] as? Int32
+            self.horizontalResolution = tiffData["XResolution"] as? Double
+            self.verticalResolution = tiffData["YResolution"] as? Double
             
             self.dateTimeTiff = (tiffData["DateTime"] as? String).flatMap {
                 exifDateFormatter.date(from: $0)
@@ -119,13 +120,14 @@ public struct ExifMetaData {
             }
             
             
-            self.focalLength35mm = exifData["FocalLenIn35mmFilm"] as? Int32
+            self.focalLength = exifData["FocalLength"] as? Double
+            self.focalLength35mm = exifData["FocalLenIn35mmFilm"] as? Double
             self.aperatureValue = exifData["ApertureValue"] as? Double
-            self.contrast = exifData["Contrast"] as? Int32
-            self.saturation = exifData["Saturation"] as? Int32
-            self.sharpness = exifData["Sharpness"] as? Int32
-            self.exposureMode = exifData["ExposureMode"] as? Int32
-            self.isoSpeedRating = ( exifData["ISOSpeedRatings"] as? [Int32])?.first
+            self.contrast = exifData["Contrast"] as? Double
+            self.saturation = exifData["Saturation"] as? Double
+            self.sharpness = exifData["Sharpness"] as? Double
+            self.exposureMode = exifData["ExposureMode"] as? Double
+            self.isoSpeedRatings = exifData["ISOSpeedRatings"] as? [Double]
             self.exposureTime = exifData["ExposureTime"] as? Double
         }
         
@@ -155,8 +157,8 @@ public struct ExifMetaData {
         
         self.orientation = (imageProperties["Orientation"] as? Int32).flatMap { .init(rawValue: Int16(truncatingIfNeeded: $0)) }
         
-        self.horizontalResolution = imageProperties["DPIWidth"] as? Int32
-        self.verticalResolution = imageProperties["DPIHeight"] as? Int32
+        self.horizontalResolution = imageProperties["DPIWidth"] as? Double
+        self.verticalResolution = imageProperties["DPIHeight"] as? Double
         self.bitDepth = imageProperties["Depth"] as? Int32
     }
     

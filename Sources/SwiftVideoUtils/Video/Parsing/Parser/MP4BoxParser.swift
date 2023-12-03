@@ -43,6 +43,20 @@ class MP4BoxParser {
         MP4TimedMetadataMediaBox.self,
     ]
     
+    var knownContainerTypes: Set<String> = .init([
+        "ctps",
+        "dinf",
+        "edts",
+        "gmhd",
+        "meta",
+        "sdpd",
+        "setu",
+        "tapt",
+        "tref",
+        "udta",
+        "wide"
+    ])
+    
     static let defaultBoxTypesMap: [String: MP4ParsableBox.Type] = {
         boxTypes.reduce(into: .init()) { partialResult, boxType in
             partialResult[boxType.typeName] = boxType
@@ -51,6 +65,7 @@ class MP4BoxParser {
     
     
     private let reader: any MP4Reader
+    let strict: Bool
     private var nextBoxOffset: Int = 0
     
     var boxTypeMapOverrides: [String: MP4ParsableBox.Type]?
@@ -61,14 +76,18 @@ class MP4BoxParser {
     
     public private(set) var endOfFile: Bool = false
 
-    init(reader: any MP4Reader, boxTypeMapOverrides: [String: MP4ParsableBox.Type]? = nil) {
+    init(reader: any MP4Reader, strict: Bool = true, boxTypeMapOverrides: [String: MP4ParsableBox.Type]? = nil) {
         self.reader = reader
-        self.nextBoxOffset = reader.offset
+        self.strict = strict
         self.boxTypeMapOverrides = boxTypeMapOverrides
+        
+        self.nextBoxOffset = reader.offset
     }
     
-    func readBox() async throws -> (any MP4Box)? {
-        guard !self.endOfFile else { return nil }
+    func readBox() async throws -> any MP4Box {
+        guard !self.endOfFile else {
+            throw MP4Error.endOfFile
+        }
         
         self.reader.offset = self.nextBoxOffset
         defer {
@@ -77,7 +96,7 @@ class MP4BoxParser {
         
         guard reader.remainingCount >= 8 else {
             self.endOfFile = true
-            return nil
+            throw MP4Error.endOfFile
         }
         
         try await self.reader.prepareToRead(count: min(16, reader.remainingCount))
@@ -86,23 +105,25 @@ class MP4BoxParser {
         
         var size = Int(try await reader.readInteger(UInt32.self, byteOrder: .bigEndian))
         
-        guard let typeName = try await reader.readString(byteCount: 4, encoding: .ascii) else {
-            return nil
-        }
-        guard typeName.allSatisfy({$0.isASCII && ($0.isLetter || $0.isNumber)}) else {
-            return nil
+        if (size != 1 && size < 8) || size-8 > self.reader.remainingCount {
+            throw MP4Error.failedToParseBox(description: "Box size `\(size)` invalid (below 8 or larger than parent box)")
         }
         
-        if size == 0 {
-            return nil
-        } else if size == 1 {
+        guard let typeName = try await reader.readString(byteCount: 4, encoding: .ascii) else {
+            throw MP4Error.failedToParseBox(description: "Failed to read FourCC")
+        }
+        guard typeName.allSatisfy({$0.isASCII && ($0.isLetter || $0.isNumber)}) else {
+            throw MP4Error.failedToParseBox(description: "FourCC `\(typeName)` is not ascii")
+        }
+        
+        if size == 1 {
             size = Int(try await reader.readInteger(UInt64.self, byteOrder: .bigEndian))
         }
         
         let remainingSizeOfBox = size - (reader.offset - startOffset)
         
         guard remainingSizeOfBox <= reader.remainingCount else {
-            return nil
+            throw MP4Error.failedToParseBox(description: "Box size invalid (below 8 or larger than parent box)")
         }
         
         if self.boxType(for: typeName) != nil {
@@ -123,20 +144,37 @@ class MP4BoxParser {
         let contentReader: MP4SubrangeReader = .init(wrappedReader: reader, 
                                                      limit: min(size - contentOffset, reader.remainingCount))
         
-        let result: any MP4Box
-        if let boxType = self.boxType(for: typeName) {
-            result = try await boxType.init(reader: contentReader)
-            if contentReader.remainingCount != 0 {
-                try await contentReader.printBytes()
+        var result: any MP4Box
+        
+        do {
+            if let boxType = self.boxType(for: typeName) {
+                result = try await boxType.init(reader: contentReader)
+                if contentReader.remainingCount != 0 {
+                    try await contentReader.printBytes()
+                }
+                
+                if self.strict && contentReader.remainingCount > 0 {
+                    // TODO: We could do something about that in the future
+                    throw MP4Error.failedToParseBox(description: "Did not parse \(contentReader.remainingCount) bytes at the end of the box.")
+                }
+                
+            } else if self.strict && self.knownContainerTypes.contains(typeName) {
+                result = try await MP4SimpleContainerBox(typeName: typeName, reader: contentReader)
+            } else if !self.strict, let containerBox = try? await MP4SimpleContainerBox(typeName: typeName, reader: contentReader) {
+                result = containerBox
+            } else {
+                contentReader.offset = 0
+                result = try await MP4SimpleDataBox(typeName: typeName, reader: contentReader, lazy: true)
             }
-            assert(contentReader.remainingCount == 0)
-        } else if let containerBox = try await MP4SimpleContainerBox(typeName: typeName, reader: contentReader) {
-            result = containerBox
-            assert(contentReader.remainingCount == 0)
-        } else {
-            contentReader.offset = 0
-            result = try await MP4SimpleDataBox(typeName: typeName, reader: contentReader, lazy: true)
+        } catch {
+            switch error {
+            case MP4Error.failedToParseBox, MP4Error.failedToParseBox:
+                result = try await MP4ParsingErrorBox(typeName: typeName, reader: reader, error: error)
+            default:
+                throw error
+            }
         }
+        
         
         return result
     }
@@ -144,8 +182,12 @@ class MP4BoxParser {
     func readBoxes() async throws -> [any MP4Box] {
         var result: [any MP4Box] = []
         
-        while let box = try await readBox() {
-            result.append(box)
+        do {
+            while !self.endOfFile {
+                result.append(try await readBox())
+            }
+        } catch MP4Error.endOfFile {
+            
         }
         
         return result

@@ -70,7 +70,7 @@ public class MP4MetadataItemListBox: MP4ParsableBox {
             let localeInformation = try await reader.readData(count: 4)
             
             guard itemSize > 16 else {
-                throw MP4Error.malformedBox(description: "ilst box entry with invalid item size")
+                throw MP4Error.failedToParseBox(description: "ilst box entry with invalid item size")
             }
             
             let data = Data(try await reader.readData(count: Int(itemSize)-16))

@@ -10,7 +10,7 @@ import Foundation
 
 public enum MP4Error: Error {
     case failedToFindBox(path: String)
-    case malformedBox(description: String)
+    case failedToParseBox(description: String)
     
     case noVideoTrack
     case noDataProvided
@@ -21,4 +21,6 @@ public enum MP4Error: Error {
     case stringEncodingError
     
     case fixedPointOverflow
+    
+    case endOfFile
 }

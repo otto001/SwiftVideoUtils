@@ -19,9 +19,10 @@ public class MP4MetadataKeyTableBox: MP4ParsableBox {
         public var children: [MP4Box]
         
         public required init(reader: any MP4Reader) async throws {
-            let _: UInt32 = try await reader.readInteger(byteOrder: .bigEndian)
+            let size: UInt32 = try await reader.readInteger(byteOrder: .bigEndian)
             self.localKeyId = try await reader.readInteger(byteOrder: .bigEndian)
-            self.children = try await MP4BoxParser(reader: reader).readBoxes()
+            self.children = try await MP4BoxParser(reader: MP4SubrangeReader(wrappedReader: reader, limit: Int(size)-8)).readBoxes()
+            reader.offset += Int(size)-8
         }
         
         public func write(to writer: MP4Writer) async throws {

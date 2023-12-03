@@ -66,14 +66,17 @@ public class MP4Asset {
             return moovBox as! MP4MoovieBox
         }
         
-        while let box = try await self.parser.readBox() {
+        while true {
+            let box = try await self.parser.readBox()
             self._boxes.append(box)
             if box.typeName == "moov" {
-                return box as! MP4MoovieBox
+                if let moovBox = box as? MP4MoovieBox {
+                    return moovBox
+                } else {
+                    throw (box as? MP4ParsingErrorBox)?.error ?? MP4Error.internalError("moov box parsed as \(box.self)")
+                }
             }
         }
-        
-        throw MP4Error.failedToFindBox(path: "moov")
     }
     
     public func data(byteRange: Range<Int>) async throws -> Data {

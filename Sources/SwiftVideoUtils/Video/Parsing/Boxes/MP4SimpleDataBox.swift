@@ -74,11 +74,7 @@ public class MP4SimpleDataBox: MP4Box {
     }
     
     public func indentedString(level: Int) -> String {
-        var result = String(repeating: "  ", count: level) + typeName + " \(_data?.count ?? reader!.remainingCount) bytes"
-        if !children.isEmpty {
-            result += "\n" + children.map {$0.indentedString(level: level+1)}.joined(separator: "\n")
-        }
-        return result
+        return String(repeating: "  ", count: level) + typeName + " \(_data?.count ?? reader!.remainingCount) bytes"
     }
 }
 

@@ -12,42 +12,40 @@ import UIKit
 
 public class MP4FrameDecoder {
     public let asset: MP4Asset
+    public let track: MP4Track
     
-    let moovBox: MP4MoovieBox
-    let stblBox: MP4SampleTableBox
-    
-    var videoTransform: CGAffineTransform?
+    public let videoTransform: CGAffineTransform?
     
     let decompressionSession: DecompressionSession
-    var videoFormat: CMFormatDescription {
+    public var videoFormat: CMFormatDescription {
         decompressionSession.formatDescription
-    }
-    
-    var numberOfKeyframes: Int {
-        get throws {
-            try self.stblBox.syncSamplesBox?.syncSamples.count ?? Int(try self.stblBox.sampleCount)
-        }
     }
     
     public init(asset: MP4Asset) async throws {
         self.asset = asset
         
-        let moovBox = try await asset.moovBox
-        
-        guard let stblBox = moovBox.videoTrack?.mediaBox?.mediaInformationBox?.sampleTableBox else {
-            throw MP4Error.noVideoTrack
+        var videoTrack: MP4Track?
+        for track in try await asset.tracks {
+            if try await track.formatDescription.mediaType == .video {
+                videoTrack = track
+                break
+            }
         }
         
-        self.videoTransform = moovBox.videoTrack?.firstChild(ofType: MP4TrackHeaderBox.self)?.displayMatrix.affineTransform
+        guard let videoTrack = videoTrack else {
+            throw MP4Error.noVideoTrack
+        }
+        self.track = videoTrack
         
-        self.moovBox = moovBox
-        self.stblBox = stblBox
+
+        self.videoTransform = try videoTrack.transformationMatrix.affineTransform
+
         
-        self.decompressionSession = try .init(formatDescription: try await asset.videoFormatDescription)
+        self.decompressionSession = try .init(formatDescription: try await track.formatDescription)
     }
     
-    public func cvImageBuffer(for keyframe: Int = 0) async throws -> CVImageBuffer {
-        let sampleBuffer = try await asset.videoSampleBuffer(for: self.stblBox.syncSamplesBox?.syncSamples[keyframe] ?? .init(index0: UInt32(keyframe)))
+    public func cvImageBuffer(for sample: MP4Index<UInt32>) async throws -> CVImageBuffer {
+        let sampleBuffer = try await track.sampleBuffer(for: sample)
         
         return try await withCheckedThrowingContinuation { continuation in
             self.decompressionSession.decode(sampleBuffer: sampleBuffer) { imageBuffer, error in
@@ -62,8 +60,8 @@ public class MP4FrameDecoder {
         }
     }
     
-    public func cgImage(for keyframe: Int = 0) async throws -> CGImage {
-        let imageBuffer = try await self.cvImageBuffer(for: keyframe)
+    public func cgImage(for sample: MP4Index<UInt32>) async throws -> CGImage {
+        let imageBuffer = try await self.cvImageBuffer(for: sample)
         
         if let cgImage: CGImage = .from(cvImageBuffer: imageBuffer, affineTransform: self.videoTransform) {
             return cgImage
@@ -73,8 +71,8 @@ public class MP4FrameDecoder {
     }
     
 #if os(iOS)
-    public func uiImage(for keyframe: Int = 0) async throws -> UIImage {
-        var ciImage = CIImage(cvImageBuffer: try await cvImageBuffer(for: keyframe))
+    public func uiImage(for sample: MP4Index<UInt32>) async throws -> UIImage {
+        var ciImage = CIImage(cvImageBuffer: try await cvImageBuffer(for: sample))
         if let videoTransform = self.videoTransform {
             ciImage = ciImage.transformed(by: videoTransform)
         }

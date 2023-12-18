@@ -34,6 +34,9 @@ public class MP4BlockReader: MP4Reader {
         }
         
         let data = try await closure(range)
+        guard data.count >= range.count else {
+            throw MP4Error.insufficientDataReturned
+        }
         buffer.insert(data: data, at: range.lowerBound)
     }
     

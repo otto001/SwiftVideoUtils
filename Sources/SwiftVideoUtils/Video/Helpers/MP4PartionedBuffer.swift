@@ -22,7 +22,7 @@ public struct MP4PartionedBuffer {
     }
     
     @discardableResult
-    mutating private func mergeRight(index left: Int) -> Bool {
+    private mutating func mergeRight(index left: Int) -> Bool {
         guard left < ranges.endIndex - 1 else { return false }
         let right = left+1
         let leftRange = ranges[left]

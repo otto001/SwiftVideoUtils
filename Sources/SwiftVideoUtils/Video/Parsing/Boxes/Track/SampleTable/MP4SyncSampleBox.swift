@@ -17,6 +17,12 @@ public class MP4SyncSampleBox: MP4VersionedBox {
     
     public var syncSamples: [MP4Index<UInt32>]
     
+    public init(version: UInt8, flags: MP4BoxFlags, syncSamples: [MP4Index<UInt32>]) {
+        self.version = version
+        self.flags = flags
+        self.syncSamples = syncSamples
+    }
+    
     public required init(reader: any MP4Reader) async throws {
         self.version = try await reader.readInteger()
         self.flags = try await reader.readBoxFlags()
@@ -36,6 +42,12 @@ public class MP4SyncSampleBox: MP4VersionedBox {
         
         for syncSample in syncSamples {
             try await writer.write(syncSample.index1, byteOrder: .bigEndian)
+        }
+    }
+    
+    public func syncSample(before sample: MP4Index<UInt32>) -> MP4Index<UInt32>? {
+        syncSamples.last { syncSample in
+            syncSample <= sample
         }
     }
 }

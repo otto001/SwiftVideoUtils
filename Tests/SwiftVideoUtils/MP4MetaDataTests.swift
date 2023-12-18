@@ -38,26 +38,29 @@ final class MP4MetaDataTests: XCTestCase {
     func testiPhoneFHD() async throws {
         let asset = try await MP4Asset(reader: MP4FileReader(url: urlForFileName("TestVideo_iPhone_FHD.MOV")))
         let metaData = try await asset.metaData()
-        print(try await asset.moovBox.description)
+        
         XCTAssertEqual(metaData.creationTime.isoString, "2023-11-23T20:07:53Z")
         XCTAssertEqual(metaData.modificationTime.isoString, "2023-11-23T20:07:58Z")
         
         XCTAssertEqual(metaData.duration, 5.001, accuracy: 0.001)
         XCTAssertEqual(metaData.nextTrackID, 6)
         
-        XCTAssertEqual(metaData.videoTrackWidth, 1920)
-        XCTAssertEqual(metaData.videoTrackHeight, 1080)
+        XCTAssertEqual(metaData.videoTracksMetaData.count, 1)
+        let videoMetaData = metaData.videoTracksMetaData.first!
         
-        XCTAssertEqual(metaData.videoCodec, .h264)
-        XCTAssertEqual(metaData.videoEncodedWidth, 1920)
-        XCTAssertEqual(metaData.videoEncodedHeight, 1080)
-        XCTAssertEqual(metaData.videoBitDepth, 24)
+        XCTAssertEqual(videoMetaData.trackWidth, 1920)
+        XCTAssertEqual(videoMetaData.trackHeight, 1080)
         
-        XCTAssertEqual(metaData.videoOrientation, .identity)
-        XCTAssertEqual(metaData.videoWidth, 1920)
-        XCTAssertEqual(metaData.videoHeight, 1080)
+        XCTAssertEqual(videoMetaData.mediaSubType, .h264)
+        XCTAssertEqual(videoMetaData.encodedWidth, 1920)
+        XCTAssertEqual(videoMetaData.encodedHeight, 1080)
+        XCTAssertEqual(videoMetaData.bitDepth, 24)
         
-        XCTAssertEqual(metaData.videoAverageFrameRate ?? -1, 59.96, accuracy: 0.01)
+        XCTAssertEqual(videoMetaData.orientation, .identity)
+        XCTAssertEqual(videoMetaData.displayWidth, 1920)
+        XCTAssertEqual(videoMetaData.displayHeight, 1080)
+        
+        XCTAssertEqual(videoMetaData.averageFrameRate ?? -1, 59.96, accuracy: 0.01)
         
         XCTAssertNotNil(metaData.appleMetaData)
         
@@ -69,7 +72,7 @@ final class MP4MetaDataTests: XCTestCase {
             XCTAssertEqual(appleMetaData.focalLength35mm, 27)
             XCTAssertEqual(appleMetaData.creationDate?.isoString, "2023-11-23T20:07:53Z")
             
-            XCTAssertEqual(appleMetaData.orientations, [.init(time: 0, orientation: 1)])
+            XCTAssertEqual(appleMetaData.orientations, [.init(time: 0..<3002, orientation: 1)])
             
             assertLocationEqual(appleMetaData.location, .init(coordinate: .init(latitude: 52.3734, longitude: 4.8921), altitude: 5.223, horizontalAccuracy: 4.75, verticalAccuracy: 0, timestamp: metaData.appleMetaData?.creationDate ?? Date()))
         }
@@ -78,26 +81,29 @@ final class MP4MetaDataTests: XCTestCase {
     func testiPhoneFHDPotrait() async throws {
         let asset = try await MP4Asset(reader: MP4FileReader(url: urlForFileName("TestVideo_iPhone_FHD_Portrait.MOV")))
         let metaData = try await asset.metaData()
-        print(try await asset.moovBox.description)
+        
         XCTAssertEqual(metaData.creationTime.isoString, "2023-11-30T10:43:29Z")
         XCTAssertEqual(metaData.modificationTime.isoString, "2023-11-30T10:43:31Z")
         
         XCTAssertEqual(metaData.duration, 1.551, accuracy: 0.001)
         XCTAssertEqual(metaData.nextTrackID, 6)
         
-        XCTAssertEqual(metaData.videoTrackWidth, 1920)
-        XCTAssertEqual(metaData.videoTrackHeight, 1080)
+        XCTAssertEqual(metaData.videoTracksMetaData.count, 1)
+        let videoMetaData = metaData.videoTracksMetaData.first!
         
-        XCTAssertEqual(metaData.videoCodec, .h264)
-        XCTAssertEqual(metaData.videoEncodedWidth, 1920)
-        XCTAssertEqual(metaData.videoEncodedHeight, 1080)
-        XCTAssertEqual(metaData.videoBitDepth, 24)
+        XCTAssertEqual(videoMetaData.trackWidth, 1920)
+        XCTAssertEqual(videoMetaData.trackHeight, 1080)
         
-        XCTAssertEqual(metaData.videoOrientation, .rotate90deg)
-        XCTAssertEqual(metaData.videoWidth, 1080)
-        XCTAssertEqual(metaData.videoHeight, 1920)
+        XCTAssertEqual(videoMetaData.mediaSubType, .h264)
+        XCTAssertEqual(videoMetaData.encodedWidth, 1920)
+        XCTAssertEqual(videoMetaData.encodedHeight, 1080)
+        XCTAssertEqual(videoMetaData.bitDepth, 24)
         
-        XCTAssertEqual(metaData.videoAverageFrameRate ?? -1, 59.935, accuracy: 0.01)
+        XCTAssertEqual(videoMetaData.orientation, .rotate90deg)
+        XCTAssertEqual(videoMetaData.displayWidth, 1080)
+        XCTAssertEqual(videoMetaData.displayHeight, 1920)
+        
+        XCTAssertEqual(videoMetaData.averageFrameRate ?? -1, 59.935, accuracy: 0.01)
         
         XCTAssertNotNil(metaData.appleMetaData)
         
@@ -109,7 +115,7 @@ final class MP4MetaDataTests: XCTestCase {
             XCTAssertEqual(appleMetaData.focalLength35mm, 22)
             XCTAssertEqual(appleMetaData.creationDate?.isoString, "2023-11-30T10:43:29Z")
             
-            XCTAssertEqual(appleMetaData.orientations, [.init(time: 0, orientation: 6)])
+            XCTAssertEqual(appleMetaData.orientations, [.init(time: 0..<931, orientation: 6)])
             
             assertLocationEqual(appleMetaData.location, .init(coordinate: .init(latitude: 50.7793, longitude: 6.0593), altitude: 226.482, horizontalAccuracy: 35.0, verticalAccuracy: 0, timestamp: metaData.appleMetaData?.creationDate ?? Date()))
         }
@@ -125,18 +131,21 @@ final class MP4MetaDataTests: XCTestCase {
         XCTAssertEqual(metaData.duration, 5.92, accuracy: 0.001)
         XCTAssertEqual(metaData.nextTrackID, 6)
         
-        XCTAssertEqual(metaData.videoTrackWidth, 3840)
-        XCTAssertEqual(metaData.videoTrackHeight, 2160)
+        XCTAssertEqual(metaData.videoTracksMetaData.count, 1)
+        let videoMetaData = metaData.videoTracksMetaData.first!
         
-        XCTAssertEqual(metaData.videoCodec, .hevc)
-        XCTAssertEqual(metaData.videoEncodedWidth, 3840)
-        XCTAssertEqual(metaData.videoEncodedHeight, 2160)
-        XCTAssertEqual(metaData.videoBitDepth, 24)
+        XCTAssertEqual(videoMetaData.trackWidth, 3840)
+        XCTAssertEqual(videoMetaData.trackHeight, 2160)
         
-        XCTAssertEqual(metaData.videoOrientation, .identity)
-        XCTAssertEqual(metaData.videoWidth, 3840)
-        XCTAssertEqual(metaData.videoHeight, 2160)
-        XCTAssertEqual(metaData.videoAverageFrameRate ?? -1, 59.96, accuracy: 0.01)
+        XCTAssertEqual(videoMetaData.mediaSubType, .hevc)
+        XCTAssertEqual(videoMetaData.encodedWidth, 3840)
+        XCTAssertEqual(videoMetaData.encodedHeight, 2160)
+        XCTAssertEqual(videoMetaData.bitDepth, 24)
+        
+        XCTAssertEqual(videoMetaData.orientation, .identity)
+        XCTAssertEqual(videoMetaData.displayWidth, 3840)
+        XCTAssertEqual(videoMetaData.displayHeight, 2160)
+        XCTAssertEqual(videoMetaData.averageFrameRate ?? -1, 59.96, accuracy: 0.01)
 
         XCTAssertNotNil(metaData.appleMetaData)
         
@@ -148,7 +157,7 @@ final class MP4MetaDataTests: XCTestCase {
             XCTAssertEqual(appleMetaData.focalLength35mm, 27)
             XCTAssertEqual(appleMetaData.creationDate?.isoString, "2023-11-23T20:08:03Z")
             
-            XCTAssertEqual(appleMetaData.orientations, [.init(time: 0, orientation: 1)])
+            XCTAssertEqual(appleMetaData.orientations, [.init(time: 0..<3552, orientation: 1)])
             
             assertLocationEqual(appleMetaData.location, .init(coordinate: .init(latitude: 52.3734, longitude: 4.8921), altitude: 4.994, horizontalAccuracy: 4.73873, verticalAccuracy: 0, timestamp: metaData.appleMetaData?.creationDate ?? Date()))
         }
@@ -164,19 +173,22 @@ final class MP4MetaDataTests: XCTestCase {
         XCTAssertEqual(metaData.duration, 86.16925, accuracy: 0.001)
         XCTAssertEqual(metaData.nextTrackID, 3)
         
-        XCTAssertEqual(metaData.videoTrackWidth, 1920)
-        XCTAssertEqual(metaData.videoTrackHeight, 1080)
+        XCTAssertEqual(metaData.videoTracksMetaData.count, 1)
+        let videoMetaData = metaData.videoTracksMetaData.first!
         
-        XCTAssertEqual(metaData.videoCodec, .h264)
-        XCTAssertEqual(metaData.videoEncodedWidth, 1920)
-        XCTAssertEqual(metaData.videoEncodedHeight, 1080)
-        XCTAssertEqual(metaData.videoBitDepth, 24)
+        XCTAssertEqual(videoMetaData.trackWidth, 1920)
+        XCTAssertEqual(videoMetaData.trackHeight, 1080)
         
-        XCTAssertEqual(metaData.videoOrientation, .identity)
-        XCTAssertEqual(metaData.videoWidth, 1920)
-        XCTAssertEqual(metaData.videoHeight, 1080)
+        XCTAssertEqual(videoMetaData.mediaSubType, .h264)
+        XCTAssertEqual(videoMetaData.encodedWidth, 1920)
+        XCTAssertEqual(videoMetaData.encodedHeight, 1080)
+        XCTAssertEqual(videoMetaData.bitDepth, 24)
         
-        XCTAssertEqual(metaData.videoAverageFrameRate ?? -1, 29.942, accuracy: 0.01)
+        XCTAssertEqual(videoMetaData.orientation, .identity)
+        XCTAssertEqual(videoMetaData.displayWidth, 1920)
+        XCTAssertEqual(videoMetaData.displayHeight, 1080)
+        
+        XCTAssertEqual(videoMetaData.averageFrameRate ?? -1, 29.942, accuracy: 0.01)
     }
     
     func testGooglePhotosAndroid10() async throws {
@@ -189,17 +201,20 @@ final class MP4MetaDataTests: XCTestCase {
         XCTAssertEqual(metaData.duration, 12.962, accuracy: 0.001)
         XCTAssertEqual(metaData.nextTrackID, 3)
         
-        XCTAssertEqual(metaData.videoTrackWidth, 3840)
-        XCTAssertEqual(metaData.videoTrackHeight, 2160)
+        XCTAssertEqual(metaData.videoTracksMetaData.count, 1)
+        let videoMetaData = metaData.videoTracksMetaData.first!
         
-        XCTAssertEqual(metaData.videoCodec, .h264)
-        XCTAssertEqual(metaData.videoEncodedWidth, 3840)
-        XCTAssertEqual(metaData.videoEncodedHeight, 2160)
-        XCTAssertEqual(metaData.videoBitDepth, 24)
+        XCTAssertEqual(videoMetaData.trackWidth, 3840)
+        XCTAssertEqual(videoMetaData.trackHeight, 2160)
         
-        XCTAssertEqual(metaData.videoOrientation, .identity)
-        XCTAssertEqual(metaData.videoWidth, 3840)
-        XCTAssertEqual(metaData.videoHeight, 2160)
-        XCTAssertEqual(metaData.videoAverageFrameRate ?? -1, 60.02, accuracy: 0.01)
+        XCTAssertEqual(videoMetaData.mediaSubType, .h264)
+        XCTAssertEqual(videoMetaData.encodedWidth, 3840)
+        XCTAssertEqual(videoMetaData.encodedHeight, 2160)
+        XCTAssertEqual(videoMetaData.bitDepth, 24)
+        
+        XCTAssertEqual(videoMetaData.orientation, .identity)
+        XCTAssertEqual(videoMetaData.displayWidth, 3840)
+        XCTAssertEqual(videoMetaData.displayHeight, 2160)
+        XCTAssertEqual(videoMetaData.averageFrameRate ?? -1, 60.02, accuracy: 0.01)
     }
 }

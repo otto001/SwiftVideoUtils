@@ -53,8 +53,7 @@ class MP4BoxParser {
         "setu",
         "tapt",
         "tref",
-        "udta",
-        "wide"
+        "udta"
     ])
     
     static let defaultBoxTypesMap: [String: MP4ParsableBox.Type] = {

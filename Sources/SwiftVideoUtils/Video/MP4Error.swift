@@ -13,7 +13,6 @@ public enum MP4Error: Error {
     case failedToParseBox(description: String)
     
     case noVideoTrack
-    case noDataProvided
     case failedToCreateCGImage
     
     case internalError(String)
@@ -22,5 +21,9 @@ public enum MP4Error: Error {
     
     case fixedPointOverflow
     
+    case unsupportedTrackFormat
+    
     case endOfFile
+    
+    case insufficientDataReturned
 }

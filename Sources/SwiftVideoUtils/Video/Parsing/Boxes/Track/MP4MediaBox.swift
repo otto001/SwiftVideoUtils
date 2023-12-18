@@ -10,9 +10,9 @@ import Foundation
 public class MP4MediaBox: MP4ParsableBox {
     public static let typeName: String = "mdia"
 
-    
     public var children: [any MP4Box]
     
+    public var mediaHeaderBox: MP4MediaHeaderBox? { firstChild(ofType: MP4MediaHeaderBox.self) }
     public var mediaInformationBox: MP4MediaInformationBox? { firstChild(ofType: MP4MediaInformationBox.self) }
     
     public init(children: [any MP4Box]) throws {

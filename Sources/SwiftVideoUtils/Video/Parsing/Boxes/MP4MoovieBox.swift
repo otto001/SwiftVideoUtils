@@ -20,7 +20,7 @@ public class MP4MoovieBox: MP4ParsableBox {
             $0.firstChild(path: "mdia.minf.vmhd") != nil
         }
     }
-    
+
     public var moovieHeaderBox: MP4MovieHeaderBox? { firstChild(ofType: MP4MovieHeaderBox.self) }
     
     public init(children: [any MP4Box]) throws {

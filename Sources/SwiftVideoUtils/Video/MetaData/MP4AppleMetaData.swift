@@ -22,7 +22,7 @@ public struct MP4AppleMetaData {
     public var location: CLLocation?
     
     public struct OrientationEntry: Equatable, Hashable {
-        public let time: UInt32?
+        public let time: Range<UInt32>?
         public let orientation: Int16
     }
     public var orientations: [OrientationEntry] = []

@@ -9,8 +9,8 @@ import Foundation
 import CoreMedia
 
 
-public class MP4Asset {
-    private var reader: any MP4Reader
+open class MP4Asset {
+    public let reader: any MP4Reader
     private var parser: MP4BoxParser
     
     
@@ -18,7 +18,7 @@ public class MP4Asset {
     public var boxes: [any MP4Box] {
         get async throws {
             if !self.parser.endOfFile {
-                self._boxes.append(contentsOf: try await parser.readBoxes())
+                self._boxes.append(contentsOf: try await self.parser.readBoxes())
             }
             return self._boxes
         }
@@ -27,20 +27,32 @@ public class MP4Asset {
     private var _moovBox: MP4MoovieBox?
     public var moovBox: MP4MoovieBox {
         get async throws {
-            if _moovBox == nil {
-                _moovBox = try await findMoovBox()
+            if self._moovBox == nil {
+                self._moovBox = try await self.findMoovBox()
             }
-            return _moovBox!
+            return self._moovBox!
         }
     }
     
-    private var _videoFormatDescription: CMFormatDescription?
-    public var videoFormatDescription: CMFormatDescription {
+    private var _tracks: [MP4Track]?
+    public var tracks: [MP4Track] {
         get async throws {
-            if _videoFormatDescription == nil {
-                _videoFormatDescription = try await makeVideoFormatDescription()
+            if self._tracks == nil {
+                self._tracks = try await self.moovBox.tracks.map {MP4Track(box: $0, reader: reader)}
             }
-            return _videoFormatDescription!
+            return self._tracks!
+        }
+    }
+    
+    var isStreamable: Bool? {
+        get async throws {
+            let boxes = try await self.boxes
+            let moovBoxIndex = boxes.firstIndex { $0.typeName == "moov" }
+            let mdatBoxIndex = boxes.firstIndex { $0.typeName == "mdat" }
+            guard let moovBoxIndex = moovBoxIndex, let mdatBoxIndex = mdatBoxIndex else {
+                return nil
+            }
+            return moovBoxIndex < mdatBoxIndex
         }
     }
     
@@ -58,7 +70,7 @@ public class MP4Asset {
     }
     
     public func metaData() async throws -> MP4MetaData {
-        try await MP4MetaData(moovBox: try await moovBox, reader: reader)
+        try await MP4MetaData(asset: self)
     }
     
     private func findMoovBox() async throws -> MP4MoovieBox {
@@ -79,46 +91,24 @@ public class MP4Asset {
         }
     }
     
+    public func makeStreamable() async throws -> Bool {
+        guard try await self.isStreamable == false else {
+            return false
+        }
+        var boxes = try await self.boxes
+        let moovBoxIndex = boxes.firstIndex { $0.typeName == "moov" }
+        let mdatBoxIndex = boxes.firstIndex { $0.typeName == "mdat" }
+        guard let moovBoxIndex = moovBoxIndex, let mdatBoxIndex = mdatBoxIndex else {
+            return false
+        }
+        let moovBox = boxes.remove(at: moovBoxIndex)
+        boxes.insert(moovBox, at: mdatBoxIndex)
+        self._boxes = boxes
+        return true
+    }
+    
     public func data(byteRange: Range<Int>) async throws -> Data {
         return try await self.reader.readData(byteRange: byteRange)
-    }
-    
-    public func makeVideoFormatDescription() async throws -> CMFormatDescription {
-        let videoTrack = try await self.moovBox.videoTrack.unwrapOrFail(with: MP4Error.failedToFindBox(path: "moov.trak.mdia.minf.vmhd"))
-        let sampleDescriptionBox = try (videoTrack.mediaBox?.mediaInformationBox?.sampleTableBox?.sampleDescriptionBox).unwrapOrFail(with: MP4Error.failedToFindBox(path: "moov.trak.mdia.minf.stbl.stsd"))
-        
-        if let avc1Box = sampleDescriptionBox.firstChild(ofType: MP4Avc1Box.self) {
-            return try avc1Box.makeFormatDescription()
-        } else if let hvc1Box = sampleDescriptionBox.firstChild(ofType: MP4Hvc1Box.self) {
-            return try hvc1Box.makeFormatDescription()
-        } else {
-            throw MP4Error.failedToFindBox(path: "moov.trak.mdia.minf.stbl.stsd.avc1")
-        }
-    }
-    
-    
-    public func videoSampleBuffer(for sample: MP4Index<UInt32>) async throws -> CMSampleBuffer {
-        let videoFormatDescription = try await self.videoFormatDescription
-        
-        let videoTrack = try await self.moovBox.videoTrack.unwrapOrFail(with: MP4Error.failedToFindBox(path: "moov.trak.mdia.minf.vmhd"))
-        let sampleTableBox = try (videoTrack.mediaBox?.mediaInformationBox?.sampleTableBox).unwrapOrFail(with: MP4Error.failedToFindBox(path: "moov.trak.mdia.minf.stbl"))
-        
-        let sampleRange = try sampleTableBox.byteRange(for: sample)
-        let sampleSize = sampleRange.count
-        let sampleData = try await self.data(byteRange: sampleRange)
-        
-        // TODO: Can i safely avoid copying data?
-        let blockBuffer = try CMBlockBuffer(length: sampleSize)
-        try sampleData.withUnsafeBytes { buffer in
-            try blockBuffer.replaceDataBytes(with: buffer)
-        }
-        
-        return try CMSampleBuffer(dataBuffer: blockBuffer,
-                                  formatDescription: videoFormatDescription,
-                                  numSamples: 1,
-                                  sampleTimings: [.init(duration: .zero, presentationTimeStamp: .zero, decodeTimeStamp: .zero)],
-                                  sampleSizes: [sampleSize])
-
     }
 }
 

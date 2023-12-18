@@ -177,9 +177,9 @@ public struct ExifMetaData {
         }
     }
     
-    public init?(imageData: Data) {
+    public init(imageData: Data) throws {
         guard let imageProperties = Self.getImageProperties(data: imageData) else {
-            return nil
+            throw ExifError.failedToFindExifData
         }
         self = .init(imageProperties: imageProperties)
     }

@@ -11,7 +11,7 @@ import XCTest
 
 final class MP4PartionedBufferTests: XCTestCase {
 
-    func testPartionedBuffer() throws {
+    func testInsertRetrieve() throws {
         let data = try Data(contentsOf: urlForFileName("TestVideo_iPhone_FHD.MOV"))
         
         var buffer = MP4PartionedBuffer()
@@ -51,5 +51,30 @@ final class MP4PartionedBufferTests: XCTestCase {
         XCTAssertEqual(buffer[10_000..<20_000], data[10_000..<20_000])
         XCTAssertEqual(buffer[00_000..<33_000], data[00_000..<33_000])
     }
+    
+    func testContains() {
+        var buffer = MP4PartionedBuffer()
+        
+        buffer.insert(data: Data(repeating: 0, count: 1_000), at: 0)
+        buffer.insert(data: Data(repeating: 0, count: 1_000), at: 2_000)
+        buffer.insert(data: Data(repeating: 0, count: 500), at: 3_000)
+        
+        XCTAssertTrue(buffer.contains(range: 0..<10))
+        XCTAssertTrue(buffer.contains(range: 100..<200))
+        XCTAssertTrue(buffer.contains(range: 0..<1_000))
+        XCTAssertTrue(buffer.contains(range: 2_000..<2_001))
+        XCTAssertTrue(buffer.contains(range: 2_000..<3_000))
+        XCTAssertTrue(buffer.contains(range: 2_000..<3_500))
+        
+        XCTAssertFalse(buffer.contains(range: 1_000..<1_001))
+        XCTAssertFalse(buffer.contains(range: 1_999..<2_000))
+        XCTAssertFalse(buffer.contains(range: 1_999..<2_001))
+        XCTAssertFalse(buffer.contains(range: 0..<3_500))
+        XCTAssertFalse(buffer.contains(range: 2_000..<3_501))
+        XCTAssertFalse(buffer.contains(range: 1_000..<3_501))
+        XCTAssertFalse(buffer.contains(range: 3500..<3_501))
+    }
+    
+    
 
 }

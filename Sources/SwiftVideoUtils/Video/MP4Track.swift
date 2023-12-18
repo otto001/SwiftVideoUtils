@@ -29,7 +29,7 @@ open class MP4Track {
         }
     }
     
-    var numberOfSyncFrames: Int {
+    public var numberOfSyncFrames: Int {
         get throws {
             if let syncSampleCount = self.box.mediaBox?.mediaInformationBox?.sampleTableBox?.syncSamplesBox?.syncSamples.count {
                 return syncSampleCount
@@ -38,9 +38,15 @@ open class MP4Track {
         }
     }
     
-    var timescale: UInt32 {
+    public var timescale: UInt32 {
         get throws {
             try self.box.mediaBox.unwrapOrFail().mediaHeaderBox.unwrapOrFail().timescale
+        }
+    }
+    
+    public var duration: TimeInterval {
+        get throws {
+            try self.box.mediaBox.unwrapOrFail().mediaHeaderBox.unwrapOrFail().duration
         }
     }
     

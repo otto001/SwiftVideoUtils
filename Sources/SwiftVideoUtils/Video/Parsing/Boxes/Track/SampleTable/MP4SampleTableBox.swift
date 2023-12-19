@@ -45,36 +45,55 @@ public class MP4SampleTableBox: MP4ParsableBox {
         }
     }
     
-    public init(children: [any MP4Box]) throws {
+    public init(children: [any MP4Box]) {
         self.children = children
     }
     
     required public convenience init(reader: any MP4Reader) async throws {
-        try self.init(children: try await MP4BoxParser(reader: reader).readBoxes())
+        self.init(children: try await MP4BoxParser(reader: reader).readBoxes())
     }
     
     public func writeContent(to writer: MP4Writer) async throws {
         try await writer.write(children)
     }
     
-    func byteRange(for sample: MP4Index<UInt32>) throws -> Range<Int> {
-        guard let samplePositon = try self.sampleToChunkBox.unwrapOrFail().samplePosition(for: sample) else {
-            throw MP4Error.internalError("failed to get chunk for sample")
-        }
+    public func byteRange(for sample: MP4Index<UInt32>) throws -> Range<Int> {
+        return try self.byteRanges(for: sample..<sample+1).first!
+    }
+    
+    public func byteRanges(for samples: Range<MP4Index<UInt32>>) throws -> [Range<Int>] {
         
-        let chunkOffset = try self.chunkOffsetBox.unwrapOrFail(with: MP4Error.failedToFindBox(path: "stco")).chunkOffset(of: samplePositon.chunk)
-        
+        let sampleToChunkBox = try self.sampleToChunkBox.unwrapOrFail()
+        let chunkOffsetBox = try self.chunkOffsetBox.unwrapOrFail(with: MP4Error.failedToFindBox(path: "stco/co64"))
         let sampleSizeBox = try self.sampleSizeBox.unwrapOrFail()
         
-        var sampleOffset = Int(chunkOffset)
+        var currentSample = samples.lowerBound
+        var result: [Range<Int>] = []
+        result.reserveCapacity(samples.count)
         
-        let firstSampleOfChunk = sample - samplePositon.sampleOfChunkIndex
+        repeat {
+            guard let firstSampleInChunkPos = sampleToChunkBox.samplePosition(for: currentSample) else {
+                throw MP4Error.internalError("failed to get chunk for sample")
+            }
+            let chunkOffset = chunkOffsetBox.chunkOffset(of: firstSampleInChunkPos.chunk)
+            
+            var sampleOffset = Int(chunkOffset)
+            
+            let firstSampleOfChunk = currentSample - firstSampleInChunkPos.sampleOfChunkIndex
+            let lastSampleOfChunk = min(firstSampleOfChunk + firstSampleInChunkPos.samplesInChunk, samples.upperBound)
+            for discardedSample in firstSampleOfChunk..<currentSample {
+                sampleOffset += Int(sampleSizeBox.sampleSize(for: discardedSample))
+            }
+            while currentSample < lastSampleOfChunk {
+                let sampleSize = Int(sampleSizeBox.sampleSize(for: currentSample))
+                result.append(sampleOffset..<sampleOffset+sampleSize)
+                sampleOffset += sampleSize
+                currentSample += 1
+            }
+            
+            
+        } while currentSample != samples.upperBound
         
-        for i in firstSampleOfChunk..<sample {
-            sampleOffset += Int(sampleSizeBox.sampleSize(for: i))
-        }
-        let syncSampleSize = Int(sampleSizeBox.sampleSize(for: sample))
-        
-        return sampleOffset..<sampleOffset+syncSampleSize
+        return result
     }
 }

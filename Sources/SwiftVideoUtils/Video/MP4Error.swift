@@ -26,4 +26,6 @@ public enum MP4Error: Error {
     case endOfFile
     
     case insufficientDataReturned
+    
+    case inconsistentSampleTableBox
 }

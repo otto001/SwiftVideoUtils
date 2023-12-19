@@ -82,36 +82,46 @@ open class MP4Track {
         }
     }
     
-    public func sampleBuffer(for sample: MP4Index<UInt32>) async throws -> CMSampleBuffer {
+    public func sampleData(for samples: Range<MP4Index<UInt32>>) async throws -> ([Range<Int>], Data) {
+        let sampleTableBox = try self.box.mediaBox.unwrapOrFail().mediaInformationBox.unwrapOrFail().sampleTableBox.unwrapOrFail()
+        let sampleRanges = try sampleTableBox.byteRanges(for: samples)
+        
+        guard !sampleRanges.isEmpty else { return ([], Data()) }
+        
+        let readRange = sampleRanges.first!.lowerBound..<sampleRanges.last!.upperBound
+        let data = try await self.reader.readData(byteRange: readRange)
+        return (sampleRanges, data)
+    }
+    
+    public func sampleBuffer(for samples: Range<MP4Index<UInt32>>) async throws -> CMSampleBuffer {
         let formatDescription = try await self.formatDescription
+        let sampleTableBox = try self.box.mediaBox.unwrapOrFail().mediaInformationBox.unwrapOrFail().sampleTableBox.unwrapOrFail().timeToSampleBox.unwrapOrFail()
         
+        let timescale = CMTimeScale(try self.timescale)
         
-        guard let sampleTableBox = self.box.mediaBox?.mediaInformationBox?.sampleTableBox else {
-            throw MP4Error.failedToFindBox(path: "mdia.minf.stbl")
+        let sampleTimings = sampleTableBox.times(for: samples).map { sampleTimeRange in
+            CMSampleTimingInfo(duration: .init(value: CMTimeValue(sampleTimeRange.count), timescale: timescale),
+                               presentationTimeStamp: .init(value: CMTimeValue(sampleTimeRange.lowerBound), timescale: timescale),
+                               decodeTimeStamp: .init())
         }
         
-        let sampleRange = try sampleTableBox.byteRange(for: sample)
-        let sampleData = try await self.reader.readData(byteRange: sampleRange)
+        let (sampleRanges, samplesData) = try await self.sampleData(for: samples)
         
-        let blockBuffer = try CMBlockBuffer(length: sampleRange.count)
-        try sampleData.withUnsafeBytes { buffer in
+        guard sampleRanges.count == sampleTimings.count else {
+            throw MP4Error.inconsistentSampleTableBox
+        }
+        
+        let blockBuffer = try CMBlockBuffer(length: samplesData.count)
+        try samplesData.withUnsafeBytes { buffer in
             try blockBuffer.replaceDataBytes(with: buffer)
-        }
-        
-        
-        var sampleTimingInfo = CMSampleTimingInfo .init(duration: .zero, presentationTimeStamp: .zero, decodeTimeStamp: .zero)
-        if let sampleTimeRange = sampleTableBox.timeToSampleBox?.time(for: sample) {
-            let timescale = CMTimeScale(try self.timescale)
-            sampleTimingInfo.duration = .init(value: CMTimeValue(sampleTimeRange.count), timescale: timescale)
-            sampleTimingInfo.presentationTimeStamp = .init(value: CMTimeValue(sampleTimeRange.lowerBound), timescale: timescale)
         }
         
         return try CMSampleBuffer(dataBuffer: blockBuffer,
                                   formatDescription: formatDescription,
-                                  numSamples: 1,
-                                  sampleTimings: [sampleTimingInfo],
-                                  sampleSizes: [sampleRange.count])
-        
+                                  numSamples: sampleRanges.count,
+                                  sampleTimings: sampleTimings,
+                                  sampleSizes: sampleRanges.map { $0.count })
+    
     }
     
     public func sample(at timeOffset: TimeInterval) throws -> MP4Index<UInt32>? {

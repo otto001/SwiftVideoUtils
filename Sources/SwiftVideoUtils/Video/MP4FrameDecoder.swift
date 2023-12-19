@@ -45,7 +45,7 @@ public class MP4FrameDecoder {
     }
     
     public func cvImageBuffer(for sample: MP4Index<UInt32>) async throws -> CVImageBuffer {
-        let sampleBuffer = try await track.sampleBuffer(for: sample)
+        let sampleBuffer = try await track.sampleBuffer(for: sample..<sample+1)
         
         return try await withCheckedThrowingContinuation { continuation in
             self.decompressionSession.decode(sampleBuffer: sampleBuffer) { imageBuffer, error in

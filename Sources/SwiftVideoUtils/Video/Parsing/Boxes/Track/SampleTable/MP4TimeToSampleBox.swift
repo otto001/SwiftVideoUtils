@@ -71,20 +71,42 @@ public class MP4TimeToSampleBox: MP4VersionedBox {
     }
     
     public func time(for sample: MP4Index<UInt32>) -> Range<UInt32>? {
+        self.times(for: sample..<sample+1).first
+    }
+    
+    public func times(for samples: Range<MP4Index<UInt32>>) -> [Range<UInt32>] {
         var currentSample: MP4Index<UInt32> = .zero
         var currentTime: UInt32 = 0
         
+        var result: [Range<UInt32>] = []
+        
         for entry in entries {
-            if currentSample + entry.sampleCount > sample {
-                let rangeStart = (sample.index0 - currentSample.index0) * entry.sampleDuration + currentTime
-                return rangeStart..<rangeStart+entry.sampleDuration
-            } else {
+            let entrySampleEnd = currentSample + entry.sampleCount
+            guard samples.lowerBound < entrySampleEnd else {
                 currentSample += entry.sampleCount
                 currentTime += entry.sampleDuration * entry.sampleCount
+                continue
+            }
+            
+            if currentSample < samples.lowerBound {
+                currentTime += (samples.lowerBound.index0 - currentSample.index0) * entry.sampleDuration
+                currentSample = samples.lowerBound
+            }
+            
+            let rangeEnd = min(entrySampleEnd, samples.upperBound)
+            for _ in currentSample..<rangeEnd {
+                result.append(currentTime..<currentTime+entry.sampleDuration)
+                currentTime += entry.sampleDuration
+            }
+            
+            currentSample = rangeEnd
+            
+            guard samples.upperBound != currentSample else {
+                break
             }
         }
         
-        return nil
+        return result
     }
     
     public func sample(at time: UInt32) -> MP4Index<UInt32>? {

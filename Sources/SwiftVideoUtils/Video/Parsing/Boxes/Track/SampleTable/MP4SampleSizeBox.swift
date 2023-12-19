@@ -19,6 +19,14 @@ public class MP4SampleSizeBox: MP4VersionedBox {
     public var sampleCount: UInt32
     public var sampleSizes: [UInt32]
     
+    public init(version: UInt8, flags: MP4BoxFlags, sampleUniformSize: UInt32, sampleCount: UInt32, sampleSizes: [UInt32]) {
+        self.version = version
+        self.flags = flags
+        self.sampleUniformSize = sampleUniformSize
+        self.sampleCount = sampleCount
+        self.sampleSizes = sampleSizes
+    }
+    
     public required init(reader: any MP4Reader) async throws {
         self.version = try await reader.readInteger()
         self.flags = try await reader.readBoxFlags()

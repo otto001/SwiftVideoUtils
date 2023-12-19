@@ -20,6 +20,12 @@ public class MP4ChunkOffset32Box: MP4ChunkOffsetBox {
     
     public var chunkOffsets: [UInt32]
     
+    public init(version: UInt8, flags: MP4BoxFlags, chunkOffsets: [UInt32]) {
+        self.version = version
+        self.flags = flags
+        self.chunkOffsets = chunkOffsets
+    }
+    
     public required init(reader: any MP4Reader) async throws {
         self.version = try await reader.readInteger()
         self.flags = try await reader.readBoxFlags()
@@ -56,6 +62,12 @@ public class MP4ChunkOffset64Box: MP4ChunkOffsetBox {
     public var flags: MP4BoxFlags
     
     public var chunkOffsets: [UInt64]
+    
+    public init(version: UInt8, flags: MP4BoxFlags, chunkOffsets: [UInt64]) {
+        self.version = version
+        self.flags = flags
+        self.chunkOffsets = chunkOffsets
+    }
     
     public required init(reader: any MP4Reader) async throws {
         self.version = try await reader.readInteger()

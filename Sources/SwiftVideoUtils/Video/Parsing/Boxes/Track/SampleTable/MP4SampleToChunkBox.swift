@@ -74,6 +74,7 @@ public class MP4SampleToChunkBox: MP4VersionedBox {
     public struct SamplePosition: Equatable, Hashable {
         public var chunk: MP4Index<UInt32>
         public var sampleOfChunkIndex: MP4Index<UInt32>
+        public var samplesInChunk: UInt32
     }
     
     public func samplePosition(for sample: MP4Index<UInt32>) -> SamplePosition? {
@@ -84,7 +85,7 @@ public class MP4SampleToChunkBox: MP4VersionedBox {
                 let entryChunkEnd = entries[entryIndex+1].firstChunk
                 let lastSampleOfChunk = currentSample + (entryChunkEnd.index0 - entry.firstChunk.index0) * entry.sampleCount
                 
-                if sample > lastSampleOfChunk {
+                if sample >= lastSampleOfChunk {
                     currentSample = lastSampleOfChunk
                     continue
                 }
@@ -97,7 +98,9 @@ public class MP4SampleToChunkBox: MP4VersionedBox {
             let sampleOfEntry = sample.index0 - currentSample.index0
             let chunkOfEntry = sampleOfEntry/entry.sampleCount
             let sampleOfChunkIndex = (sampleOfEntry - chunkOfEntry * entry.sampleCount)
-            return .init(chunk: .init(index0: chunkOfEntry) + entry.firstChunk, sampleOfChunkIndex: .init(index0: sampleOfChunkIndex))
+            return .init(chunk: .init(index0: chunkOfEntry) + entry.firstChunk, 
+                         sampleOfChunkIndex: .init(index0: sampleOfChunkIndex),
+                         samplesInChunk: entry.sampleCount)
         }
         
         return nil

@@ -44,6 +44,27 @@ final class MP4TimeToSampleBoxTests: XCTestCase {
         XCTAssertEqual(box.time(for: .init(index0: 31)), nil)
     }
     
+    func testTimeForSamples() throws {
+        let box = exampleBox()
+        XCTAssertEqual(box.times(for: MP4Index(index0: 7)..<MP4Index(index0: 14)), [70..<80, 80..<90, 90..<100,
+                                                                                    100..<111, 111..<123, 123..<135, 135..<147])
+        
+        XCTAssertEqual(box.times(for: MP4Index(index0: 0)..<MP4Index(index0: 1)), [0..<10])
+        XCTAssertEqual(box.times(for: MP4Index(index0: 0)..<MP4Index(index0: 2)), [0..<10, 10..<20])
+        XCTAssertEqual(box.times(for: MP4Index(index0: 0)..<MP4Index(index0: 11)), [0..<10, 10..<20, 20..<30, 30..<40, 40..<50,
+                                                                                    50..<60, 60..<70, 70..<80, 80..<90, 90..<100,
+                                                                                    100..<111])
+        
+        XCTAssertEqual(box.times(for: MP4Index(index0: 10)..<MP4Index(index0: 14)), [100..<111, 111..<123, 123..<135, 135..<147])
+        
+        XCTAssertEqual(box.times(for: MP4Index(index0: 7)..<MP4Index(index0: 14)), [70..<80, 80..<90, 90..<100,
+                                                                                    100..<111, 111..<123, 123..<135, 135..<147])
+        
+        XCTAssertEqual(box.times(for: MP4Index(index0: 0)..<MP4Index(index0: 14)), [0..<10, 10..<20, 20..<30, 30..<40, 40..<50,
+                                                                                    50..<60, 60..<70, 70..<80, 80..<90, 90..<100,
+                                                                                    100..<111, 111..<123, 123..<135, 135..<147])
+    }
+    
     func testSampleAtTime() throws {
         let box = exampleBox()
         XCTAssertEqual(box.sample(at: 0), .init(index0: 0))

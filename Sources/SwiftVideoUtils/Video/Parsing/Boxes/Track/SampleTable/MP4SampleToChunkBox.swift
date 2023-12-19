@@ -10,7 +10,7 @@ import Foundation
 
 public class MP4SampleToChunkBox: MP4VersionedBox {
     public static let typeName: String = "stsc"
-    public static let fullyParsable: Bool = true
+
     
     public var version: UInt8
     public var flags: MP4BoxFlags

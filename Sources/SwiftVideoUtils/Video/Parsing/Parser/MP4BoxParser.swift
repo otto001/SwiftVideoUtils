@@ -14,6 +14,7 @@ class MP4BoxParser {
         MP4AvcCBox.self,
         MP4ChunkOffset32Box.self,
         MP4ChunkOffset64Box.self,
+        MP4CompositionTimeToSampleBox.self,
         MP4FileTypeBox.self,
         MP4HandlerReferenceBox.self,
         MP4Hvc1Box.self,

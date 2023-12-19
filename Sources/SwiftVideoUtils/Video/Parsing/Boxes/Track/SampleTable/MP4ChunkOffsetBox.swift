@@ -13,7 +13,7 @@ public protocol MP4ChunkOffsetBox: MP4VersionedBox {
 
 public class MP4ChunkOffset32Box: MP4ChunkOffsetBox {
     public static let typeName: String = "stco"
-    public static let fullyParsable: Bool = true
+
     
     public var version: UInt8
     public var flags: MP4BoxFlags
@@ -56,7 +56,7 @@ public class MP4ChunkOffset32Box: MP4ChunkOffsetBox {
 
 public class MP4ChunkOffset64Box: MP4ChunkOffsetBox {
     public static let typeName: String = "co64"
-    public static let fullyParsable: Bool = true
+
     
     public var version: UInt8
     public var flags: MP4BoxFlags

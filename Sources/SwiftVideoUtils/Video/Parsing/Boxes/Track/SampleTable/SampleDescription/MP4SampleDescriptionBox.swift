@@ -10,7 +10,7 @@ import Foundation
 
 public class MP4SampleDescriptionBox: MP4ParsableBox {
     public static let typeName: String = "stsd"
-    public static let fullyParsable: Bool = true
+
     
     public var version: UInt8
     public var flags: MP4BoxFlags

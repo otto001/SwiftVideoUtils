@@ -52,8 +52,12 @@ public extension MP4Reader {
         }
     }
     
-    func readInteger<T: FixedWidthInteger>() async throws  -> T {
-        try await self.readInteger(T.self)
+    func readInteger() async throws -> UInt8 {
+        try await self.readInteger(UInt8.self)
+    }
+    
+    func readInteger() async throws -> Int8 {
+        try await self.readInteger(Int8.self)
     }
     
     func readInteger<T: FixedWidthInteger>(byteOrder: ByteOrder) async throws -> T {

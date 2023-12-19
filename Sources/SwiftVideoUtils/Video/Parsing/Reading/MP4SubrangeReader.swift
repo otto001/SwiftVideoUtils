@@ -48,7 +48,7 @@ public class MP4SubrangeReader: MP4Reader {
         }
         wrappedReader.offset = offset + additionalOffset
         
-        return try await wrappedReader.readInteger()
+        return try await wrappedReader.readInteger(T.self)
     }
     
     public func readData(count readCount: Int) async throws -> Data {

@@ -10,7 +10,7 @@ import Foundation
 
 public class MP4SampleSizeBox: MP4VersionedBox {
     public static let typeName: String = "stsz"
-    public static let fullyParsable: Bool = true
+
     
     public var version: UInt8
     public var flags: MP4BoxFlags

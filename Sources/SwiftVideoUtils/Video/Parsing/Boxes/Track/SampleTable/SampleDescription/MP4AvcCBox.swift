@@ -10,7 +10,7 @@ import Foundation
 
 public class MP4AvcCBox: MP4ParsableBox {
     public static let typeName: String = "avcC"
-    public static let fullyParsable: Bool = true
+
     
     public var data: Data
     

@@ -11,7 +11,7 @@ import CoreVideo
 
 public class MP4ColorParameterBox: MP4ParsableBox {
     public static let typeName: String = "colr"
-    public static let fullyParsable: Bool = true
+
     
     public var colorParameterType: String
     

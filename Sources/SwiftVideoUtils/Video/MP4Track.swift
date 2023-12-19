@@ -104,14 +104,16 @@ open class MP4Track {
     
     public func sampleBuffer(for samples: Range<MP4Index<UInt32>>) async throws -> CMSampleBuffer {
         let formatDescription = try await self.formatDescription
-        let sampleTableBox = try self.box.mediaBox.unwrapOrFail().mediaInformationBox.unwrapOrFail().sampleTableBox.unwrapOrFail().timeToSampleBox.unwrapOrFail()
+        let sampleTableBox = try self.box.mediaBox.unwrapOrFail().mediaInformationBox.unwrapOrFail().sampleTableBox.unwrapOrFail()
+        
+        let outOfOrderFrames = sampleTableBox.compositionTimeToSampleBox != nil
         
         let timescale = CMTimeScale(try self.timescale)
         
-        let sampleTimings = sampleTableBox.times(for: samples).map { sampleTimeRange in
-            CMSampleTimingInfo(duration: .init(value: CMTimeValue(sampleTimeRange.count), timescale: timescale),
-                               presentationTimeStamp: .init(value: CMTimeValue(sampleTimeRange.lowerBound), timescale: timescale),
-                               decodeTimeStamp: .init())
+        let sampleTimings = try sampleTableBox.timingInfo(for: samples).map { timingInfo in
+            CMSampleTimingInfo(duration: .init(value: CMTimeValue(timingInfo.duration), timescale: timescale),
+                               presentationTimeStamp: .init(value: CMTimeValue(timingInfo.displayTime), timescale: timescale),
+                               decodeTimeStamp: outOfOrderFrames ? .init(value: CMTimeValue(timingInfo.decodeTime), timescale: timescale) : .invalid)
         }
         
         let (sampleRanges, samplesData) = try await self.sampleData(for: samples)
@@ -133,6 +135,7 @@ open class MP4Track {
     
     }
     
+    // TODO: clarify that this is using decode times!
     public func sample(at timeOffset: TimeInterval) throws -> MP4Index<UInt32>? {
         
         let time = UInt32(timeOffset * TimeInterval(try self.timescale))

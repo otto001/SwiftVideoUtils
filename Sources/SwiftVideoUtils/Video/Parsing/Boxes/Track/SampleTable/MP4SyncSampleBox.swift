@@ -10,7 +10,7 @@ import Foundation
 
 public class MP4SyncSampleBox: MP4VersionedBox {
     public static let typeName: String = "stss"
-    public static let fullyParsable: Bool = true
+
     
     public var version: UInt8
     public var flags: MP4BoxFlags

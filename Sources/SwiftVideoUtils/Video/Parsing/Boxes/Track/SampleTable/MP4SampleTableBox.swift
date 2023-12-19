@@ -10,7 +10,7 @@ import Foundation
 
 public class MP4SampleTableBox: MP4ParsableBox {
     public static let typeName: String = "stbl"
-    public static let fullyParsable: Bool = true
+
     
     public var children: [any MP4Box]
     
@@ -31,6 +31,9 @@ public class MP4SampleTableBox: MP4ParsableBox {
     }
     public var timeToSampleBox: MP4TimeToSampleBox? {
         self.firstChild(ofType: MP4TimeToSampleBox.self)
+    }
+    public var compositionTimeToSampleBox: MP4CompositionTimeToSampleBox? {
+        self.firstChild(ofType: MP4CompositionTimeToSampleBox.self)
     }
     
     var sampleCount: UInt32 {
@@ -95,5 +98,37 @@ public class MP4SampleTableBox: MP4ParsableBox {
         } while currentSample != samples.upperBound
         
         return result
+    }
+    
+    public struct SampleTimingInfo {
+        public var duration: UInt32
+        public var decodeTime: UInt32
+        public var displayTime: UInt32
+        
+        public init(duration: UInt32, decodeTime: UInt32, displayTime: UInt32) {
+            self.duration = duration
+            self.decodeTime = decodeTime
+            self.displayTime = displayTime
+        }
+    }
+    
+    public func timingInfo(for samples: Range<MP4Index<UInt32>>) throws -> [SampleTimingInfo] {
+        let timeToSampleBox = try self.timeToSampleBox.unwrapOrFail()
+        
+        
+        let decodeTimes = timeToSampleBox.times(for: samples)
+        if let compositionTimeToSampleBox = self.compositionTimeToSampleBox {
+            let offsets = compositionTimeToSampleBox.offsets(for: samples)
+            
+            guard offsets.count == decodeTimes.count else {
+                throw MP4Error.internalError("number of sample times from stts does not match number of time offsets from ctts")
+            }
+            return zip(decodeTimes, offsets).map { decodeTimeRange, offset in
+                    .init(duration: UInt32(decodeTimeRange.count), decodeTime: decodeTimeRange.lowerBound,
+                          displayTime: UInt32(min(0, Int64(decodeTimeRange.lowerBound) + Int64(offset))))
+            }
+        } else {
+            return decodeTimes.map { .init(duration: UInt32($0.count), decodeTime: $0.lowerBound, displayTime: $0.lowerBound) }
+        }
     }
 }

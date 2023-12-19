@@ -15,34 +15,48 @@ public class MP4SampleToChunkBox: MP4VersionedBox {
     public var version: UInt8
     public var flags: MP4BoxFlags
     
-    /// All chunks starting at this index up to the next first chunk have the same sample count/description
-    public var firstChunk: [MP4Index<UInt32>]
-    /// Number of samples in the chunk
-    public var samplesPerChunk: [UInt32]
-    /// Description (see the sample description box - stsd)
-    public var sampleDescriptionID: [UInt32]
+    public struct Entry: MP4Writeable {
+        public var firstChunk: MP4Index<UInt32>
+        public var sampleCount: UInt32
+        /// Description (see the sample description box - stsd)
+        public var sampleDescriptionID: UInt32
+        
+        public init(firstChunk: MP4Index<UInt32>, sampleCount: UInt32, sampleDescriptionID: UInt32) {
+            self.firstChunk = firstChunk
+            self.sampleCount = sampleCount
+            self.sampleDescriptionID = sampleDescriptionID
+        }
+
+        public init(reader: any MP4Reader) async throws {
+            self.firstChunk = .init(index1: try await reader.readInteger(byteOrder: .bigEndian))
+            self.sampleCount = try await reader.readInteger(byteOrder: .bigEndian)
+            self.sampleDescriptionID = try await reader.readInteger(byteOrder: .bigEndian)
+        }
+        
+        public func write(to writer: MP4Writer) async throws {
+            try await writer.write(firstChunk.index1, byteOrder: .bigEndian)
+            try await writer.write(sampleCount, byteOrder: .bigEndian)
+            try await writer.write(sampleDescriptionID, byteOrder: .bigEndian)
+        }
+    }
+
+    public var entries: [Entry]
     
-    public init(version: UInt8, flags: MP4BoxFlags, firstChunk: [MP4Index<UInt32>], samplesPerChunk: [UInt32], sampleDescriptionID: [UInt32]) {
+    public init(version: UInt8, flags: MP4BoxFlags, entries: [Entry]) {
         self.version = version
         self.flags = flags
-        self.firstChunk = firstChunk
-        self.samplesPerChunk = samplesPerChunk
-        self.sampleDescriptionID = sampleDescriptionID
+        self.entries = entries
     }
     
     public required init(reader: any MP4Reader) async throws {
         self.version = try await reader.readInteger()
         self.flags = try await reader.readBoxFlags()
         
-        self.firstChunk = []
-        self.samplesPerChunk = []
-        self.sampleDescriptionID = []
+        self.entries = []
         
         let entryCount: UInt32 = try await reader.readInteger(byteOrder: .bigEndian)
         for _ in 0..<entryCount {
-            self.firstChunk.append(.init(index1: try await reader.readInteger(byteOrder: .bigEndian)))
-            self.samplesPerChunk.append(try await reader.readInteger(byteOrder: .bigEndian))
-            self.sampleDescriptionID.append(try await reader.readInteger(byteOrder: .bigEndian))
+            self.entries.append(try await .init(reader: reader))
         }
     }
     
@@ -50,12 +64,10 @@ public class MP4SampleToChunkBox: MP4VersionedBox {
         try await writer.write(version)
         try await writer.write(flags)
         
-        try await writer.write(UInt32(firstChunk.count), byteOrder: .bigEndian)
+        try await writer.write(UInt32(entries.count), byteOrder: .bigEndian)
         
-        for i in 0..<firstChunk.count {
-            try await writer.write(firstChunk[i].index1, byteOrder: .bigEndian)
-            try await writer.write(samplesPerChunk[i], byteOrder: .bigEndian)
-            try await writer.write(sampleDescriptionID[i], byteOrder: .bigEndian)
+        for entry in entries {
+            try await writer.write(entry)
         }
     }
     
@@ -64,26 +76,30 @@ public class MP4SampleToChunkBox: MP4VersionedBox {
         public var sampleOfChunkIndex: MP4Index<UInt32>
     }
     
-    public func samplePosition(for sample: MP4Index<UInt32>) -> SamplePosition {
-        
-        var currentChunkGroup: MP4Index<UInt32> = .zero
-        var currentChunkIndex: MP4Index<UInt32> = .zero
-        
-        //var currentChunkStartSample: MP4Index<UInt32> = .init(index0: 0)
-        var currentChunkEndSample: MP4Index<UInt32> = .init(index0: samplesPerChunk[currentChunkGroup])
-        
-        while sample >= currentChunkEndSample {
-            
-            currentChunkIndex += 1
-            if currentChunkGroup.index0 < firstChunk.count && currentChunkIndex >= firstChunk[currentChunkGroup + 1] {
-                currentChunkGroup += 1
+    public func samplePosition(for sample: MP4Index<UInt32>) -> SamplePosition? {
+        var currentSample: MP4Index<UInt32> = .zero
+
+        for (entryIndex, entry) in entries.enumerated() {
+            if entryIndex < entries.count-1 {
+                let entryChunkEnd = entries[entryIndex+1].firstChunk
+                let lastSampleOfChunk = currentSample + (entryChunkEnd.index0 - entry.firstChunk.index0) * entry.sampleCount
+                
+                if sample > lastSampleOfChunk {
+                    currentSample = lastSampleOfChunk
+                    continue
+                }
             }
             
-            //currentChunkStartSample = currentChunkEndSample
-            currentChunkEndSample += samplesPerChunk[currentChunkGroup]
+            guard entry.sampleCount != 0 else {
+                return nil
+            }
+            
+            let sampleOfEntry = sample.index0 - currentSample.index0
+            let chunkOfEntry = sampleOfEntry/entry.sampleCount
+            let sampleOfChunkIndex = (sampleOfEntry - chunkOfEntry * entry.sampleCount)
+            return .init(chunk: .init(index0: chunkOfEntry) + entry.firstChunk, sampleOfChunkIndex: .init(index0: sampleOfChunkIndex))
         }
         
-        return SamplePosition(chunk: currentChunkIndex, 
-                              sampleOfChunkIndex: sample - (currentChunkEndSample - samplesPerChunk[currentChunkGroup]))
+        return nil
     }
 }

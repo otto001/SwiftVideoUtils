@@ -94,8 +94,11 @@ open class MP4Track {
         
         guard !sampleRanges.isEmpty else { return ([], Data()) }
         
-        let readRange = sampleRanges.first!.lowerBound..<sampleRanges.last!.upperBound
-        let data = try await self.reader.readData(byteRange: readRange)
+        let readRanges = sampleRanges.merged()
+        var data = Data(capacity: readRanges.map { $0.count }.reduce(0, +))
+        for readRange in readRanges {
+            data.append(try await self.reader.readData(byteRange: readRange))
+        }
         return (sampleRanges, data)
     }
     

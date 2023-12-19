@@ -29,19 +29,3 @@ extension CLLocation {
         }
     }
 }
-
-private extension Collection {
-    subscript(safe index: Index) -> Element? {
-        return indices.contains(index) ? self[index] : nil
-    }
-}
-
-private extension String {
-    func capture(pattern: String) -> [String] {
-        guard
-            let regex = try? NSRegularExpression(pattern: pattern),
-            let result = regex.firstMatch(in: self, range: NSRange(location: 0, length: count))
-            else { return [] }
-        return (0..<result.numberOfRanges).map { String(self[Range(result.range(at: $0), in: self)!]) }
-    }
-}

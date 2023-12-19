@@ -29,15 +29,6 @@ open class MP4Track {
         }
     }
     
-    public var numberOfSyncFrames: Int {
-        get throws {
-            if let syncSampleCount = self.box.mediaBox?.mediaInformationBox?.sampleTableBox?.syncSamplesBox?.syncSamples.count {
-                return syncSampleCount
-            }
-            return Int(try self.box.mediaBox.unwrapOrFail().mediaInformationBox.unwrapOrFail().sampleTableBox.unwrapOrFail().sampleCount)
-        }
-    }
-    
     public var timescale: UInt32 {
         get throws {
             try self.box.mediaBox.unwrapOrFail().mediaHeaderBox.unwrapOrFail().timescale
@@ -47,6 +38,21 @@ open class MP4Track {
     public var duration: TimeInterval {
         get throws {
             try self.box.mediaBox.unwrapOrFail().mediaHeaderBox.unwrapOrFail().duration
+        }
+    }
+    
+    public var nSamples: Int {
+        get throws {
+            Int(try self.box.mediaBox.unwrapOrFail().mediaInformationBox.unwrapOrFail().sampleTableBox.unwrapOrFail().sampleCount)
+        }
+    }
+    
+    public var nSyncSamples: Int {
+        get throws {
+            if let syncSampleCount = self.box.mediaBox?.mediaInformationBox?.sampleTableBox?.syncSamplesBox?.syncSamples.count {
+                return syncSampleCount
+            }
+            return try self.nSamples
         }
     }
     

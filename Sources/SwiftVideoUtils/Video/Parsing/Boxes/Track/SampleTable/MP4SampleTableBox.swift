@@ -58,7 +58,9 @@ public class MP4SampleTableBox: MP4ParsableBox {
     }
     
     func byteRange(for sample: MP4Index<UInt32>) throws -> Range<Int> {
-        let samplePositon = try self.sampleToChunkBox.unwrapOrFail().samplePosition(for: sample)
+        guard let samplePositon = try self.sampleToChunkBox.unwrapOrFail().samplePosition(for: sample) else {
+            throw MP4Error.internalError("failed to get chunk for sample")
+        }
         
         let chunkOffset = try self.chunkOffsetBox.unwrapOrFail(with: MP4Error.failedToFindBox(path: "stco")).chunkOffset(of: samplePositon.chunk)
         

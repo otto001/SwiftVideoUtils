@@ -100,7 +100,7 @@ public class MP4SampleTableBox: MP4ParsableBox {
         return result
     }
     
-    public struct SampleTimingInfo {
+    public struct SampleTimingInfo: Equatable {
         public var duration: UInt32
         public var decodeTime: UInt32
         public var displayTime: UInt32
@@ -125,7 +125,7 @@ public class MP4SampleTableBox: MP4ParsableBox {
             }
             return zip(decodeTimes, offsets).map { decodeTimeRange, offset in
                     .init(duration: UInt32(decodeTimeRange.count), decodeTime: decodeTimeRange.lowerBound,
-                          displayTime: UInt32(min(0, Int64(decodeTimeRange.lowerBound) + Int64(offset))))
+                          displayTime: UInt32(max(0, Int64(decodeTimeRange.lowerBound) + Int64(offset))))
             }
         } else {
             return decodeTimes.map { .init(duration: UInt32($0.count), decodeTime: $0.lowerBound, displayTime: $0.lowerBound) }

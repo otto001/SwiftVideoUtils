@@ -1,5 +1,5 @@
 //
-//  MP4MoovieBox.swift
+//  MP4MovieBox.swift
 //  
 //
 //  Created by Matteo Ludwig on 23.11.23.
@@ -8,9 +8,9 @@
 import Foundation
 
 
-public class MP4MoovieBox: MP4ParsableBox {
+public class MP4MovieBox: MP4ParsableBox {
     public static let typeName: String = "moov"
-
+    public static let supportedChildBoxTypes: MP4BoxTypeMap = [MP4MovieHeaderBox.self, MP4TrackBox.self]
     
     public var children: [any MP4Box]
     
@@ -28,7 +28,7 @@ public class MP4MoovieBox: MP4ParsableBox {
     }
     
     required public convenience init(reader: any MP4Reader) async throws {
-        try self.init(children: try await MP4BoxParser(reader: reader).readBoxes())
+        try self.init(children: try await reader.readBoxes(parentType: Self.self))
     }
     
     public func writeContent(to writer: MP4Writer) async throws {

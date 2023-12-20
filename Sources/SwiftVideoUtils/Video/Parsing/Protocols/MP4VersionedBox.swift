@@ -16,5 +16,6 @@ public protocol MP4VersionedBox: MP4ParsableBox {
 
 public extension MP4VersionedBox {
     var children: [MP4Box] { [] }
+    static var supportedChildBoxTypes: MP4BoxTypeMap { [] }
 }
 

@@ -18,7 +18,7 @@ public class MP4SimpleContainerBox: MP4Box {
     }
     
     public convenience init(typeName: String, reader: any MP4Reader) async throws {
-        let children = try await MP4BoxParser(reader: reader).readBoxes()
+        let children = try await reader.readBoxes(boxTypeMap: [])
         
         if children.isEmpty && reader.remainingCount > 0 {
             throw MP4Error.failedToParseBox(description: "Not a container box")

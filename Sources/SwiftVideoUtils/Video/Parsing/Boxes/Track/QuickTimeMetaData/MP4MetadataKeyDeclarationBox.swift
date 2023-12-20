@@ -10,7 +10,8 @@ import Foundation
 
 public class MP4MetadataKeyDeclarationBox: MP4ParsableBox {
     public static let typeName: String = "keyd"
-
+    public static let supportedChildBoxTypes: MP4BoxTypeMap = []
+    
     public var namespace: String
     public var value: Data
     

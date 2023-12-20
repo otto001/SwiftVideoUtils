@@ -17,7 +17,6 @@ private let referenceDate: Date = {
 public class MP4MovieHeaderBox: MP4VersionedBox {
     public static let typeName: String = "mvhd"
 
-
     public var version: UInt8
     public var flags: MP4BoxFlags
     

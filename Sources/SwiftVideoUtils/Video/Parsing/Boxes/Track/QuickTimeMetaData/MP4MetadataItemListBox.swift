@@ -10,7 +10,7 @@ import Foundation
 
 public class MP4MetadataItemListBox: MP4ParsableBox {
     public static let typeName: String = "ilst"
-
+    public static let supportedChildBoxTypes: MP4BoxTypeMap = []
     
     public struct Item: MP4Writeable {
         /// https://developer.apple.com/documentation/quicktime-file-format/well-known_types

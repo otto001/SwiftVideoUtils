@@ -9,7 +9,8 @@ import Foundation
 
 public class MP4MetadataKeyTableBox: MP4ParsableBox {
     public static let typeName: String = "keys"
-
+    public static let supportedChildBoxTypes: MP4BoxTypeMap = []
+    
     public class MP4MetaDataKeyBox: MP4Box {
         public var localKeyId: UInt32
         public var typeName: String {
@@ -21,7 +22,7 @@ public class MP4MetadataKeyTableBox: MP4ParsableBox {
         public required init(reader: any MP4Reader) async throws {
             let size: UInt32 = try await reader.readInteger(byteOrder: .bigEndian)
             self.localKeyId = try await reader.readInteger(byteOrder: .bigEndian)
-            self.children = try await MP4BoxParser(reader: MP4SubrangeReader(wrappedReader: reader, limit: Int(size)-8)).readBoxes()
+            self.children = try await reader.readBoxes(boxTypeMap: [])
             reader.offset += Int(size)-8
         }
         

@@ -11,6 +11,7 @@ import CoreMedia
 
 public class MP4Avc1Box: MP4ParsableBox {
     public static let typeName: String = "avc1"
+    public static let supportedChildBoxTypes: MP4BoxTypeMap = [MP4AvcCBox.self]
     
     public var reserved1: Data
     
@@ -67,8 +68,7 @@ public class MP4Avc1Box: MP4ParsableBox {
         self.bitDepth = try await reader.readInteger(byteOrder: .bigEndian)
         self.colorTableIndex = try await reader.readInteger(byteOrder: .bigEndian)
         
-        assert(reader.offset == 78)
-        self.children = try await MP4BoxParser(reader: reader).readBoxes()
+        self.children = try await reader.readBoxes(parentType: Self.self)
         
         self.reserved2 = try await reader.readAllData()
     }

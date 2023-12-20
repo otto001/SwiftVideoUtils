@@ -10,7 +10,14 @@ import Foundation
 
 public class MP4SampleTableBox: MP4ParsableBox {
     public static let typeName: String = "stbl"
-
+    public static let supportedChildBoxTypes: MP4BoxTypeMap = [MP4SampleDescriptionBox.self,
+                                                               MP4TimeToSampleBox.self,
+                                                               MP4CompositionTimeToSampleBox.self,
+                                                               MP4SampleToChunkBox.self,
+                                                               MP4SampleSizeBox.self,
+                                                               MP4ChunkOffset32Box.self,
+                                                               MP4ChunkOffset64Box.self,
+                                                               MP4SyncSampleBox.self,]
     
     public var children: [any MP4Box]
     
@@ -53,7 +60,7 @@ public class MP4SampleTableBox: MP4ParsableBox {
     }
     
     required public convenience init(reader: any MP4Reader) async throws {
-        self.init(children: try await MP4BoxParser(reader: reader).readBoxes())
+        self.init(children: try await reader.readBoxes(parentType: Self.self))
     }
     
     public func writeContent(to writer: MP4Writer) async throws {

@@ -11,21 +11,20 @@ import CoreMedia
 
 open class MP4Asset {
     public let reader: any MP4Reader
-    private var parser: MP4BoxParser
-    
+    static var supportedTopLevelBoxTypes: MP4BoxTypeMap = [MP4FileTypeBox.self, MP4MovieBox.self]
     
     private var _boxes: [any MP4Box] = []
     public var boxes: [any MP4Box] {
         get async throws {
-            if !self.parser.endOfFile {
-                self._boxes.append(contentsOf: try await self.parser.readBoxes())
+            if self.reader.remainingCount == 0 {
+                self._boxes.append(contentsOf: try await self.reader.readBoxes(boxTypeMap: Self.supportedTopLevelBoxTypes))
             }
             return self._boxes
         }
     }
     
-    private var _moovBox: MP4MoovieBox?
-    public var moovBox: MP4MoovieBox {
+    private var _moovBox: MP4MovieBox?
+    public var moovBox: MP4MovieBox {
         get async throws {
             if self._moovBox == nil {
                 self._moovBox = try await self.findMoovBox()
@@ -58,7 +57,6 @@ open class MP4Asset {
     
     public init(reader: any MP4Reader) async throws {
         self.reader = reader
-        self.parser = MP4BoxParser(reader: reader)
     }
     
     public convenience init(url: URL) async throws {
@@ -73,16 +71,16 @@ open class MP4Asset {
         try await MP4MetaData(asset: self)
     }
     
-    private func findMoovBox() async throws -> MP4MoovieBox {
+    private func findMoovBox() async throws -> MP4MovieBox {
         if let moovBox = self._boxes.first(where: {$0.typeName == "moov"}) {
-            return moovBox as! MP4MoovieBox
+            return moovBox as! MP4MovieBox
         }
         
         while true {
-            let box = try await self.parser.readBox()
+            let box = try await self.reader.readBox(boxTypeMap: Self.supportedTopLevelBoxTypes)
             self._boxes.append(box)
             if box.typeName == "moov" {
-                if let moovBox = box as? MP4MoovieBox {
+                if let moovBox = box as? MP4MovieBox {
                     return moovBox
                 } else {
                     throw (box as? MP4ParsingErrorBox)?.error ?? MP4Error.internalError("moov box parsed as \(box.self)")

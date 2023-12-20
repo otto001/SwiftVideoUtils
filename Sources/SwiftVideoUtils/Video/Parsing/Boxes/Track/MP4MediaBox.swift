@@ -9,7 +9,8 @@ import Foundation
 
 public class MP4MediaBox: MP4ParsableBox {
     public static let typeName: String = "mdia"
-
+    public static let supportedChildBoxTypes: MP4BoxTypeMap = [MP4MediaHeaderBox.self, MP4HandlerReferenceBox.self, MP4MediaInformationBox.self]
+    
     public var children: [any MP4Box]
     
     public var mediaHeaderBox: MP4MediaHeaderBox? { firstChild(ofType: MP4MediaHeaderBox.self) }
@@ -20,7 +21,7 @@ public class MP4MediaBox: MP4ParsableBox {
     }
     
     required public convenience init(reader: any MP4Reader) async throws {
-        try self.init(children: try await MP4BoxParser(reader: reader).readBoxes())
+        try self.init(children: try await reader.readBoxes(parentType: Self.self))
     }
     
     public func writeContent(to writer: MP4Writer) async throws {

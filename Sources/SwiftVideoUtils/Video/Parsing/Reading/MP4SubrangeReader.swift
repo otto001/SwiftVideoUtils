@@ -19,8 +19,10 @@ public class MP4SubrangeReader: MP4Reader {
         limit - offset
     }
 
-    public init(wrappedReader: any MP4Reader, limit: Int) {
-        assert(limit <= wrappedReader.remainingCount)
+    public init(wrappedReader: any MP4Reader, limit: Int) throws {
+        guard limit <= wrappedReader.remainingCount else {
+            throw MP4Error.tooFewBytes
+        }
         
         var underlyingReader = wrappedReader
         var additionalOffset = wrappedReader.offset

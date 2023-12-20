@@ -20,8 +20,10 @@ public class MP4BufferReader: MP4Reader {
         self.data = data
     }
     
-    public func readInteger<T>(_ type: T.Type) -> T where T : FixedWidthInteger {
-        assert(MemoryLayout<T>.size <= remainingCount)
+    public func readInteger<T>(_ type: T.Type) throws -> T where T : FixedWidthInteger {
+        guard MemoryLayout<T>.size <= remainingCount else {
+            throw MP4Error.tooFewBytes
+        }
         
         defer { offset += MemoryLayout<T>.size }
         return self.data.withUnsafeBytes { buffer in
@@ -30,8 +32,10 @@ public class MP4BufferReader: MP4Reader {
     }
     
     
-    public func readData(count readCount: Int) -> Data {
-        assert(readCount <= self.remainingCount)
+    public func readData(count readCount: Int) throws -> Data {
+        guard readCount <= remainingCount else {
+            throw MP4Error.tooFewBytes
+        }
         defer { self.offset += readCount }
 
         return self.data.withUnsafeBytes { buffer in

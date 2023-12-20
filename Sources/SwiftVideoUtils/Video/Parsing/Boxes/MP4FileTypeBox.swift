@@ -10,7 +10,7 @@ import Foundation
 
 public class MP4FileTypeBox: MP4ParsableBox {
     public static let typeName: String = "ftyp"
-
+    public static let supportedChildBoxTypes: MP4BoxTypeMap = []
     
     public var majorBrand: String
     public var minorBrand: UInt32

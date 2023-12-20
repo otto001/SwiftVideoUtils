@@ -10,7 +10,7 @@ import Foundation
 
 public class MP4HvcCBox: MP4ParsableBox {
     public static let typeName: String = "hvcC"
-
+    public static let supportedChildBoxTypes: MP4BoxTypeMap = []
     
     public var data: Data
     

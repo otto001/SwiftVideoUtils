@@ -27,7 +27,7 @@ public struct MP4AppleMetaData {
     }
     public var orientations: [OrientationEntry] = []
     
-    public init(moovBox: MP4MoovieBox, reader: any MP4Reader) async throws {
+    public init(moovBox: MP4MovieBox, reader: any MP4Reader) async throws {
         for metaBox in moovBox.children(path: "trak.meta") {
             if let itemListBox = metaBox.firstChild(ofType: MP4MetadataItemListBox.self),
                let keysListBox = metaBox.firstChild(ofType: MP4MetadataItemKeysBox.self) {

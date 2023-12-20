@@ -8,9 +8,12 @@
 import Foundation
 
 
+// TODO: implement stz2
+
+
 public class MP4SampleDescriptionBox: MP4ParsableBox {
     public static let typeName: String = "stsd"
-
+    public static let supportedChildBoxTypes: MP4BoxTypeMap = [MP4Avc1Box.self, MP4Hvc1Box.self, MP4ColorParameterBox.self]
     
     public var version: UInt8
     public var flags: MP4BoxFlags
@@ -25,7 +28,7 @@ public class MP4SampleDescriptionBox: MP4ParsableBox {
         //let entryCount: UInt32 = try await reader.readInteger(byteOrder: .bigEndian)
         reader.offset += MemoryLayout<UInt32>.size
         
-        self.children = try await MP4BoxParser(reader: reader).readBoxes()
+        self.children = try await reader.readBoxes(parentType: Self.self)
     }
     
     public func writeContent(to writer: MP4Writer) async throws {

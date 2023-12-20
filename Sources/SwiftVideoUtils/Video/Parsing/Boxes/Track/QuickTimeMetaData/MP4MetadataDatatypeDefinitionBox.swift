@@ -9,7 +9,8 @@ import Foundation
 
 public class MP4MetadataDatatypeDefinitionBox: MP4ParsableBox {
     public static let typeName: String = "dtyp"
-
+    public static let supportedChildBoxTypes: MP4BoxTypeMap = []
+    
     public var namespace: String
     public var value: Data
     

@@ -9,7 +9,7 @@ import Foundation
 
 public class MP4MediaInformationBox: MP4ParsableBox {
     public static let typeName: String = "minf"
-
+    public static let supportedChildBoxTypes: MP4BoxTypeMap = [MP4SampleTableBox.self]
     
     public var children: [any MP4Box]
     
@@ -20,7 +20,7 @@ public class MP4MediaInformationBox: MP4ParsableBox {
     }
     
     required public convenience init(reader: any MP4Reader) async throws {
-        try self.init(children: try await MP4BoxParser(reader: reader).readBoxes())
+        try self.init(children: try await reader.readBoxes(parentType: Self.self))
     }
     
     public func writeContent(to writer: MP4Writer) async throws {

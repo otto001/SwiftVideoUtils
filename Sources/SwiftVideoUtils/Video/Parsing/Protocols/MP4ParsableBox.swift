@@ -9,12 +9,12 @@ import Foundation
 
 
 public protocol MP4ParsableBox: MP4Box {
-    static var typeName: String { get }
+    static var typeName: MP4FourCC { get }
     static var supportedChildBoxTypes: MP4BoxTypeMap { get }
     
-    init(reader: any MP4Reader) async throws
+    init(reader: MP4SequentialReader) async throws
 }
 
 public extension MP4ParsableBox {
-    var typeName: String { Self.typeName }
+    var typeName: MP4FourCC { Self.typeName }
 }

@@ -1,21 +1,17 @@
 //
-//  MP4TrackBox.swift
+//  MP4MetaBox.swift
 //
 //
-//  Created by Matteo Ludwig on 23.11.23.
+//  Created by Matteo Ludwig on 20.12.23.
 //
 
 import Foundation
 
-
-public class MP4TrackBox: MP4ParsableBox {
-    public static let typeName: MP4FourCC = "trak"
-    public static let supportedChildBoxTypes: MP4BoxTypeMap = [MP4TrackHeaderBox.self, MP4MediaBox.self, MP4MetaBox.self]
+public class MP4MetaBox: MP4ParsableBox {
+    public static let typeName: MP4FourCC = "meta"
+    public static let supportedChildBoxTypes: MP4BoxTypeMap = [MP4HandlerReferenceBox.self, MP4MetadataItemKeysBox.self, MP4MetadataItemListBox.self]
     
     public var children: [any MP4Box]
-    
-    public var mediaBox: MP4MediaBox? { firstChild(ofType: MP4MediaBox.self) }
-    public var trackHeaderBox: MP4TrackHeaderBox? { firstChild(ofType: MP4TrackHeaderBox.self) }
     
     public init(children: [any MP4Box]) throws {
         self.children = children

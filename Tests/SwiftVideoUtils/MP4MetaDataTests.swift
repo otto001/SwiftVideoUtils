@@ -38,7 +38,7 @@ final class MP4MetaDataTests: XCTestCase {
     func testiPhoneFHD() async throws {
         let asset = try await MP4Asset(reader: MP4FileReader(url: urlForFileName("TestVideo_iPhone_FHD.MOV")))
         let metaData = try await asset.metaData()
-        
+        print(try await asset.moovBox.description)
         XCTAssertEqual(metaData.creationTime.isoString, "2023-11-23T20:07:53Z")
         XCTAssertEqual(metaData.modificationTime.isoString, "2023-11-23T20:07:58Z")
         

@@ -12,7 +12,7 @@ public protocol MP4ChunkOffsetBox: MP4VersionedBox {
 }
 
 public class MP4ChunkOffset32Box: MP4ChunkOffsetBox {
-    public static let typeName: String = "stco"
+    public static let typeName: MP4FourCC = "stco"
 
     
     public var version: UInt8
@@ -26,9 +26,9 @@ public class MP4ChunkOffset32Box: MP4ChunkOffsetBox {
         self.chunkOffsets = chunkOffsets
     }
     
-    public required init(reader: any MP4Reader) async throws {
-        self.version = try await reader.readInteger()
-        self.flags = try await reader.readBoxFlags()
+    public required init(reader: MP4SequentialReader) async throws {
+        self.version = try await reader.read()
+        self.flags = try await reader.read()
         
         self.chunkOffsets = []
         let entryCount: UInt32 = try await reader.readInteger(byteOrder: .bigEndian)
@@ -55,7 +55,7 @@ public class MP4ChunkOffset32Box: MP4ChunkOffsetBox {
 
 
 public class MP4ChunkOffset64Box: MP4ChunkOffsetBox {
-    public static let typeName: String = "co64"
+    public static let typeName: MP4FourCC = "co64"
 
     
     public var version: UInt8
@@ -69,9 +69,9 @@ public class MP4ChunkOffset64Box: MP4ChunkOffsetBox {
         self.chunkOffsets = chunkOffsets
     }
     
-    public required init(reader: any MP4Reader) async throws {
-        self.version = try await reader.readInteger()
-        self.flags = try await reader.readBoxFlags()
+    public required init(reader: MP4SequentialReader) async throws {
+        self.version = try await reader.read()
+        self.flags = try await reader.read()
         
         self.chunkOffsets = []
         let entryCount: UInt32 = try await reader.readInteger(byteOrder: .bigEndian)

@@ -62,8 +62,7 @@ public struct MP4AppleMetaData {
                 for sample in try stblBox.samples {
                     let byteRange = try stblBox.byteRange(for: sample)
                     let time = stblBox.timeToSampleBox?.time(for: sample)
-                    reader.offset = byteRange.upperBound - 2
-                    let orientation: Int16 = try await reader.readInteger(byteOrder: .bigEndian)
+                    let orientation: Int16 = try await reader.readInteger(startingAt: byteRange.upperBound - 2, Int16.self, byteOrder: .bigEndian)
                     self.orientations.append(.init(time: time, orientation: orientation))
                 }
             } catch {

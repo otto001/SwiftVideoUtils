@@ -10,7 +10,7 @@ import CoreVideo
 
 
 public class MP4ColorParameterBox: MP4ParsableBox {
-    public static let typeName: String = "colr"
+    public static let typeName: MP4FourCC = "colr"
     public static let supportedChildBoxTypes: MP4BoxTypeMap = []
     
     public var colorParameterType: String
@@ -21,7 +21,7 @@ public class MP4ColorParameterBox: MP4ParsableBox {
     
     public var notParsed: Data
     
-    public required init(reader: any MP4Reader) async throws {
+    public required init(reader: MP4SequentialReader) async throws {
         self.colorParameterType = try await reader.readAscii(byteCount: 4)
         
         self.primariesIndex = try await reader.readInteger(byteOrder: .bigEndian)

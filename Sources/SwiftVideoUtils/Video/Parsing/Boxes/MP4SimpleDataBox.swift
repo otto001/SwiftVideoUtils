@@ -8,12 +8,12 @@
 import Foundation
 
 public class MP4SimpleDataBox: MP4Box {
-    public var typeName: String
+    public var typeName: MP4FourCC
     
     public var lazy: Bool {
         reader != nil
     }
-    private var reader: (any MP4Reader)?
+    private var reader: (MP4SequentialReader)?
     private var _data: Data?
     
     public var size: Int {
@@ -30,18 +30,18 @@ public class MP4SimpleDataBox: MP4Box {
         }
     }
 
-    public init(typeName: String, data: Data?) {
+    public init(typeName: MP4FourCC, data: Data?) {
         self.typeName = typeName
         self._data = data
     }
     
-    public init(typeName: String, reader: any MP4Reader, lazy: Bool = true) async throws {
+    public init(typeName: MP4FourCC, reader: MP4SequentialReader, lazy: Bool = true) async throws {
         self.typeName = typeName
         
         var fetchNow = !lazy
         
         if lazy && reader.remainingCount <= 1024 {
-            fetchNow = try await reader.bytesAreAvaliable(count: reader.remainingCount)
+            fetchNow = try await reader.isPreparedToRead(count: reader.remainingCount)
         }
         
 
@@ -74,7 +74,7 @@ public class MP4SimpleDataBox: MP4Box {
     }
     
     public func indentedString(level: Int) -> String {
-        return String(repeating: "  ", count: level) + typeName + " \(_data?.count ?? reader!.remainingCount) bytes"
+        return String(repeating: "  ", count: level) + typeName.description + " \(_data?.count ?? reader!.remainingCount) bytes"
     }
 }
 

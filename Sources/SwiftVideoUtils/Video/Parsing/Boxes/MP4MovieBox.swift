@@ -9,8 +9,8 @@ import Foundation
 
 
 public class MP4MovieBox: MP4ParsableBox {
-    public static let typeName: String = "moov"
-    public static let supportedChildBoxTypes: MP4BoxTypeMap = [MP4MovieHeaderBox.self, MP4TrackBox.self]
+    public static let typeName: MP4FourCC = "moov"
+    public static let supportedChildBoxTypes: MP4BoxTypeMap = [MP4MovieHeaderBox.self, MP4TrackBox.self, MP4MetaBox.self]
     
     public var children: [any MP4Box]
     
@@ -27,7 +27,7 @@ public class MP4MovieBox: MP4ParsableBox {
         self.children = children
     }
     
-    required public convenience init(reader: any MP4Reader) async throws {
+    required public convenience init(reader: MP4SequentialReader) async throws {
         try self.init(children: try await reader.readBoxes(parentType: Self.self))
     }
     

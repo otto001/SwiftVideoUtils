@@ -9,7 +9,7 @@ import Foundation
 
 
 public class MP4HandlerReferenceBox: MP4VersionedBox {
-    public static let typeName: String = "hdlr"
+    public static let typeName: MP4FourCC = "hdlr"
 
     public var version: UInt8
     public var flags: MP4BoxFlags
@@ -23,9 +23,9 @@ public class MP4HandlerReferenceBox: MP4VersionedBox {
     
     public var componentName: String = ""
     
-    public required init(reader: any MP4Reader) async throws {
-        self.version = try await reader.readInteger()
-        self.flags = try await reader.readBoxFlags()
+    public required init(reader: MP4SequentialReader) async throws {
+        self.version = try await reader.read()
+        self.flags = try await reader.read()
         
         self.componentType = try await reader.readAscii(byteCount: 4)
         self.componentSubtype = try await reader.readAscii(byteCount: 4)

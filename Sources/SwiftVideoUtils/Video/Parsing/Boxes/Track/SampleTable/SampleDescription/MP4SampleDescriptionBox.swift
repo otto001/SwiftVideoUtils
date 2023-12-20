@@ -12,17 +12,17 @@ import Foundation
 
 
 public class MP4SampleDescriptionBox: MP4ParsableBox {
-    public static let typeName: String = "stsd"
-    public static let supportedChildBoxTypes: MP4BoxTypeMap = [MP4Avc1Box.self, MP4Hvc1Box.self, MP4ColorParameterBox.self]
+    public static let typeName: MP4FourCC = "stsd"
+    public static let supportedChildBoxTypes: MP4BoxTypeMap = [MP4Avc1Box.self, MP4Hvc1Box.self, MP4ColorParameterBox.self, MP4TimedMetadataMediaBox.self]
     
     public var version: UInt8
     public var flags: MP4BoxFlags
     
     public var children: [MP4Box]
     
-    public required init(reader: any MP4Reader) async throws {
-        self.version = try await reader.readInteger()
-        self.flags = try await reader.readBoxFlags()
+    public required init(reader: MP4SequentialReader) async throws {
+        self.version = try await reader.read()
+        self.flags = try await reader.read()
         
         
         //let entryCount: UInt32 = try await reader.readInteger(byteOrder: .bigEndian)

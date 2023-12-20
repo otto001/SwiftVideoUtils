@@ -10,7 +10,7 @@ import CoreMedia
 
 
 public class MP4Hvc1Box: MP4ParsableBox {
-    public static let typeName: String = "hvc1"
+    public static let typeName: MP4FourCC = "hvc1"
     public static let supportedChildBoxTypes: MP4BoxTypeMap = [MP4HvcCBox.self]
     public var reserved1: Data
     
@@ -40,7 +40,7 @@ public class MP4Hvc1Box: MP4ParsableBox {
     
     public var reserved2: Data
     
-    required public init(reader: any MP4Reader) async throws {
+    required public init(reader: MP4SequentialReader) async throws {
         
         self.reserved1 = try await reader.readData(count: 6)
 

@@ -11,13 +11,14 @@ import CoreMedia
 
 open class MP4Asset {
     public let reader: any MP4Reader
-    static var supportedTopLevelBoxTypes: MP4BoxTypeMap = [MP4FileTypeBox.self, MP4MovieBox.self]
+    public lazy var sequentialReader: MP4SequentialReader = .init(reader: self.reader)
+    static var supportedTopLevelBoxTypes: MP4BoxTypeMap = [MP4FileTypeBox.self, MP4MovieBox.self, MP4MetaBox.self]
     
     private var _boxes: [any MP4Box] = []
     public var boxes: [any MP4Box] {
         get async throws {
-            if self.reader.remainingCount == 0 {
-                self._boxes.append(contentsOf: try await self.reader.readBoxes(boxTypeMap: Self.supportedTopLevelBoxTypes))
+            if self.sequentialReader.remainingCount > 0 {
+                self._boxes.append(contentsOf: try await self.sequentialReader.readBoxes(boxTypeMap: Self.supportedTopLevelBoxTypes))
             }
             return self._boxes
         }
@@ -55,7 +56,7 @@ open class MP4Asset {
         }
     }
     
-    public init(reader: any MP4Reader) async throws {
+    public init(reader: MP4Reader) async throws {
         self.reader = reader
     }
     
@@ -77,7 +78,7 @@ open class MP4Asset {
         }
         
         while true {
-            let box = try await self.reader.readBox(boxTypeMap: Self.supportedTopLevelBoxTypes)
+            let box = try await self.sequentialReader.readBox(boxTypeMap: Self.supportedTopLevelBoxTypes)
             self._boxes.append(box)
             if box.typeName == "moov" {
                 if let moovBox = box as? MP4MovieBox {

@@ -9,7 +9,7 @@ import Foundation
 
 
 public class MP4FileTypeBox: MP4ParsableBox {
-    public static let typeName: String = "ftyp"
+    public static let typeName: MP4FourCC = "ftyp"
     public static let supportedChildBoxTypes: MP4BoxTypeMap = []
     
     public var majorBrand: String
@@ -17,7 +17,7 @@ public class MP4FileTypeBox: MP4ParsableBox {
     public var compatibleBrands: [String]
     
     
-    required public init(reader: any MP4Reader) async throws {
+    required public init(reader: MP4SequentialReader) async throws {
         self.majorBrand = try await reader.readAscii(byteCount: 4)
         self.minorBrand = try await reader.readInteger(byteOrder: .bigEndian)
         self.compatibleBrands = []

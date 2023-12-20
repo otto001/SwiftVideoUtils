@@ -1,5 +1,5 @@
 //
-//  any MP4Reader.swift
+//  MP4SequentialReader.swift
 //  WebDAV Photos
 //
 //  Created by Matteo Ludwig on 19.11.23.
@@ -8,39 +8,39 @@
 import Foundation
 
 public class MP4BufferReader: MP4Reader {
-    private let data: Data
+   
+    public let data: Data
+    public var totalSize: Int { data.count }
     
-    public var offset: Int = 0
-    
-    public var remainingCount: Int {
-        data.count - offset
-    }
-
     public init(data: Data) {
         self.data = data
     }
     
-    public func readInteger<T>(_ type: T.Type) throws -> T where T : FixedWidthInteger {
-        guard MemoryLayout<T>.size <= remainingCount else {
-            throw MP4Error.tooFewBytes
-        }
+    public func prepareToRead(byteRange: Range<Int>)  {
         
-        defer { offset += MemoryLayout<T>.size }
-        return self.data.withUnsafeBytes { buffer in
-            return buffer.loadUnaligned(fromByteOffset: offset, as: T.self)
-        }
     }
     
+    public func isPreparedToRead(byteRange: Range<Int>)  -> Bool {
+        true
+    }
     
-    public func readData(count readCount: Int) throws -> Data {
-        guard readCount <= remainingCount else {
-            throw MP4Error.tooFewBytes
-        }
-        defer { self.offset += readCount }
-
-        return self.data.withUnsafeBytes { buffer in
-            return Data(buffer: UnsafeRawBufferPointer(start: buffer.baseAddress!.advanced(by: self.offset),
-                                                       count: readCount).assumingMemoryBound(to: UInt8.self))
+    public func readData(byteRange: Range<Int>) async throws -> Data {
+        return Data(data[byteRange])
+    }
+    
+    public func readInteger<T>(startingAt: Int, _ type: T.Type, byteOrder: ByteOrder) async throws -> T where T : FixedWidthInteger {
+        switch byteOrder {
+        case .native:
+            guard startingAt + MemoryLayout<T>.size <= totalSize else {
+                throw MP4Error.tooFewBytes
+            }
+            return self.data[startingAt..<startingAt+MemoryLayout<T>.size].withUnsafeBytes { rawBuffer in
+                rawBuffer.loadUnaligned(as: T.self)
+            }
+        case .littleEndian:
+            return try await T(littleEndian: self.readInteger(startingAt: startingAt, T.self, byteOrder: .native))
+        case .bigEndian:
+            return try await T(bigEndian: self.readInteger(startingAt: startingAt, T.self, byteOrder: .native))
         }
     }
 }

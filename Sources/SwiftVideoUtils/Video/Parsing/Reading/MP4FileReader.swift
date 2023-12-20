@@ -15,35 +15,34 @@ public class MP4FileReader: MP4Reader {
     private static let fileReaderQueue = DispatchQueue(label: "de.mludwig.MP4Utils.MP4FileReader")
     
     private let fileHandle: FileHandle
-    private var fileSize: Int
+    public let totalSize: Int
     
-    public var offset: Int = 0
-    
-    public var remainingCount: Int {
-        fileSize - offset
-    }
     
     public init(url: URL) throws {
         self.fileHandle = try .init(forReadingFrom: url)
-        self.fileSize = Int(try FileManager.default.attributesOfItem(atPath: url.relativePath)[.size] as! UInt64)
+        self.totalSize = Int(try FileManager.default.attributesOfItem(atPath: url.relativePath)[.size] as! UInt64)
+    }
+    
+    public func prepareToRead(byteRange: Range<Int>) throws {
+        if try !self.isPreparedToRead(byteRange: byteRange) {
+            try fileHandle.seek(toOffset: UInt64(byteRange.lowerBound))
+        }
+    }
+    
+    public func isPreparedToRead(byteRange: Range<Int>) throws -> Bool {
+        try fileHandle.offset() == byteRange.lowerBound
     }
 
-    public func readData(count readCount: Int) async throws -> Data {
-        guard readCount > 0 else {
+    public func readData(byteRange: Range<Int>) async throws -> Data {
+        guard !byteRange.isEmpty else {
             return .init()
         }
-        
-        let currentOffset = try fileHandle.offset()
-        if offset != currentOffset {
-            try fileHandle.seek(toOffset: UInt64(offset))
-        }
-        
-        offset += readCount
         
         return try await withCheckedThrowingContinuation { continuation in
             Self.fileReaderQueue.async {
                 do {
-                    guard let data = try self.fileHandle.read(upToCount: readCount) else {
+                    try self.prepareToRead(byteRange: byteRange)
+                    guard let data = try self.fileHandle.read(upToCount: byteRange.count) else {
                         throw MP4FileReaderError.noDataAvaliable
                     }
                     continuation.resume(returning: data)

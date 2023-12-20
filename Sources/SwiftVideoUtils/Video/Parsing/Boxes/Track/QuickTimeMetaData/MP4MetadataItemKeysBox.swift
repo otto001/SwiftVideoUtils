@@ -9,7 +9,7 @@ import Foundation
 import CoreMedia
 
 public class MP4MetadataItemKeysBox: MP4VersionedBox {
-    public static let typeName: String = "keys"
+    public static let typeName: MP4FourCC = "keys"
 
     public var version: UInt8
     public var flags: MP4BoxFlags
@@ -25,7 +25,7 @@ public class MP4MetadataItemKeysBox: MP4VersionedBox {
             self.value = value
         }
         
-        public init(from reader: MP4Reader) async throws {
+        public init(from reader: MP4SequentialReader) async throws {
             let keySize: UInt32 = try await reader.readInteger(byteOrder: .bigEndian)
             let namespace = try await reader.readAscii(byteCount: 4)
             let value = try await reader.readAscii(byteCount: Int(keySize)-8)
@@ -43,9 +43,9 @@ public class MP4MetadataItemKeysBox: MP4VersionedBox {
     
     public var keys: [Key]
     
-    public required init(reader: any MP4Reader) async throws {
-        self.version = try await reader.readInteger()
-        self.flags = try await reader.readBoxFlags()
+    public required init(reader: MP4SequentialReader) async throws {
+        self.version = try await reader.read()
+        self.flags = try await reader.read()
         
         self.keys = []
 

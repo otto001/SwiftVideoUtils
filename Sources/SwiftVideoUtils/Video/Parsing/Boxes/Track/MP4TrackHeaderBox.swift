@@ -9,7 +9,7 @@ import Foundation
 
 
 public class MP4TrackHeaderBox: MP4VersionedBox {
-    public static let typeName: String = "tkhd"
+    public static let typeName: MP4FourCC = "tkhd"
 
     
     public var version: UInt8
@@ -41,9 +41,9 @@ public class MP4TrackHeaderBox: MP4VersionedBox {
     public var trackWidth: Double
     public var trackHeight: Double
 
-    required public init(reader: any MP4Reader) async throws {
-        self.version = try await reader.readInteger()
-        self.flags = try await reader.readBoxFlags()
+    required public init(reader: MP4SequentialReader) async throws {
+        self.version = try await reader.read()
+        self.flags = try await reader.read()
         
         self.creationTime = try await reader.readDate(UInt32.self)
         self.modificationTime = try await reader.readDate(UInt32.self)

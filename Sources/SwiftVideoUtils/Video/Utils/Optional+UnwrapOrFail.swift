@@ -22,6 +22,6 @@ extension Optional where Wrapped: MP4ParsableBox {
         if let wrapped = self {
             return wrapped
         }
-        throw MP4Error.failedToFindBox(path: Wrapped.typeName)
+        throw MP4Error.failedToFindBox(path: Wrapped.typeName.ascii)
     }
 }

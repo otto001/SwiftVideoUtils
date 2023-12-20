@@ -9,7 +9,7 @@ import Foundation
 
 
 public class MP4TimedMetadataMediaBox: MP4VersionedBox {
-    public static let typeName: String = "mebx"
+    public static let typeName: MP4FourCC = "mebx"
     public static let supportedChildBoxTypes: MP4BoxTypeMap = [MP4MetadataKeyTableBox.self]
     
     public var version: UInt8
@@ -19,9 +19,9 @@ public class MP4TimedMetadataMediaBox: MP4VersionedBox {
     
     public var children: [MP4Box]
     
-    public required init(reader: any MP4Reader) async throws {
-        self.version = try await reader.readInteger()
-        self.flags = try await reader.readBoxFlags()
+    public required init(reader: MP4SequentialReader) async throws {
+        self.version = try await reader.read()
+        self.flags = try await reader.read()
         
         self.entryCount = try await reader.readInteger(byteOrder: .bigEndian)
         

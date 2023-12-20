@@ -9,7 +9,7 @@ import Foundation
 
 
 public class MP4SampleSizeBox: MP4VersionedBox {
-    public static let typeName: String = "stsz"
+    public static let typeName: MP4FourCC = "stsz"
 
     
     public var version: UInt8
@@ -27,9 +27,9 @@ public class MP4SampleSizeBox: MP4VersionedBox {
         self.sampleSizes = sampleSizes
     }
     
-    public required init(reader: any MP4Reader) async throws {
-        self.version = try await reader.readInteger()
-        self.flags = try await reader.readBoxFlags()
+    public required init(reader: MP4SequentialReader) async throws {
+        self.version = try await reader.read()
+        self.flags = try await reader.read()
         
         self.sampleUniformSize = try await reader.readInteger(byteOrder: .bigEndian)
         self.sampleCount = try await reader.readInteger(byteOrder: .bigEndian)

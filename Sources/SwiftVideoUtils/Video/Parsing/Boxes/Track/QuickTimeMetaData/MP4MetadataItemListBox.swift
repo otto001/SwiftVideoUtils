@@ -9,7 +9,7 @@ import Foundation
 
 
 public class MP4MetadataItemListBox: MP4ParsableBox {
-    public static let typeName: String = "ilst"
+    public static let typeName: MP4FourCC = "ilst"
     public static let supportedChildBoxTypes: MP4BoxTypeMap = []
     
     public struct Item: MP4Writeable {
@@ -58,7 +58,7 @@ public class MP4MetadataItemListBox: MP4ParsableBox {
             self.data = data
         }
         
-        public init(from reader: MP4Reader) async throws {
+        public init(from reader: MP4SequentialReader) async throws {
             // TODO: What are these bytes?
             let reserved = try await reader.readData(count: 4)
             
@@ -138,7 +138,7 @@ public class MP4MetadataItemListBox: MP4ParsableBox {
     
     public var items: [MP4Index<UInt32>: Item]
     
-    public required init(reader: any MP4Reader) async throws {
+    public required init(reader: MP4SequentialReader) async throws {
         self.items = [:]
         
         while reader.remainingCount > 12 {

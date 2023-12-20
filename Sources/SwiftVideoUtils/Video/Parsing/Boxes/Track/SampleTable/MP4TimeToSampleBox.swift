@@ -9,7 +9,7 @@ import Foundation
 
 
 public class MP4TimeToSampleBox: MP4VersionedBox {
-    public static let typeName: String = "stts"
+    public static let typeName: MP4FourCC = "stts"
 
     
     public var version: UInt8
@@ -33,9 +33,9 @@ public class MP4TimeToSampleBox: MP4VersionedBox {
         self.entries = entries
     }
     
-    public required init(reader: any MP4Reader) async throws {
-        self.version = try await reader.readInteger()
-        self.flags = try await reader.readBoxFlags()
+    public required init(reader: MP4SequentialReader) async throws {
+        self.version = try await reader.read()
+        self.flags = try await reader.read()
         
         let entryCount: UInt32 = try await reader.readInteger(byteOrder: .bigEndian)
         

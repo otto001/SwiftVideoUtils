@@ -8,21 +8,19 @@
 import Foundation
 
 public class MP4MetadataKeyTableBox: MP4ParsableBox {
-    public static let typeName: String = "keys"
+    public static let typeName: MP4FourCC = "keys"
     public static let supportedChildBoxTypes: MP4BoxTypeMap = []
     
     public class MP4MetaDataKeyBox: MP4Box {
-        public var localKeyId: UInt32
-        public var typeName: String {
-            String(data: localKeyId.data, encoding: .ascii)!
-        }
-        
+        public var typeName: MP4FourCC
+        public static let supportedChildBoxTypes: MP4BoxTypeMap = [MP4MetadataKeyDeclarationBox.self, MP4MetadataDatatypeDefinitionBox.self]
         public var children: [MP4Box]
         
-        public required init(reader: any MP4Reader) async throws {
+        public required init(reader: MP4SequentialReader) async throws {
             let size: UInt32 = try await reader.readInteger(byteOrder: .bigEndian)
-            self.localKeyId = try await reader.readInteger(byteOrder: .bigEndian)
-            self.children = try await reader.readBoxes(boxTypeMap: [])
+            self.typeName = try await reader.read()
+            self.children = try await MP4SequentialReader(sequentialReader: reader, count: Int(size)-8).readBoxes(boxTypeMap: Self.supportedChildBoxTypes)
+            
             reader.offset += Int(size)-8
         }
         
@@ -31,7 +29,7 @@ public class MP4MetadataKeyTableBox: MP4ParsableBox {
             try await writeContent(to: contentWriter)
             
             try await writer.write(UInt32(contentWriter.count) + 8, byteOrder: .bigEndian)
-            try await writer.write(localKeyId, byteOrder: .bigEndian)
+            try await writer.write(typeName)
             
             try await writer.write(contentWriter.data)
         }
@@ -43,11 +41,11 @@ public class MP4MetadataKeyTableBox: MP4ParsableBox {
     public var children: [MP4MetaDataKeyBox]
 
     
-    public required init(reader: any MP4Reader) async throws {
+    public required init(reader: MP4SequentialReader) async throws {
         self.children = []
         
         while reader.remainingCount > 0 {
-            self.children.append(try await .init(reader: reader))
+            self.children.append(try await MP4MetaDataKeyBox(reader: reader))
         }
     }
     

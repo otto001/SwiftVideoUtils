@@ -10,7 +10,7 @@ import Foundation
 
 
 public class MP4MediaHeaderBox: MP4VersionedBox {
-    public static let typeName: String = "mdhd"
+    public static let typeName: MP4FourCC = "mdhd"
 
     public var version: UInt8
     public var flags: MP4BoxFlags
@@ -23,9 +23,9 @@ public class MP4MediaHeaderBox: MP4VersionedBox {
     public var language: Data
     public var quality: Int16
     
-    required public init(reader: any MP4Reader) async throws {
-        self.version = try await reader.readInteger()
-        self.flags = try await reader.readBoxFlags()
+    required public init(reader: MP4SequentialReader) async throws {
+        self.version = try await reader.read()
+        self.flags = try await reader.read()
 
         self.creationTime = try await reader.readDate(UInt32.self)
         self.modificationTime = try await reader.readDate(UInt32.self)

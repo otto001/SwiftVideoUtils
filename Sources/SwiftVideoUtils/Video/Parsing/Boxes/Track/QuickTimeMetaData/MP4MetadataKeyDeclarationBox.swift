@@ -9,7 +9,7 @@ import Foundation
 
 
 public class MP4MetadataKeyDeclarationBox: MP4ParsableBox {
-    public static let typeName: String = "keyd"
+    public static let typeName: MP4FourCC = "keyd"
     public static let supportedChildBoxTypes: MP4BoxTypeMap = []
     
     public var namespace: String
@@ -19,7 +19,7 @@ public class MP4MetadataKeyDeclarationBox: MP4ParsableBox {
         return String(data: value, encoding: .ascii)
     }
     
-    public required init(reader: any MP4Reader) async throws {
+    public required init(reader: MP4SequentialReader) async throws {
         self.namespace = try await reader.readAscii(byteCount: 4)
         self.value = try await reader.readAllData()
     }

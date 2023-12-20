@@ -9,7 +9,7 @@ import Foundation
 
 
 public class MP4SampleToChunkBox: MP4VersionedBox {
-    public static let typeName: String = "stsc"
+    public static let typeName: MP4FourCC = "stsc"
 
     
     public var version: UInt8
@@ -27,7 +27,7 @@ public class MP4SampleToChunkBox: MP4VersionedBox {
             self.sampleDescriptionID = sampleDescriptionID
         }
 
-        public init(reader: any MP4Reader) async throws {
+        public init(reader: MP4SequentialReader) async throws {
             self.firstChunk = .init(index1: try await reader.readInteger(byteOrder: .bigEndian))
             self.sampleCount = try await reader.readInteger(byteOrder: .bigEndian)
             self.sampleDescriptionID = try await reader.readInteger(byteOrder: .bigEndian)
@@ -48,9 +48,9 @@ public class MP4SampleToChunkBox: MP4VersionedBox {
         self.entries = entries
     }
     
-    public required init(reader: any MP4Reader) async throws {
-        self.version = try await reader.readInteger()
-        self.flags = try await reader.readBoxFlags()
+    public required init(reader: MP4SequentialReader) async throws {
+        self.version = try await reader.read()
+        self.flags = try await reader.read()
         
         self.entries = []
         

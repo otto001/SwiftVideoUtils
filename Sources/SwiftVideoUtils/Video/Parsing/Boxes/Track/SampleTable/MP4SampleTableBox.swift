@@ -9,7 +9,7 @@ import Foundation
 
 
 public class MP4SampleTableBox: MP4ParsableBox {
-    public static let typeName: String = "stbl"
+    public static let typeName: MP4FourCC = "stbl"
     public static let supportedChildBoxTypes: MP4BoxTypeMap = [MP4SampleDescriptionBox.self,
                                                                MP4TimeToSampleBox.self,
                                                                MP4CompositionTimeToSampleBox.self,
@@ -45,7 +45,7 @@ public class MP4SampleTableBox: MP4ParsableBox {
     
     var sampleCount: UInt32 {
         get throws {
-            try sampleSizeBox.unwrapOrFail(with: MP4Error.failedToFindBox(path: MP4SampleSizeBox.typeName)).sampleCount
+            try sampleSizeBox.unwrapOrFail(with: MP4Error.failedToFindBox(path: MP4SampleSizeBox.typeName.ascii)).sampleCount
         }
     }
     
@@ -59,7 +59,7 @@ public class MP4SampleTableBox: MP4ParsableBox {
         self.children = children
     }
     
-    required public convenience init(reader: any MP4Reader) async throws {
+    required public convenience init(reader: MP4SequentialReader) async throws {
         self.init(children: try await reader.readBoxes(parentType: Self.self))
     }
     

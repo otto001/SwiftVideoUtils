@@ -9,7 +9,7 @@ import Foundation
 
 
 public protocol MP4Box: CustomStringConvertible, MP4Writeable {
-    var typeName: String { get }
+    var typeName: MP4FourCC { get }
     
     var children: [MP4Box] { get }
     
@@ -23,15 +23,15 @@ public protocol MP4Box: CustomStringConvertible, MP4Writeable {
 public extension MP4Box {
     var children: [MP4Box] { [] }
     
-    func children(ofType typeName: any StringProtocol) -> [MP4Box] {
+    func children(ofType typeName: MP4FourCC) -> [MP4Box] {
         children.filter { $0.typeName == typeName }
     }
     
     func children<T: MP4ParsableBox>(ofType type: T.Type) -> [T] {
-        children.filter { $0.typeName == type.typeName }.map { $0 as! T }
+        children.compactMap { $0 as? T }
     }
     
-    func firstChild(ofType typeName: any StringProtocol) -> MP4Box? {
+    func firstChild(ofType typeName: MP4FourCC) -> MP4Box? {
         children.first { $0.typeName == typeName }
     }
     
@@ -46,7 +46,7 @@ public extension MP4Box {
 
 // MARK: Path
 public extension MP4Box {
-    func children(path: [any StringProtocol]) -> [any MP4Box] {
+    func children(path: [MP4FourCC]) -> [any MP4Box] {
         var workingArray: [any MP4Box] = [self]
         for step in path {
             guard !workingArray.isEmpty else { return [] }
@@ -58,7 +58,7 @@ public extension MP4Box {
         return workingArray
     }
     
-    func firstChild(path: [any StringProtocol]) -> (any MP4Box)? {
+    func firstChild(path: [MP4FourCC]) -> (any MP4Box)? {
         // This may be faster with dfs but its fine for now
         var workingArray: [any MP4Box] = [self]
         for step in path {
@@ -72,22 +72,30 @@ public extension MP4Box {
     }
     
     func children(path: String) -> [any MP4Box] {
-        children(path: path.split(separator: "."))
+        do {
+            return try children(path: path.split(separator: ".").map {try .init($0)})
+        } catch {
+            return []
+        }
     }
     
     func firstChild(path: String) -> (any MP4Box)? {
-        firstChild(path: path.split(separator: "."))
+        do {
+            return try firstChild(path: path.split(separator: ".").map {try .init($0)})
+        } catch {
+            return nil
+        }
     }
     
     func requiredChild(path: String) throws -> (any MP4Box) {
-        try firstChild(path: path.split(separator: ".")).unwrapOrFail(with: MP4Error.failedToFindBox(path: path))
+        try firstChild(path: path).unwrapOrFail(with: MP4Error.failedToFindBox(path: path))
     }
 }
 
 // MARK: CustomStringConvertible
 public extension MP4Box {
     func indentedString(level: Int = 0) -> String {
-        var result = String(repeating: "  ", count: level) + typeName
+        var result = String(repeating: "  ", count: level) + typeName.description
         if !children.isEmpty {
             result += "\n" + children.map {$0.indentedString(level: level+1)}.joined(separator: "\n")
         }
@@ -112,7 +120,7 @@ public extension MP4Box {
             size += 8
         }
         
-        try await writer.write(typeName, encoding: .ascii, length: 4)
+        try await writer.write(typeName)
         
         if size > UInt32.max {
             try await writer.write(UInt64(size), byteOrder: .bigEndian)

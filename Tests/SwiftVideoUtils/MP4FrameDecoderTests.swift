@@ -68,7 +68,7 @@ final class MP4FrameDecoderTests: XCTestCase {
         
         let data = try Data(contentsOf: url)
 
-        let bufferedReader = MP4BlockReader(count: data.count) { range in
+        let bufferedReader = MP4BlockReader(totalSize: data.count) { range in
             let range = range.lowerBound..<min(max(range.upperBound, range.lowerBound+128), data.count)
             return Data(data[range])
         }

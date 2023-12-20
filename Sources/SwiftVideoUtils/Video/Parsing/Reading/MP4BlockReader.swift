@@ -9,46 +9,37 @@ import Foundation
 
 
 public class MP4BlockReader: MP4Reader {
-    public let count: Int
-    
-    public var offset: Int = 0
-    
-    public var remainingCount: Int {
-        count - offset
-    }
-    
+    public let totalSize: Int
+
     private let closure: (_ range: Range<Int>) async throws -> Data
     private var buffer: MP4PartionedBuffer = .init()
     
-    public init(count: Int, closure: @escaping (_: Range<Int>) async throws -> Data) {
-        self.count = count
+    public init(totalSize: Int, closure: @escaping (_: Range<Int>) async throws -> Data) {
+        self.totalSize = totalSize
         self.closure = closure
     }
     
-    public func prepareToRead(count readCount: Int) async throws {
-        var range = offset..<offset+readCount
-        guard !buffer.contains(range: range) else { return }
+    public func prepareToRead(byteRange: Range<Int>) async throws {
+        guard !buffer.contains(range: byteRange) else { return }
         
-        if let newLowerBound = buffer.upperBound(for: range.lowerBound) {
-            range = newLowerBound..<range.upperBound
+        var byteRange = byteRange
+        if let newLowerBound = buffer.upperBound(for: byteRange.lowerBound) {
+            byteRange = newLowerBound..<byteRange.upperBound
         }
-        
-        let data = try await closure(range)
-        guard data.count >= range.count else {
+
+        let data = try await closure(byteRange)
+        guard data.count >= byteRange.count else {
             throw MP4Error.insufficientDataReturned
         }
-        buffer.insert(data: data, at: range.lowerBound)
+        buffer.insert(data: data, at: byteRange.lowerBound)
     }
     
-    public func bytesAreAvaliable(count readCount: Int) async throws -> Bool {
-        return buffer.contains(range: offset..<offset+readCount)
+    public func isPreparedToRead(byteRange: Range<Int>) -> Bool {
+        return buffer.contains(range: byteRange)
     }
     
-    public func readData(count readCount: Int) async throws -> Data {
-        try await prepareToRead(count: readCount)
-        defer {
-            offset += readCount
-        }
-        return buffer[offset..<offset+readCount]!
+    public func readData(byteRange: Range<Int>) async throws -> Data {
+        try await prepareToRead(byteRange: byteRange)
+        return buffer[byteRange]!
     }
 }

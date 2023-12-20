@@ -9,24 +9,24 @@ import Foundation
 
 
 public struct MP4BoxTypeMap {
-    public var parsableBoxTypeMap: [String: MP4ParsableBox.Type]
+    public var parsableBoxTypeMap: [MP4FourCC: MP4ParsableBox.Type]
     
-    public static var knownContainerTypes: Set<String> = .init([
-        "ctps",
-        "dinf",
-        "edts",
-        "gmhd",
-        "meta",
-        "sdpd",
-        "setu",
-        "tapt",
-        "tref",
-        "udta"
+    public static var knownContainerTypes: Set<MP4FourCC> = .init([
+//        "ctps",
+//        "dinf",
+//        "edts",
+//        "gmhd",
+//        "meta",
+//        "sdpd",
+//        "setu",
+//        "tapt",
+//        "tref",
+//        "udta"
     ])
     
     
     
-    public init(_ parsableBoxTypeMap: [String : MP4ParsableBox.Type]) {
+    public init(_ parsableBoxTypeMap: [MP4FourCC : MP4ParsableBox.Type]) {
         self.parsableBoxTypeMap = parsableBoxTypeMap
     }
     
@@ -34,7 +34,7 @@ public struct MP4BoxTypeMap {
         self.parsableBoxTypeMap = Dictionary(uniqueKeysWithValues: boxTypes.map { ($0.typeName, $0) })
     }
     
-    public func boxType(for typeName: String) -> MP4ParsableBox.Type? {
+    public func boxType(for typeName: MP4FourCC) -> MP4ParsableBox.Type? {
         self.parsableBoxTypeMap[typeName] //?? (Self.knownContainerTypes.contains(typeName) ? MP4SimpleContainerBox.self : MP4SimpleDataBox.self)
     }
 }

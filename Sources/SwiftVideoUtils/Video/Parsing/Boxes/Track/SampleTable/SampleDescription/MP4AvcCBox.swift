@@ -9,12 +9,12 @@ import Foundation
 
 
 public class MP4AvcCBox: MP4ParsableBox {
-    public static let typeName: String = "avcC"
+    public static let typeName: MP4FourCC = "avcC"
     public static let supportedChildBoxTypes: MP4BoxTypeMap = []
     
     public var data: Data
     
-    required public init(reader: any MP4Reader) async throws {
+    required public init(reader: MP4SequentialReader) async throws {
         self.data = try await reader.readAllData()
     }
     

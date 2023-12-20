@@ -33,7 +33,7 @@ public struct MP4TransformationMatrix {
         self.w = w
     }
     
-    public init(reader: any MP4Reader) async throws {
+    public init(reader: MP4SequentialReader) async throws {
         self.a = try await reader.readFixedPoint(underlyingType: UInt32.self, fractionBits: 16, byteOrder: .bigEndian)
         self.b = try await reader.readFixedPoint(underlyingType: UInt32.self, fractionBits: 16, byteOrder: .bigEndian)
         self.u = try await reader.readFixedPoint(underlyingType: UInt32.self, fractionBits: 30, byteOrder: .bigEndian)

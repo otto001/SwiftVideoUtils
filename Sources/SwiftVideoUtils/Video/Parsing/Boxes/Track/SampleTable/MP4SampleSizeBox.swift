@@ -7,17 +7,21 @@
 
 import Foundation
 
+public protocol MP4SampleSizeBox: MP4VersionedBox {
+    var sampleCount: UInt32 { get }
+    func sampleSize(for sample: MP4Index<UInt32>) -> UInt32?
+}
 
-public class MP4SampleSizeBox: MP4VersionedBox {
+public class MP4StandardSampleSizeBox: MP4SampleSizeBox {
     public static let typeName: MP4FourCC = "stsz"
 
-    
     public var version: UInt8
     public var flags: MP4BoxFlags
     
     public var sampleUniformSize: UInt32
     public var sampleCount: UInt32
     public var sampleSizes: [UInt32]
+    
     
     public init(version: UInt8, flags: MP4BoxFlags, sampleUniformSize: UInt32, sampleCount: UInt32, sampleSizes: [UInt32]) {
         self.version = version
@@ -57,7 +61,12 @@ public class MP4SampleSizeBox: MP4VersionedBox {
         }
     }
     
-    public func sampleSize<T>(for sample: MP4Index<T>) -> UInt32 {
-        sampleSizes.isEmpty ? sampleUniformSize : sampleSizes[sample]
+    public func sampleSize(for sample: MP4Index<UInt32>) -> UInt32? {
+        if self.sampleSizes.isEmpty {
+            return self.sampleUniformSize
+        } else if self.sampleSizes.contains(index: sample) {
+            return self.sampleSizes[sample]
+        }
+        return nil
     }
 }

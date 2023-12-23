@@ -17,4 +17,7 @@ public class MP4BufferWriter: MP4Writer {
     public func write(_ data: Data) async throws {
         self.data.append(contentsOf: data)
     }
+    
+    public init() {
+    }
 }

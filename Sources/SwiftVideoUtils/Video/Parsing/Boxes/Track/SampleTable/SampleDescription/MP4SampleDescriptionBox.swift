@@ -13,7 +13,7 @@ import Foundation
 
 public class MP4SampleDescriptionBox: MP4ParsableBox {
     public static let typeName: MP4FourCC = "stsd"
-    public static let supportedChildBoxTypes: MP4BoxTypeMap = [MP4Avc1Box.self, MP4Hvc1Box.self, MP4ColorParameterBox.self, MP4TimedMetadataMediaBox.self]
+    public static let supportedChildBoxTypes: MP4BoxTypeMap = [MP4Avc1Box.self, MP4Hvc1Box.self, MP4TimedMetadataMediaBox.self]
     
     public var version: UInt8
     public var flags: MP4BoxFlags

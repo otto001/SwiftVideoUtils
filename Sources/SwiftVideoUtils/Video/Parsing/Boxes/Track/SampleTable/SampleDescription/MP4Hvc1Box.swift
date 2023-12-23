@@ -11,7 +11,7 @@ import CoreMedia
 
 public class MP4Hvc1Box: MP4ParsableBox {
     public static let typeName: MP4FourCC = "hvc1"
-    public static let supportedChildBoxTypes: MP4BoxTypeMap = [MP4HvcCBox.self]
+    public static let supportedChildBoxTypes: MP4BoxTypeMap = [MP4HvcCBox.self, MP4ColorParameterBox.self]
     public var reserved1: Data
     
     public var dataReferenceIndex: UInt16

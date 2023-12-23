@@ -15,7 +15,7 @@ final class MP4SampleTableBoxTests: XCTestCase {
     func exampleBox() -> MP4SampleTableBox {
         let sampleCount = 11
         let chunkOffsetBox = MP4ChunkOffset64Box(version: 0, flags: .init(), chunkOffsets: [100, 300, 400])
-        let sampleSizeBox = MP4SampleSizeBox(version: 0, flags: .init(), sampleUniformSize: 0, sampleCount: UInt32(sampleCount), sampleSizes: [
+        let sampleSizeBox = MP4StandardSampleSizeBox(version: 0, flags: .init(), sampleUniformSize: 0, sampleCount: UInt32(sampleCount), sampleSizes: [
         60, 40, 50, 50,
         25, 25, 25,
         40, 10, 25, 25,

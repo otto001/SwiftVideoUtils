@@ -14,7 +14,8 @@ public class MP4SampleTableBox: MP4ParsableBox {
                                                                MP4TimeToSampleBox.self,
                                                                MP4CompositionTimeToSampleBox.self,
                                                                MP4SampleToChunkBox.self,
-                                                               MP4SampleSizeBox.self,
+                                                               MP4StandardSampleSizeBox.self,
+                                                               MP4CompactSampleSizeBox.self,
                                                                MP4ChunkOffset32Box.self,
                                                                MP4ChunkOffset64Box.self,
                                                                MP4SyncSampleBox.self,]
@@ -27,8 +28,8 @@ public class MP4SampleTableBox: MP4ParsableBox {
     public var sampleToChunkBox: MP4SampleToChunkBox? {
         self.firstChild(ofType: MP4SampleToChunkBox.self)
     }
-    public var sampleSizeBox: MP4SampleSizeBox? {
-        self.firstChild(ofType: MP4SampleSizeBox.self)
+    public var sampleSizeBox: (any MP4SampleSizeBox)? {
+        self.firstChild(ofType: MP4StandardSampleSizeBox.self) ?? self.firstChild(ofType: MP4CompactSampleSizeBox.self)
     }
     public var chunkOffsetBox: (any MP4ChunkOffsetBox)? {
         self.firstChild(ofType: MP4ChunkOffset32Box.self) ?? self.firstChild(ofType: MP4ChunkOffset64Box.self)
@@ -45,7 +46,7 @@ public class MP4SampleTableBox: MP4ParsableBox {
     
     var sampleCount: UInt32 {
         get throws {
-            try sampleSizeBox.unwrapOrFail(with: MP4Error.failedToFindBox(path: MP4SampleSizeBox.typeName.ascii)).sampleCount
+            try sampleSizeBox.unwrapOrFail(with: MP4Error.failedToFindBox(path: "stsz/stz2")).sampleCount
         }
     }
     
@@ -75,8 +76,9 @@ public class MP4SampleTableBox: MP4ParsableBox {
         
         let sampleToChunkBox = try self.sampleToChunkBox.unwrapOrFail()
         let chunkOffsetBox = try self.chunkOffsetBox.unwrapOrFail(with: MP4Error.failedToFindBox(path: "stco/co64"))
-        let sampleSizeBox = try self.sampleSizeBox.unwrapOrFail()
+        let sampleSizeBox = try self.sampleSizeBox.unwrapOrFail(with: MP4Error.failedToFindBox(path: "stsz/stz2"))
         
+        let samples = samples.lowerBound..<min(samples.upperBound, .init(index0: sampleSizeBox.sampleCount))
         var currentSample = samples.lowerBound
         var result: [Range<Int>] = []
         result.reserveCapacity(samples.count)
@@ -92,10 +94,10 @@ public class MP4SampleTableBox: MP4ParsableBox {
             let firstSampleOfChunk = currentSample - firstSampleInChunkPos.sampleOfChunkIndex
             let lastSampleOfChunk = min(firstSampleOfChunk + firstSampleInChunkPos.samplesInChunk, samples.upperBound)
             for discardedSample in firstSampleOfChunk..<currentSample {
-                sampleOffset += Int(sampleSizeBox.sampleSize(for: discardedSample))
+                sampleOffset += Int(sampleSizeBox.sampleSize(for: discardedSample)!)
             }
             while currentSample < lastSampleOfChunk {
-                let sampleSize = Int(sampleSizeBox.sampleSize(for: currentSample))
+                let sampleSize = Int(sampleSizeBox.sampleSize(for: currentSample)!)
                 result.append(sampleOffset..<sampleOffset+sampleSize)
                 sampleOffset += sampleSize
                 currentSample += 1

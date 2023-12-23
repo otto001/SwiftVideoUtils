@@ -137,7 +137,7 @@ open class MP4Track {
         } else {
             var result: [CMSampleBuffer] = []
             var nextSampleStart: Int = 0
-            for i in samples.indices {
+            for i in 0..<samples.count {
                 let sampleData = samplesData[nextSampleStart..<nextSampleStart+sampleRanges[i].count]
                 
                 let blockBuffer = try CMBlockBuffer(length: sampleData.count)

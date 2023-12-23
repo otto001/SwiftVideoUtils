@@ -12,6 +12,10 @@ import Foundation
 public class MP4SequentialReader {
     public let reader: any MP4Reader
     
+    var context: MP4IOContext {
+        reader.context
+    }
+    
     // TODO: make read-only
     public var offset: Int = 0
     public let baseOffset: Int
@@ -65,16 +69,25 @@ public class MP4SequentialReader {
     }
     
     public func readData(count readCount: Int) async throws -> Data {
+        guard readCount <= remainingCount else {
+            throw MP4Error.tooFewBytes
+        }
         defer { offset += readCount }
         return try await self.reader.readData(byteRange: self.byteRange(count: readCount))
     }
     
     public func readInteger<T: FixedWidthInteger>(_ type: T.Type, byteOrder: ByteOrder) async throws -> T {
+        guard MemoryLayout<T>.size <= remainingCount else {
+            throw MP4Error.tooFewBytes
+        }
         defer { offset += MemoryLayout<T>.size }
         return try await self.reader.readInteger(startingAt: baseOffset+offset, type.self, byteOrder: byteOrder)
     }
     
     public func readFixedPoint<T: FixedWidthInteger & UnsignedInteger>(underlyingType: T.Type, fractionBits: Int, byteOrder: ByteOrder) async throws -> Double {
+        guard MemoryLayout<T>.size <= remainingCount else {
+            throw MP4Error.tooFewBytes
+        }
         defer { offset += MemoryLayout<T>.size }
         return try await self.reader.readFixedPoint(startingAt: baseOffset+offset, underlyingType: underlyingType.self, fractionBits: fractionBits, byteOrder: byteOrder)
     }

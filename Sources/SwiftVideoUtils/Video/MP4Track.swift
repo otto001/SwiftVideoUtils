@@ -102,7 +102,7 @@ open class MP4Track {
         return (sampleRanges, data)
     }
     
-    public func sampleBuffer(for samples: Range<MP4Index<UInt32>>) async throws -> CMSampleBuffer {
+    public func sampleBuffers(for samples: Range<MP4Index<UInt32>>, combineIntoSingleBuffer: Bool) async throws -> [CMSampleBuffer] {
         let formatDescription = try await self.formatDescription
         let sampleTableBox = try self.box.mediaBox.unwrapOrFail().mediaInformationBox.unwrapOrFail().sampleTableBox.unwrapOrFail()
         
@@ -122,17 +122,48 @@ open class MP4Track {
             throw MP4Error.inconsistentSampleTableBox
         }
         
-        let blockBuffer = try CMBlockBuffer(length: samplesData.count)
-        try samplesData.withUnsafeBytes { buffer in
-            try blockBuffer.replaceDataBytes(with: buffer)
+        if combineIntoSingleBuffer {
+            let blockBuffer = try CMBlockBuffer(length: samplesData.count)
+            try samplesData.withUnsafeBytes { buffer in
+                try blockBuffer.replaceDataBytes(with: buffer)
+            }
+            
+            let sampleBuffer = try CMSampleBuffer(dataBuffer: blockBuffer,
+                                            formatDescription: formatDescription,
+                                            numSamples: sampleRanges.count,
+                                            sampleTimings: sampleTimings,
+                                            sampleSizes: sampleRanges.map { $0.count })
+            return [sampleBuffer]
+        } else {
+            var result: [CMSampleBuffer] = []
+            var nextSampleStart: Int = 0
+            for i in samples.indices {
+                let sampleData = samplesData[nextSampleStart..<nextSampleStart+sampleRanges[i].count]
+                
+                let blockBuffer = try CMBlockBuffer(length: sampleData.count)
+                try sampleData.withUnsafeBytes { buffer in
+                    try blockBuffer.replaceDataBytes(with: buffer)
+                }
+                
+                let sampleBuffer = try CMSampleBuffer(dataBuffer: blockBuffer,
+                                                formatDescription: formatDescription,
+                                                numSamples: 1,
+                                                sampleTimings: [sampleTimings[i]],
+                                                sampleSizes: [sampleData.count])
+                result.append(sampleBuffer)
+                nextSampleStart += sampleRanges[i].count
+                
+            }
+            
+            return result
         }
-        
-        return try CMSampleBuffer(dataBuffer: blockBuffer,
-                                  formatDescription: formatDescription,
-                                  numSamples: sampleRanges.count,
-                                  sampleTimings: sampleTimings,
-                                  sampleSizes: sampleRanges.map { $0.count })
+    }
     
+    public func sampleBuffers(forSamplesInChunkStartingAt firstSample: MP4Index<UInt32>, combineIntoSingleBuffer: Bool) async throws -> [CMSampleBuffer] {
+        let sampleTableBox = try self.box.mediaBox.unwrapOrFail().mediaInformationBox.unwrapOrFail().sampleTableBox.unwrapOrFail()
+        
+        let sampleRange = try sampleTableBox.samplesOfChunk(startingAt: firstSample)
+        return try await self.sampleBuffers(for: sampleRange, combineIntoSingleBuffer: combineIntoSingleBuffer)
     }
     
     // TODO: clarify that this is using decode times!

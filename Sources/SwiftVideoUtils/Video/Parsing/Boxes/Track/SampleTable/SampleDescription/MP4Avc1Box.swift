@@ -28,7 +28,8 @@ public class MP4Avc1Box: MP4ParsableBox {
     
     public var horizontalResolution: UInt32
     public var verticalResolution: UInt32
-    public var entryDataSize: UInt32
+    
+    public var reserved2: UInt32
     
     public var framesPerSample: UInt16
     
@@ -39,7 +40,7 @@ public class MP4Avc1Box: MP4ParsableBox {
     
     public var children: [MP4Box]
     
-    public var reserved2: Data
+    public var reserved3: Data
     
     required public init(reader: MP4SequentialReader) async throws {
         
@@ -59,7 +60,8 @@ public class MP4Avc1Box: MP4ParsableBox {
         
         self.horizontalResolution = try await reader.readInteger(byteOrder: .bigEndian)
         self.verticalResolution = try await reader.readInteger(byteOrder: .bigEndian)
-        self.entryDataSize = try await reader.readInteger(byteOrder: .bigEndian)
+        
+        self.reserved2 = try await reader.readInteger(byteOrder: .bigEndian)
         
         self.framesPerSample = try await reader.readInteger(byteOrder: .bigEndian)
         
@@ -70,7 +72,7 @@ public class MP4Avc1Box: MP4ParsableBox {
         
         self.children = try await reader.readBoxes(parentType: Self.self)
         
-        self.reserved2 = try await reader.readAllData()
+        self.reserved3 = try await reader.readAllData()
     }
 
     public func writeContent(to writer: any MP4Writer) async throws {
@@ -90,7 +92,8 @@ public class MP4Avc1Box: MP4ParsableBox {
         
         try await writer.write(horizontalResolution, byteOrder: .bigEndian)
         try await writer.write(verticalResolution, byteOrder: .bigEndian)
-        try await writer.write(entryDataSize, byteOrder: .bigEndian)
+        
+        try await writer.write(reserved2, byteOrder: .bigEndian)
         
         try await writer.write(framesPerSample, byteOrder: .bigEndian)
         
@@ -101,7 +104,7 @@ public class MP4Avc1Box: MP4ParsableBox {
         
         try await writer.write(children)
         
-        try await writer.write(reserved2)
+        try await writer.write(reserved3)
     }
 }
 
@@ -110,7 +113,7 @@ extension MP4Avc1Box {
     public func makeFormatDescription() throws -> CMFormatDescription {
         // TODO: Missing Extensions:
         // Do i need them all?
-        // CVImageBufferChromaLocationBottomField, VerbatimISOSampleEntry, CVImageBufferChromaLocationTopField, CVFieldCount, CVPixelAspectRatio, FullRangeVideo
+        // CVImageBufferChromaLocationBottomField, VerbatimISOSampleEntry, CVImageBufferChromaLocationTopField, CVFieldCount, CVPixelAspectRatio
         
         var extensions: CMFormatDescription.Extensions = .init()
         
@@ -128,17 +131,7 @@ extension MP4Avc1Box {
             extensions[.sampleDescriptionExtensionAtoms] = .init(sampleDescriptionExtensionAtoms)
         }
         
-        if let colrBox = firstChild(ofType: MP4ColorParameterBox.self) {
-            if let primaries = colrBox.colorPrimaries {
-                extensions[.colorPrimaries] = .string(primaries)
-            }
-            if let transferFunction = colrBox.transferFunction {
-                extensions[.transferFunction] = .string(transferFunction)
-            }
-            if let yCbCrMatrix = colrBox.yCbCrMatrix {
-                extensions[.yCbCrMatrix] = .string(yCbCrMatrix)
-            }
-        }
+        firstChild(ofType: MP4ColorParameterBox.self)?.extensions(updating: &extensions)
         
         return try .init(videoCodecType: .h264, width: Int(width), height: Int(height), extensions: extensions)
     }

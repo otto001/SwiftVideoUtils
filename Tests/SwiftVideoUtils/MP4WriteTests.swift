@@ -34,7 +34,7 @@ final class MP4WriteTests: XCTestCase {
 
     func testiPhoneFHD() async throws {
         let originalData = try Data(contentsOf: urlForFileName("TestVideo_iPhone_FHD.MOV"))
-        let asset = try await MP4Asset(reader: MP4BufferReader(data: originalData))
+        let asset = try await MP4Asset(reader: MP4BufferReader(data: originalData, context: .init(fileType: .quicktime)))
         
         
         
@@ -49,7 +49,7 @@ final class MP4WriteTests: XCTestCase {
 //            let boxCopy = MP4SequentialReader(reader: MP4BufferReader(data: boxWriter.data)).readBox(boxTypeMap: [type(of: box)])
 //        }
 //        
-        let writer = MP4BufferWriter()
+        let writer = MP4BufferWriter(context: .init(fileType: .quicktime))
         var lastOffset = 0
         for box in try await asset.boxes {
             try await writer.write(box)

@@ -43,13 +43,13 @@ public class MP4CompositionTimeToSampleBox: MP4VersionedBox {
         
         for _ in 0..<entryCount {
             var entry = Entry(sampleCount: try await reader.readInteger(byteOrder: .bigEndian), offset: 0)
-            // TODO: Version 0 in mp4 is unsigned, version 0 in quicktime is signed... For proper support, we would need a hint which type of file we are parsing here
-//            if self.version == 0 {
-//                let offset: UInt32 = try await reader.readInteger(byteOrder: .bigEndian)
-//                entry.offset = Int32(offset)
-//            } else {
+            
+            if self.version == 0 && reader.context.fileType == .mp4 {
+                let offset: UInt32 = try await reader.readInteger(byteOrder: .bigEndian)
+                entry.offset = Int32(offset)
+            } else {
                 entry.offset = try await reader.readInteger(byteOrder: .bigEndian)
-            //}
+            }
             
             self.entries.append(entry)
         }
@@ -64,12 +64,11 @@ public class MP4CompositionTimeToSampleBox: MP4VersionedBox {
         for entry in entries {
             try await writer.write(entry.sampleCount, byteOrder: .bigEndian)
             
-            // TODO: See reading init
-//            if self.version == 0 {
-//                try await writer.write(UInt32(entry.offset), byteOrder: .bigEndian)
-//            } else {
+            if self.version == 0 && writer.context.fileType == .mp4 {
+                try await writer.write(UInt32(entry.offset), byteOrder: .bigEndian)
+            } else {
                 try await writer.write(entry.offset, byteOrder: .bigEndian)
-            //}
+            }
         }
     }
     

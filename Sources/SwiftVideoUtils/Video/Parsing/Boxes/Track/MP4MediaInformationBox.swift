@@ -9,7 +9,8 @@ import Foundation
 
 public class MP4MediaInformationBox: MP4ParsableBox {
     public static let typeName: MP4FourCC = "minf"
-    public static let supportedChildBoxTypes: MP4BoxTypeMap = [MP4SampleTableBox.self, MP4HandlerReferenceBox.self]
+    public static let supportedChildBoxTypes: MP4BoxTypeMap = [MP4VideoMediaHeaderBox.self, MP4SoundMediaHeaderBox.self,
+                                                               MP4SampleTableBox.self, MP4HandlerReferenceBox.self]
     
     public var children: [any MP4Box]
     

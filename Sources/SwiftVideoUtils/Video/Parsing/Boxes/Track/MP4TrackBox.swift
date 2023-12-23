@@ -10,7 +10,7 @@ import Foundation
 
 public class MP4TrackBox: MP4ParsableBox {
     public static let typeName: MP4FourCC = "trak"
-    public static let supportedChildBoxTypes: MP4BoxTypeMap = [MP4TrackHeaderBox.self, MP4MediaBox.self, MP4MetaBox.self]
+    public static let supportedChildBoxTypes: MP4BoxTypeMap = [MP4VideoMediaHeaderBox.self, MP4TrackHeaderBox.self, MP4MediaBox.self, MP4MetaBox.self]
     
     public var children: [any MP4Box]
     

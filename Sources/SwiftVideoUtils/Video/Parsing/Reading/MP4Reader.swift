@@ -10,6 +10,7 @@ import Foundation
 
 public protocol MP4Reader: AnyObject {
     var totalSize: Int { get }
+    var context: MP4IOContext { get }
 
     func prepareToRead(byteRange: Range<Int>) async throws
     func isPreparedToRead(byteRange: Range<Int>) async throws -> Bool

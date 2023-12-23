@@ -72,6 +72,19 @@ public class MP4SampleTableBox: MP4ParsableBox {
         return try self.byteRanges(for: sample..<sample+1).first!
     }
     
+//    public func byteRanges(forSamplesInChunkStartingAt start: MP4Index<UInt32>) throws -> [(MP4Index<UInt32>, Range<Int>)] {
+//        let sampleToChunkBox = try self.sampleToChunkBox.unwrapOrFail()
+//        
+//        guard let startingSamplePosition = sampleToChunkBox.samplePosition(for: start) else {
+//            throw MP4Error.internalError("failed to get chunk for sample")
+//        }
+//        
+//        let range = start..<(start - startingSamplePosition.sampleOfChunkIndex + startingSamplePosition.samplesInChunk)
+//        return try self.byteRanges(for: range).enumerated().map { (i, byteRange) in
+//            return (MP4Index<UInt32>(index0: UInt32(i)) + start, byteRange)
+//        }
+//    }
+    
     public func byteRanges(for samples: Range<MP4Index<UInt32>>) throws -> [Range<Int>] {
         
         let sampleToChunkBox = try self.sampleToChunkBox.unwrapOrFail()
@@ -85,7 +98,7 @@ public class MP4SampleTableBox: MP4ParsableBox {
         
         repeat {
             guard let firstSampleInChunkPos = sampleToChunkBox.samplePosition(for: currentSample) else {
-                throw MP4Error.internalError("failed to get chunk for sample")
+                throw MP4Error.internalError("failed to get chunk for sample \(currentSample)")
             }
             let chunkOffset = chunkOffsetBox.chunkOffset(of: firstSampleInChunkPos.chunk)
             
@@ -139,5 +152,15 @@ public class MP4SampleTableBox: MP4ParsableBox {
         } else {
             return decodeTimes.map { .init(duration: UInt32($0.count), decodeTime: $0.lowerBound, displayTime: $0.lowerBound) }
         }
+    }
+    
+    public func samplesOfChunk(startingAt start: MP4Index<UInt32>) throws -> Range<MP4Index<UInt32>> {
+        let sampleToChunkBox = try self.sampleToChunkBox.unwrapOrFail()
+        
+        guard let startingSamplePosition = sampleToChunkBox.samplePosition(for: start) else {
+            throw MP4Error.internalError("failed to get chunk for sample")
+        }
+        
+        return start..<(start - startingSamplePosition.sampleOfChunkIndex + startingSamplePosition.samplesInChunk)
     }
 }

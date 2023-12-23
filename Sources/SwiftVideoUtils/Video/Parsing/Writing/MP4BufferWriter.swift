@@ -11,6 +11,8 @@ import Foundation
 public class MP4BufferWriter: MP4Writer {
     public private(set) var data: Data = .init()
     
+    public var context: MP4IOContext
+    
     public var count: Int { data.count }
     public var offset: Int { data.endIndex }
     
@@ -18,6 +20,7 @@ public class MP4BufferWriter: MP4Writer {
         self.data.append(contentsOf: data)
     }
     
-    public init() {
+    public init(context: MP4IOContext = .init()) {
+        self.context = context
     }
 }

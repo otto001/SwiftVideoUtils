@@ -112,7 +112,7 @@ extension MP4Hvc1Box {
     public func makeFormatDescription() throws -> CMFormatDescription {
         // TODO: Missing Extensions:
         // Do i need them all?
-        // CVImageBufferChromaLocationBottomField, VerbatimISOSampleEntry, CVImageBufferChromaLocationTopField, CVFieldCount, CVPixelAspectRatio, FullRangeVideo
+        // CVImageBufferChromaLocationBottomField, VerbatimISOSampleEntry, CVImageBufferChromaLocationTopField, CVFieldCount, CVPixelAspectRatio
         
         var extensions: CMFormatDescription.Extensions = .init()
         
@@ -130,17 +130,7 @@ extension MP4Hvc1Box {
             extensions[.sampleDescriptionExtensionAtoms] = .init(sampleDescriptionExtensionAtoms)
         }
         
-        if let colrBox = firstChild(ofType: MP4ColorParameterBox.self) {
-            if let primaries = colrBox.colorPrimaries {
-                extensions[.colorPrimaries] = .string(primaries)
-            }
-            if let transferFunction = colrBox.transferFunction {
-                extensions[.transferFunction] = .string(transferFunction)
-            }
-            if let yCbCrMatrix = colrBox.yCbCrMatrix {
-                extensions[.yCbCrMatrix] = .string(yCbCrMatrix)
-            }
-        }
+        firstChild(ofType: MP4ColorParameterBox.self)?.extensions(updating: &extensions)
         
         return try .init(videoCodecType: .hevc, width: Int(width), height: Int(height), extensions: extensions)
     }

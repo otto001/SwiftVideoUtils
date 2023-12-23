@@ -13,15 +13,18 @@ public class MP4FileWriter: MP4Writer {
     
     private let fileHandle: FileHandle
     
+    public var context: MP4IOContext
+    
     public var count: Int { offset }
     public private(set) var offset: Int = 0
     
-    init(url: URL) throws {
+    init(url: URL, context: MP4IOContext = .init()) throws {
         if !FileManager.default.fileExists(atPath: url.relativePath) {
             FileManager.default.createFile(atPath: url.relativePath, contents: nil)
         }
         
         self.fileHandle = try FileHandle(forWritingTo: url)
+        self.context = context
     }
     
     public func write(_ data: Data) async throws {

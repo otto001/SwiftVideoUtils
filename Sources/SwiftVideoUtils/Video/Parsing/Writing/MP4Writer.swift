@@ -11,6 +11,8 @@ public protocol MP4Writer {
     var count: Int { get }
     var offset: Int { get }
     
+    var context: MP4IOContext { get }
+    
     func write(_ data: Data) async throws
     
     func write(_ string: String, encoding: String.Encoding, length: Int?) async throws

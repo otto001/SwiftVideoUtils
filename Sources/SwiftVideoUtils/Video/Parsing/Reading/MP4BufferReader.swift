@@ -12,8 +12,11 @@ public class MP4BufferReader: MP4Reader {
     public let data: Data
     public var totalSize: Int { data.count }
     
-    public init(data: Data) {
+    public var context: MP4IOContext
+    
+    public init(data: Data, context: MP4IOContext = .init()) {
         self.data = data
+        self.context = context
     }
     
     public func prepareToRead(byteRange: Range<Int>)  {
@@ -25,6 +28,9 @@ public class MP4BufferReader: MP4Reader {
     }
     
     public func readData(byteRange: Range<Int>) async throws -> Data {
+        if byteRange.upperBound > self.totalSize {
+            throw MP4Error.tooFewBytes
+        }
         return Data(data[byteRange])
     }
     

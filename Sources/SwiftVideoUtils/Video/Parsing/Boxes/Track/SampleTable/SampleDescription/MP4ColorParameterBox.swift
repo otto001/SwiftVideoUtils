@@ -7,7 +7,7 @@
 
 import Foundation
 import CoreVideo
-
+import CoreMedia
 
 public class MP4ColorParameterBox: MP4ParsableBox {
     public static let typeName: MP4FourCC = "colr"
@@ -19,7 +19,22 @@ public class MP4ColorParameterBox: MP4ParsableBox {
     public var transferFunctionIndex: UInt16
     public var matrixIndex: UInt16
     
-    public var notParsed: Data
+    public var flags: UInt8?
+    
+    var fullRangeVideo: Bool? {
+        get {
+            flags.map { $0 & (1<<7) != 0 }
+        }
+        set {
+            if let flags = flags, let newValue = newValue {
+                if newValue {
+                    self.flags = flags | (1<<7)
+                } else {
+                    self.flags = flags & ~(1<<7)
+                }
+            }
+        }
+    }
     
     public required init(reader: MP4SequentialReader) async throws {
         self.colorParameterType = try await reader.readAscii(byteCount: 4)
@@ -28,7 +43,9 @@ public class MP4ColorParameterBox: MP4ParsableBox {
         self.transferFunctionIndex = try await reader.readInteger(byteOrder: .bigEndian)
         self.matrixIndex = try await reader.readInteger(byteOrder: .bigEndian)
         
-        self.notParsed = try await reader.readAllData()
+        if reader.context.fileType == .mp4 {
+            self.flags = try await reader.read()
+        }
     }
     
     public func writeContent(to writer: MP4Writer) async throws {
@@ -38,10 +55,12 @@ public class MP4ColorParameterBox: MP4ParsableBox {
         try await writer.write(transferFunctionIndex, byteOrder: .bigEndian)
         try await writer.write(matrixIndex, byteOrder: .bigEndian)
         
-        try await writer.write(notParsed)
+        if writer.context.fileType == .mp4 {
+            try await writer.write(flags ?? 0)
+        }
     }
     
-    var colorPrimaries: CFString? {
+    public var colorPrimaries: CFString? {
         switch primariesIndex {
         case 1:
             return kCVImageBufferColorPrimaries_ITU_R_709_2
@@ -56,7 +75,7 @@ public class MP4ColorParameterBox: MP4ParsableBox {
         }
     }
     
-    var transferFunction: CFString? {
+    public var transferFunction: CFString? {
         switch transferFunctionIndex {
         case 1:
             return kCVImageBufferTransferFunction_ITU_R_709_2
@@ -69,7 +88,7 @@ public class MP4ColorParameterBox: MP4ParsableBox {
         }
     }
     
-    var yCbCrMatrix: CFString? {
+    public var yCbCrMatrix: CFString? {
         switch matrixIndex {
         case 1:
             return kCVImageBufferYCbCrMatrix_ITU_R_709_2
@@ -81,6 +100,21 @@ public class MP4ColorParameterBox: MP4ParsableBox {
             return kCVImageBufferYCbCrMatrix_ITU_R_2020
         default:
             return nil
+        }
+    }
+    
+    public func extensions(updating extensions: inout CMFormatDescription.Extensions) {
+        if let primaries = colorPrimaries {
+            extensions[.colorPrimaries] = .string(primaries)
+        }
+        if let transferFunction = transferFunction {
+            extensions[.transferFunction] = .string(transferFunction)
+        }
+        if let yCbCrMatrix = yCbCrMatrix {
+            extensions[.yCbCrMatrix] = .string(yCbCrMatrix)
+        }
+        if let fullRangeVideo = fullRangeVideo {
+            extensions[.fullRangeVideo] = .number(fullRangeVideo ? 1 : 0)
         }
     }
 }

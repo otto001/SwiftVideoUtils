@@ -17,10 +17,13 @@ public class MP4FileReader: MP4Reader {
     private let fileHandle: FileHandle
     public let totalSize: Int
     
+    public var context: MP4IOContext
     
-    public init(url: URL) throws {
+    
+    public init(url: URL, context: MP4IOContext = .init()) throws {
         self.fileHandle = try .init(forReadingFrom: url)
         self.totalSize = Int(try FileManager.default.attributesOfItem(atPath: url.relativePath)[.size] as! UInt64)
+        self.context = context
     }
     
     public func prepareToRead(byteRange: Range<Int>) throws {
@@ -30,12 +33,18 @@ public class MP4FileReader: MP4Reader {
     }
     
     public func isPreparedToRead(byteRange: Range<Int>) throws -> Bool {
-        try fileHandle.offset() == byteRange.lowerBound
+        if byteRange.upperBound > self.totalSize {
+            throw MP4Error.tooFewBytes
+        }
+        return try fileHandle.offset() == byteRange.lowerBound
     }
 
     public func readData(byteRange: Range<Int>) async throws -> Data {
         guard !byteRange.isEmpty else {
             return .init()
+        }
+        if byteRange.upperBound > self.totalSize {
+            throw MP4Error.tooFewBytes
         }
         
         return try await withCheckedThrowingContinuation { continuation in

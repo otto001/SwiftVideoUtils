@@ -23,7 +23,7 @@ public class MP4TrackHeaderBox: MP4VersionedBox {
     /// 4 byte reserved data
     public var reserved1: UInt32
     
-    public var duration: UInt32
+    public var duration: UInt64
     
     /// 8 byte reserved data
     public var reserved2: UInt64
@@ -42,17 +42,32 @@ public class MP4TrackHeaderBox: MP4VersionedBox {
     public var trackHeight: Double
 
     required public init(reader: MP4SequentialReader) async throws {
-        self.version = try await reader.read()
+        let version: UInt8 = try await reader.read()
+        self.version = version
         self.flags = try await reader.read()
         
-        self.creationTime = try await reader.readDate(UInt32.self)
-        self.modificationTime = try await reader.readDate(UInt32.self)
-        
-        self.trackID = try await reader.readInteger(byteOrder: .bigEndian)
-        
-        self.reserved1 = try await reader.readInteger(byteOrder: .bigEndian)
-        
-        self.duration = try await reader.readInteger(byteOrder: .bigEndian)
+        if version == 0 {
+            self.creationTime = try await reader.readDate(UInt32.self)
+            self.modificationTime = try await reader.readDate(UInt32.self)
+            
+            self.trackID = try await reader.readInteger(byteOrder: .bigEndian)
+            
+            self.reserved1 = try await reader.readInteger(byteOrder: .bigEndian)
+            
+            self.duration = UInt64(try await reader.readInteger(UInt32.self, byteOrder: .bigEndian))
+        } else if version == 1 {
+            self.creationTime = try await reader.readDate(UInt64.self)
+            self.modificationTime = try await reader.readDate(UInt64.self)
+            
+            self.trackID = try await reader.readInteger(byteOrder: .bigEndian)
+            
+            self.reserved1 = try await reader.readInteger(byteOrder: .bigEndian)
+            
+            self.duration = try await reader.readInteger(UInt64.self, byteOrder: .bigEndian)
+        } else {
+            throw MP4Error.failedToParseBox(description: "tkhd box version \(version) not supported")
+        }
+       
         
         self.reserved2 = try await reader.readInteger(byteOrder: .bigEndian)
         
@@ -73,15 +88,28 @@ public class MP4TrackHeaderBox: MP4VersionedBox {
         try await writer.write(version)
         try await writer.write(flags)
         
-        try await writer.write(creationTime, UInt32.self, byteOrder: .bigEndian)
-        try await writer.write(modificationTime, UInt32.self, byteOrder: .bigEndian)
+        if self.version == 0 {
+            try await writer.write(creationTime, UInt32.self, byteOrder: .bigEndian)
+            try await writer.write(modificationTime, UInt32.self, byteOrder: .bigEndian)
 
-        try await writer.write(trackID, byteOrder: .bigEndian)
-        
-        try await writer.write(reserved1, byteOrder: .bigEndian)
-        
-        try await writer.write(duration, byteOrder: .bigEndian)
-        
+            try await writer.write(trackID, byteOrder: .bigEndian)
+            
+            try await writer.write(reserved1, byteOrder: .bigEndian)
+            
+            try await writer.write(UInt32(duration), byteOrder: .bigEndian)
+        } else if self.version == 1 {
+            try await writer.write(creationTime, UInt64.self, byteOrder: .bigEndian)
+            try await writer.write(modificationTime, UInt64.self, byteOrder: .bigEndian)
+
+            try await writer.write(trackID, byteOrder: .bigEndian)
+            
+            try await writer.write(reserved1, byteOrder: .bigEndian)
+            
+            try await writer.write(duration, byteOrder: .bigEndian)
+        } else {
+            throw MP4Error.failedToParseBox(description: "tkhd box version \(version) not supported")
+        }
+       
         try await writer.write(reserved2, byteOrder: .bigEndian)
         
         try await writer.write(layer, byteOrder: .bigEndian)

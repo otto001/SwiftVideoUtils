@@ -27,7 +27,10 @@ public class MP4FileReader: MP4Reader {
     }
     
     public func prepareToRead(byteRange: Range<Int>) throws {
-        if try !self.isPreparedToRead(byteRange: byteRange) {
+        if byteRange.upperBound > self.totalSize {
+            throw MP4Error.tooFewBytes
+        }
+        if try fileHandle.offset() != byteRange.lowerBound {
             try fileHandle.seek(toOffset: UInt64(byteRange.lowerBound))
         }
     }
@@ -36,7 +39,7 @@ public class MP4FileReader: MP4Reader {
         if byteRange.upperBound > self.totalSize {
             throw MP4Error.tooFewBytes
         }
-        return try fileHandle.offset() == byteRange.lowerBound
+        return true
     }
 
     public func readData(byteRange: Range<Int>) async throws -> Data {

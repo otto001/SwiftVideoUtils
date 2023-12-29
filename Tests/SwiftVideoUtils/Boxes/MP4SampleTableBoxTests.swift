@@ -14,19 +14,19 @@ final class MP4SampleTableBoxTests: XCTestCase {
     
     func exampleBox() -> MP4SampleTableBox {
         let sampleCount = 11
-        let chunkOffsetBox = MP4ChunkOffset64Box(version: 0, flags: .init(), chunkOffsets: [100, 300, 400])
-        let sampleSizeBox = MP4StandardSampleSizeBox(version: 0, flags: .init(), sampleUniformSize: 0, sampleCount: UInt32(sampleCount), sampleSizes: [
+        let chunkOffsetBox = MP4ChunkOffset64Box(version: .mp4(0), flags: .init(), chunkOffsets: [100, 300, 400])
+        let sampleSizeBox = MP4StandardSampleSizeBox(version: .mp4(0), flags: .init(), sampleUniformSize: 0, sampleCount: UInt32(sampleCount), sampleSizes: [
         60, 40, 50, 50,
         25, 25, 25,
         40, 10, 25, 25,
         ])
-        let sampleToChunkBox = MP4SampleToChunkBox(version: 0, flags: .init(), entries: [.init(firstChunk: .init(index0: 0), sampleCount: 4, sampleDescriptionID: 0),
+        let sampleToChunkBox = MP4SampleToChunkBox(version: .mp4(0), flags: .init(), entries: [.init(firstChunk: .init(index0: 0), sampleCount: 4, sampleDescriptionID: 0),
                                                                                          .init(firstChunk: .init(index0: 1), sampleCount: 3, sampleDescriptionID: 0),
                                                                                          .init(firstChunk: .init(index0: 2), sampleCount: 4, sampleDescriptionID: 0)])
-        let timeToSampleBox = MP4TimeToSampleBox(version: 0, flags: .init(), entries: [.init(sampleCount: 3, sampleDuration: 10),
+        let timeToSampleBox = MP4TimeToSampleBox(version: .mp4(0), flags: .init(), entries: [.init(sampleCount: 3, sampleDuration: 10),
                                                                                        .init(sampleCount: 3, sampleDuration: 9),
                                                                                        .init(sampleCount: 5, sampleDuration: 12)])
-        let compositionTimeToSampleBox = MP4CompositionTimeToSampleBox(version: 0, flags: .init(), entries: [.init(sampleCount: 5, offset: 0),
+        let compositionTimeToSampleBox = MP4CompositionTimeToSampleBox(version: .mp4(0), flags: .init(), entries: [.init(sampleCount: 5, offset: 0),
                                                                                                              .init(sampleCount: 3, offset: -4),
                                                                                                              .init(sampleCount: 3, offset: 2)])
         let sampleTableBox = MP4SampleTableBox(children: [sampleSizeBox, sampleToChunkBox, chunkOffsetBox, timeToSampleBox, compositionTimeToSampleBox])

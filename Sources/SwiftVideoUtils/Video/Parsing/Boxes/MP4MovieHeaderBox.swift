@@ -17,7 +17,7 @@ private let referenceDate: Date = {
 public class MP4MovieHeaderBox: MP4VersionedBox {
     public static let typeName: MP4FourCC = "mvhd"
 
-    public var version: UInt8
+    public var version:  MP4BoxVersion
     public var flags: MP4BoxFlags
     
     public var creationTime: Date
@@ -46,7 +46,7 @@ public class MP4MovieHeaderBox: MP4VersionedBox {
     
     public var nextTrackID: UInt32
     
-    public required init(reader: MP4SequentialReader) async throws {
+    public required init(contentReader reader: MP4SequentialReader) async throws {
         self.version = try await reader.read()
         self.flags = try await reader.read()
         

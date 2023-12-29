@@ -7,7 +7,7 @@
 
 import Foundation
 
-public class MP4MetadataDatatypeDefinitionBox: MP4ParsableBox {
+public class MP4MetadataDatatypeDefinitionBox: MP4ConcreteBox {
     public static let typeName: MP4FourCC = "dtyp"
     public static let supportedChildBoxTypes: MP4BoxTypeMap = []
     
@@ -19,7 +19,7 @@ public class MP4MetadataDatatypeDefinitionBox: MP4ParsableBox {
         return String(data: value, encoding: .ascii)
     }
     
-    public required init(reader: MP4SequentialReader) async throws {
+    public required init(contentReader reader: MP4SequentialReader) async throws {
         self.namespace = try await reader.readAscii(byteCount: 4)
         self.value = try await reader.readAllData()
     }

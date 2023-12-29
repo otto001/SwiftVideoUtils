@@ -15,7 +15,7 @@ final class MP4CompactSampleSizeBoxTests: XCTestCase {
 
     
     func test16BitReadWrite() async throws {
-        let box = MP4CompactSampleSizeBox(version: 0, flags: .init(), fieldSize: 16, sampleSizes: [0, UInt16(UInt8.max), UInt16.max-1, UInt16.max])
+        let box = MP4CompactSampleSizeBox(version: .mp4(0), flags: .init(), fieldSize: 16, sampleSizes: [0, UInt16(UInt8.max), UInt16.max-1, UInt16.max])
         
         try await AssertBoxReadWriteStability(box: box)
         let reReadBox = try await WriteReadBox(box: box)
@@ -28,7 +28,7 @@ final class MP4CompactSampleSizeBoxTests: XCTestCase {
     }
     
     func test8BitReadWrite() async throws {
-        let box = MP4CompactSampleSizeBox(version: 0, flags: .init(), fieldSize: 8, sampleSizes: [0, UInt16(UInt8.max)])
+        let box = MP4CompactSampleSizeBox(version: .mp4(0), flags: .init(), fieldSize: 8, sampleSizes: [0, UInt16(UInt8.max)])
         
         try await AssertBoxReadWriteStability(box: box)
         let reReadBox = try await WriteReadBox(box: box)
@@ -39,7 +39,7 @@ final class MP4CompactSampleSizeBoxTests: XCTestCase {
     }
     
     func test4BitReadWrite() async throws {
-        let boxEvenSamples = MP4CompactSampleSizeBox(version: 0, flags: .init(), fieldSize: 4, sampleSizes: [0, 13, 14, 15])
+        let boxEvenSamples = MP4CompactSampleSizeBox(version: .mp4(0), flags: .init(), fieldSize: 4, sampleSizes: [0, 13, 14, 15])
         
         try await AssertBoxReadWriteStability(box: boxEvenSamples)
         let reReadBoxEven = try await WriteReadBox(box: boxEvenSamples)
@@ -50,7 +50,7 @@ final class MP4CompactSampleSizeBoxTests: XCTestCase {
         XCTAssertEqual(reReadBoxEven.sampleSize(for: .init(index0: 2)), 14)
         XCTAssertEqual(reReadBoxEven.sampleSize(for: .init(index0: 3)), 15)
         
-        let boxOddSamples = MP4CompactSampleSizeBox(version: 0, flags: .init(), fieldSize: 4, sampleSizes: [0, 14, 15])
+        let boxOddSamples = MP4CompactSampleSizeBox(version: .mp4(0), flags: .init(), fieldSize: 4, sampleSizes: [0, 14, 15])
         
         try await AssertBoxReadWriteStability(box: boxOddSamples)
         let reReadBoxOdd = try await WriteReadBox(box: boxOddSamples)

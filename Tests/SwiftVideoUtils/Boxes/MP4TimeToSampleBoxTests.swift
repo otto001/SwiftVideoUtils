@@ -11,7 +11,7 @@ import XCTest
 final class MP4TimeToSampleBoxTests: XCTestCase {
     
     func exampleBox() -> MP4TimeToSampleBox {
-        MP4TimeToSampleBox(version: 0, flags: .init(), entries: [.init(sampleCount: 10, sampleDuration: 10),
+        MP4TimeToSampleBox(version: .mp4(0), flags: .init(), entries: [.init(sampleCount: 10, sampleDuration: 10),
                                                                  .init(sampleCount: 1, sampleDuration: 11),
                                                                  .init(sampleCount: 3, sampleDuration: 12),
                                                                  .init(sampleCount: 7, sampleDuration: 9),

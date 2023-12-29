@@ -12,14 +12,14 @@ public class MP4TimedMetadataMediaBox: MP4VersionedBox {
     public static let typeName: MP4FourCC = "mebx"
     public static let supportedChildBoxTypes: MP4BoxTypeMap = [MP4MetadataKeyTableBox.self]
     
-    public var version: UInt8
+    public var version:  MP4BoxVersion
     public var flags: MP4BoxFlags
     
     public var entryCount: UInt32
     
     public var children: [MP4Box]
     
-    public required init(reader: MP4SequentialReader) async throws {
+    public required init(contentReader reader: MP4SequentialReader) async throws {
         self.version = try await reader.read()
         self.flags = try await reader.read()
         

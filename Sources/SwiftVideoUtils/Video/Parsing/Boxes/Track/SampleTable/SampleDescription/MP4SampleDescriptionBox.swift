@@ -11,16 +11,16 @@ import Foundation
 // TODO: implement stz2
 
 
-public class MP4SampleDescriptionBox: MP4ParsableBox {
+public class MP4SampleDescriptionBox: MP4ConcreteBox {
     public static let typeName: MP4FourCC = "stsd"
-    public static let supportedChildBoxTypes: MP4BoxTypeMap = [MP4Avc1Box.self, MP4Hvc1Box.self, MP4TimedMetadataMediaBox.self]
+    public static let supportedChildBoxTypes: MP4BoxTypeMap = [MP4VideoSampleEntryBox.self, MP4TimedMetadataMediaBox.self, MP4Mp4aBox.self]
     
-    public var version: UInt8
+    public var version:  MP4BoxVersion
     public var flags: MP4BoxFlags
     
     public var children: [MP4Box]
     
-    public required init(reader: MP4SequentialReader) async throws {
+    public required init(contentReader reader: MP4SequentialReader) async throws {
         self.version = try await reader.read()
         self.flags = try await reader.read()
         

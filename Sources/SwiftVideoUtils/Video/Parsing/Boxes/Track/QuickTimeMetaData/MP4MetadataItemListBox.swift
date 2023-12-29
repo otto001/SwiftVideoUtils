@@ -8,7 +8,7 @@
 import Foundation
 
 
-public class MP4MetadataItemListBox: MP4ParsableBox {
+public class MP4MetadataItemListBox: MP4ConcreteBox {
     public static let typeName: MP4FourCC = "ilst"
     public static let supportedChildBoxTypes: MP4BoxTypeMap = []
     
@@ -138,7 +138,7 @@ public class MP4MetadataItemListBox: MP4ParsableBox {
     
     public var items: [MP4Index<UInt32>: Item]
     
-    public required init(reader: MP4SequentialReader) async throws {
+    public required init(contentReader reader: MP4SequentialReader) async throws {
         self.items = [:]
         
         while reader.remainingCount > 12 {

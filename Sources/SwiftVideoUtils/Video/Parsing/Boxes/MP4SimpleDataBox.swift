@@ -44,7 +44,7 @@ public class MP4SimpleDataBox: MP4Box {
             fetchNow = try await reader.isPreparedToRead(count: reader.remainingCount)
         }
         
-
+        reader.offset = 0
         if fetchNow {
             self._data = try await reader.readAllData()
         } else {

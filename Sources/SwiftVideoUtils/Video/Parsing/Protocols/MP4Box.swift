@@ -27,7 +27,7 @@ public extension MP4Box {
         children.filter { $0.typeName == typeName }
     }
     
-    func children<T: MP4ParsableBox>(ofType type: T.Type) -> [T] {
+    func children<T: MP4ConcreteBox>(ofType type: T.Type) -> [T] {
         children.compactMap { $0 as? T }
     }
     
@@ -36,10 +36,10 @@ public extension MP4Box {
     }
     
     func firstChild<T: MP4ParsableBox>(ofType type: T.Type) -> T? {
-        children.first { $0.typeName == type.typeName } as? T
+        children.first { $0 as? T != nil } as? T
     }
     
-    func requiredChild<T: MP4ParsableBox>(ofType type: T.Type) throws -> T {
+    func requiredChild<T: MP4ConcreteBox>(ofType type: T.Type) throws -> T {
         try firstChild(ofType: T.self).unwrapOrFail()
     }
 }

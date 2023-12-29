@@ -11,7 +11,7 @@ import Foundation
 public class MP4CompositionTimeToSampleBox: MP4VersionedBox {
     public static let typeName: MP4FourCC = "ctts"
     
-    public var version: UInt8
+    public var version:  MP4BoxVersion
     public var flags: MP4BoxFlags
     
     public struct Entry {
@@ -26,13 +26,13 @@ public class MP4CompositionTimeToSampleBox: MP4VersionedBox {
     
     public var entries: [Entry]
     
-    public init(version: UInt8, flags: MP4BoxFlags, entries: [Entry]) {
+    public init(version:  MP4BoxVersion, flags: MP4BoxFlags, entries: [Entry]) {
         self.version = version
         self.flags = flags
         self.entries = entries
     }
     
-    public required init(reader: MP4SequentialReader) async throws {
+    public required init(contentReader reader: MP4SequentialReader) async throws {
         self.version = try await reader.read()
         self.flags = try await reader.read()
         
@@ -44,7 +44,7 @@ public class MP4CompositionTimeToSampleBox: MP4VersionedBox {
         for _ in 0..<entryCount {
             var entry = Entry(sampleCount: try await reader.readInteger(byteOrder: .bigEndian), offset: 0)
             
-            if self.version == 0 && reader.context.fileType == .mp4 {
+            if self.version == .mp4(0){
                 let offset: UInt32 = try await reader.readInteger(byteOrder: .bigEndian)
                 entry.offset = Int32(offset)
             } else {
@@ -64,7 +64,7 @@ public class MP4CompositionTimeToSampleBox: MP4VersionedBox {
         for entry in entries {
             try await writer.write(entry.sampleCount, byteOrder: .bigEndian)
             
-            if self.version == 0 && writer.context.fileType == .mp4 {
+            if self.version == .mp4(0) {
                 try await writer.write(UInt32(entry.offset), byteOrder: .bigEndian)
             } else {
                 try await writer.write(entry.offset, byteOrder: .bigEndian)

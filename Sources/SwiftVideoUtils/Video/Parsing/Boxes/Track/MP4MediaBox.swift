@@ -7,7 +7,7 @@
 
 import Foundation
 
-public class MP4MediaBox: MP4ParsableBox {
+public class MP4MediaBox: MP4ConcreteBox {
     public static let typeName: MP4FourCC = "mdia"
     public static let supportedChildBoxTypes: MP4BoxTypeMap = [MP4MediaHeaderBox.self, MP4HandlerReferenceBox.self, MP4MediaInformationBox.self]
     
@@ -20,7 +20,7 @@ public class MP4MediaBox: MP4ParsableBox {
         self.children = children
     }
     
-    required public convenience init(reader: MP4SequentialReader) async throws {
+    public required convenience init(contentReader reader: MP4SequentialReader) async throws {
         try self.init(children: try await reader.readBoxes(parentType: Self.self))
     }
     

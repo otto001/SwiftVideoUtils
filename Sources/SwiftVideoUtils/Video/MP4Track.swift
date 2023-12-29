@@ -65,10 +65,8 @@ open class MP4Track {
         
         let sampleDescriptionBox = try (self.box.mediaBox?.mediaInformationBox?.sampleTableBox?.sampleDescriptionBox).unwrapOrFail(with: MP4Error.failedToFindBox(path: "moov.trak.mdia.minf.stbl.stsd"))
         
-        if let avc1Box = sampleDescriptionBox.firstChild(ofType: MP4Avc1Box.self) {
-            return try avc1Box.makeFormatDescription()
-        } else if let hvc1Box = sampleDescriptionBox.firstChild(ofType: MP4Hvc1Box.self) {
-            return try hvc1Box.makeFormatDescription()
+        if let videoSampleEntryBox = sampleDescriptionBox.firstChild(ofType: MP4VideoSampleEntryBox.self) {
+            return try await videoSampleEntryBox.makeFormatDescription()
         } else {
             throw MP4Error.unsupportedTrackFormat
         }

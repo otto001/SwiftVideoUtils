@@ -17,7 +17,7 @@ extension Optional {
     }
 }
 
-extension Optional where Wrapped: MP4ParsableBox {
+extension Optional where Wrapped: MP4ConcreteBox {
     func unwrapOrFail() throws -> Wrapped {
         if let wrapped = self {
             return wrapped

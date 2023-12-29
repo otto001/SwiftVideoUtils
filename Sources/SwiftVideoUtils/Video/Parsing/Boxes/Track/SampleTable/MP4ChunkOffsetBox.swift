@@ -15,18 +15,18 @@ public class MP4ChunkOffset32Box: MP4ChunkOffsetBox {
     public static let typeName: MP4FourCC = "stco"
 
     
-    public var version: UInt8
+    public var version:  MP4BoxVersion
     public var flags: MP4BoxFlags
     
     public var chunkOffsets: [UInt32]
     
-    public init(version: UInt8, flags: MP4BoxFlags, chunkOffsets: [UInt32]) {
+    public init(version:  MP4BoxVersion, flags: MP4BoxFlags, chunkOffsets: [UInt32]) {
         self.version = version
         self.flags = flags
         self.chunkOffsets = chunkOffsets
     }
     
-    public required init(reader: MP4SequentialReader) async throws {
+    public required init(contentReader reader: MP4SequentialReader) async throws {
         self.version = try await reader.read()
         self.flags = try await reader.read()
         
@@ -58,18 +58,18 @@ public class MP4ChunkOffset64Box: MP4ChunkOffsetBox {
     public static let typeName: MP4FourCC = "co64"
 
     
-    public var version: UInt8
+    public var version:  MP4BoxVersion
     public var flags: MP4BoxFlags
     
     public var chunkOffsets: [UInt64]
     
-    public init(version: UInt8, flags: MP4BoxFlags, chunkOffsets: [UInt64]) {
+    public init(version:  MP4BoxVersion, flags: MP4BoxFlags, chunkOffsets: [UInt64]) {
         self.version = version
         self.flags = flags
         self.chunkOffsets = chunkOffsets
     }
     
-    public required init(reader: MP4SequentialReader) async throws {
+    public required init(contentReader reader: MP4SequentialReader) async throws {
         self.version = try await reader.read()
         self.flags = try await reader.read()
         

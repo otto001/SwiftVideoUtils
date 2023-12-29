@@ -12,7 +12,7 @@ public class MP4CompactSampleSizeBox: MP4SampleSizeBox {
     public static let typeName: MP4FourCC = "stz2"
 
     
-    public var version: UInt8
+    public var version:  MP4BoxVersion
     public var flags: MP4BoxFlags
     
     // 3 bytes reserved
@@ -22,7 +22,7 @@ public class MP4CompactSampleSizeBox: MP4SampleSizeBox {
     
     public var sampleCount: UInt32 { UInt32(self.sampleSizes.count) }
     
-    public init(version: UInt8, flags: MP4BoxFlags, fieldSize: UInt8, sampleSizes: [UInt16]) {
+    public init(version:  MP4BoxVersion, flags: MP4BoxFlags, fieldSize: UInt8, sampleSizes: [UInt16]) {
         self.version = version
         self.flags = flags
         self.reserved = Data(repeating: 0, count: 3)
@@ -30,7 +30,7 @@ public class MP4CompactSampleSizeBox: MP4SampleSizeBox {
         self.sampleSizes = sampleSizes
     }
     
-    public required init(reader: MP4SequentialReader) async throws {
+    public required init(contentReader reader: MP4SequentialReader) async throws {
         self.version = try await reader.read()
         self.flags = try await reader.read()
         

@@ -11,13 +11,13 @@ import Foundation
 public class MP4SoundMediaHeaderBox: MP4VersionedBox {
     public static let typeName: MP4FourCC = "smhd"
 
-    public var version: UInt8
+    public var version:  MP4BoxVersion
     public var flags: MP4BoxFlags
     
     public var balance: Double
     public var reserved: UInt16
     
-    required public init(reader: MP4SequentialReader) async throws {
+   public required init(contentReader reader: MP4SequentialReader) async throws {
         self.version = try await reader.read()
         self.flags = try await reader.read()
 

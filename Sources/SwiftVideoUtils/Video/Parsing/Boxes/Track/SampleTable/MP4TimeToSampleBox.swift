@@ -12,7 +12,7 @@ public class MP4TimeToSampleBox: MP4VersionedBox {
     public static let typeName: MP4FourCC = "stts"
 
     
-    public var version: UInt8
+    public var version:  MP4BoxVersion
     public var flags: MP4BoxFlags
     
     public struct TimeToSampleEntry {
@@ -27,13 +27,13 @@ public class MP4TimeToSampleBox: MP4VersionedBox {
     
     public var entries: [TimeToSampleEntry]
     
-    public init(version: UInt8, flags: MP4BoxFlags, entries: [TimeToSampleEntry]) {
+    public init(version:  MP4BoxVersion, flags: MP4BoxFlags, entries: [TimeToSampleEntry]) {
         self.version = version
         self.flags = flags
         self.entries = entries
     }
     
-    public required init(reader: MP4SequentialReader) async throws {
+    public required init(contentReader reader: MP4SequentialReader) async throws {
         self.version = try await reader.read()
         self.flags = try await reader.read()
         

@@ -8,7 +8,7 @@
 import XCTest
 import SwiftVideoUtils
 
-func WriteReadBox<Box: MP4ParsableBox>(box: Box, file: StaticString = #filePath, line: UInt = #line) async throws -> Box {
+func WriteReadBox<Box: MP4ConcreteBox>(box: Box, file: StaticString = #filePath, line: UInt = #line) async throws -> Box {
     let writer1 = MP4BufferWriter()
     try await writer1.write(box)
     
@@ -20,7 +20,7 @@ func WriteReadBox<Box: MP4ParsableBox>(box: Box, file: StaticString = #filePath,
     return reReadBox as! Box
 }
 
-func AssertBoxReadWriteStability<Box: MP4ParsableBox>(box: Box, file: StaticString = #filePath, line: UInt = #line) async throws {
+func AssertBoxReadWriteStability<Box: MP4ConcreteBox>(box: Box, file: StaticString = #filePath, line: UInt = #line) async throws {
     let writer1 = MP4BufferWriter()
     try await writer1.write(box)
     

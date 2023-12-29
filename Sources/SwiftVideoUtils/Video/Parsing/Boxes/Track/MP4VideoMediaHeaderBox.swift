@@ -11,13 +11,13 @@ import Foundation
 public class MP4VideoMediaHeaderBox: MP4VersionedBox {
     public static let typeName: MP4FourCC = "vmhd"
 
-    public var version: UInt8
+    public var version:  MP4BoxVersion
     public var flags: MP4BoxFlags
     
     public var graphicsMode: MP4VideoGraphicsMode
     public var opColor: (UInt16, UInt16, UInt16)
     
-    required public init(reader: MP4SequentialReader) async throws {
+   public required init(contentReader reader: MP4SequentialReader) async throws {
         self.version = try await reader.read()
         self.flags = try await reader.read()
 

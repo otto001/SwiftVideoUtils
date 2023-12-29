@@ -54,16 +54,11 @@ public struct MP4VideoTrackMetaData: MP4TrackMetaData {
         let orientation = trackHeader.displayMatrix.exifOrientation
         self.orientation = orientation
         
-        if let avc1Box = stblBox.firstChild(path: "stsd.avc1") as? MP4Avc1Box {
-            self.mediaSubType = .h264
-            self.encodedWidth = Int(avc1Box.width)
-            self.encodedHeight = Int(avc1Box.height)
-            self.bitDepth = Int(avc1Box.bitDepth)
-        } else if let hvc1Box = stblBox.firstChild(path: "stsd.hvc1") as? MP4Hvc1Box {
-            self.mediaSubType = .hevc
-            self.encodedWidth = Int(hvc1Box.width)
-            self.encodedHeight = Int(hvc1Box.height)
-            self.bitDepth = Int(hvc1Box.bitDepth)
+        if let videoSampleEntryBox = stblBox.firstChild(ofType: MP4SampleDescriptionBox.self)?.firstChild(ofType: MP4VideoSampleEntryBox.self) {
+            self.mediaSubType = videoSampleEntryBox.videoCodecType
+            self.encodedWidth = Int(videoSampleEntryBox.width)
+            self.encodedHeight = Int(videoSampleEntryBox.height)
+            self.bitDepth = Int(videoSampleEntryBox.bitDepth)
         }
         
         self.averageFrameRate = (stblBox.timeToSampleBox?.averageSampleDuration()).map {

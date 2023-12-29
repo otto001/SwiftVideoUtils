@@ -216,26 +216,24 @@ public extension MP4SequentialReader {
         return result
     }
     
-    func readBoxes(parentType: MP4ParsableBox.Type) async throws -> [any MP4Box] {
+    func readBoxes(parentType: MP4ConcreteBox.Type) async throws -> [any MP4Box] {
         return try await self.readBoxes(boxTypeMap: parentType.supportedChildBoxTypes)
     }
     
-    func readBoxes<T: MP4ParsableBox>(parent: T) async throws -> [any MP4Box] {
+    func readBoxes<T: MP4ConcreteBox>(parent: T) async throws -> [any MP4Box] {
         return try await self.readBoxes(boxTypeMap: T.supportedChildBoxTypes)
     }
     
     private func readBoxContent(boxTypeMap: MP4BoxTypeMap, typeName: MP4FourCC, size: Int, contentOffset: Int) async throws -> any MP4Box {
-        
         let contentReader = try MP4SequentialReader(sequentialReader: self, count: min(size - contentOffset, self.remainingCount))
 
-        
         var result: any MP4Box
         
         do {
             if let boxType = boxTypeMap.boxType(for: typeName) {
                 try await self.prepareToRead(count: min(contentReader.remainingCount + 16, self.remainingCount))
                 
-                result = try await boxType.init(reader: contentReader)
+                result = try await boxType.init(typeName: typeName, contentReader: contentReader)
                 if contentReader.remainingCount != 0 {
                     try await contentReader.printBytes()
                 }
@@ -245,10 +243,7 @@ public extension MP4SequentialReader {
                     throw MP4Error.failedToParseBox(description: "Did not parse \(contentReader.remainingCount) bytes at the end of the box.")
                 }
                 
-            } else if MP4BoxTypeMap.knownContainerTypes.contains(typeName) {
-                result = try await MP4SimpleContainerBox(typeName: typeName, reader: contentReader)
             } else {
-                contentReader.offset = 0
                 result = try await MP4SimpleDataBox(typeName: typeName, reader: contentReader, lazy: true)
             }
         } catch {

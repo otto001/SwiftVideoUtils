@@ -1,17 +1,20 @@
 //
-//  File.swift
-//  
+//  MP4VideoSampleEntryBox.swift
 //
-//  Created by Matteo Ludwig on 26.11.23.
+//
+//  Created by Matteo Ludwig on 19.11.23.
 //
 
 import Foundation
 import CoreMedia
 
 
-public class MP4Hvc1Box: MP4ParsableBox {
-    public static let typeName: MP4FourCC = "hvc1"
-    public static let supportedChildBoxTypes: MP4BoxTypeMap = [MP4HvcCBox.self, MP4ColorParameterBox.self]
+public class MP4VideoSampleEntryBox: MP4SampleEntryBox {
+    public static let supportedFormats: [MP4FourCC] = ["avc1", "hvc1"]
+    public static let supportedChildBoxTypes: MP4BoxTypeMap = [MP4ColorParameterBox.self]
+    
+    public var typeName: MP4FourCC
+    
     public var reserved1: Data
     
     public var dataReferenceIndex: UInt16
@@ -27,7 +30,8 @@ public class MP4Hvc1Box: MP4ParsableBox {
     
     public var horizontalResolution: UInt32
     public var verticalResolution: UInt32
-    public var entryDataSize: UInt32
+    
+    public var reserved2: UInt32
     
     public var framesPerSample: UInt16
     
@@ -38,12 +42,13 @@ public class MP4Hvc1Box: MP4ParsableBox {
     
     public var children: [MP4Box]
     
-    public var reserved2: Data
+    public var reserved3: Data
     
-    required public init(reader: MP4SequentialReader) async throws {
+    required public init(format: MP4FourCC, contentReader reader: MP4SequentialReader) async throws {
+        self.typeName = format
         
         self.reserved1 = try await reader.readData(count: 6)
-
+        
         self.dataReferenceIndex = try await reader.readInteger(byteOrder: .bigEndian)
         
         self.version = try await reader.readInteger(byteOrder: .bigEndian)
@@ -59,20 +64,18 @@ public class MP4Hvc1Box: MP4ParsableBox {
         self.horizontalResolution = try await reader.readInteger(byteOrder: .bigEndian)
         self.verticalResolution = try await reader.readInteger(byteOrder: .bigEndian)
         
-        // TODO: what is this?
-        self.entryDataSize = try await reader.readInteger(byteOrder: .bigEndian)
+        self.reserved2 = try await reader.readInteger(byteOrder: .bigEndian)
         
         self.framesPerSample = try await reader.readInteger(byteOrder: .bigEndian)
         
-        // TODO: Is this always the length of the string?
         self.compressorName = try await reader.readAscii(byteCount: 32)
 
         self.bitDepth = try await reader.readInteger(byteOrder: .bigEndian)
         self.colorTableIndex = try await reader.readInteger(byteOrder: .bigEndian)
         
-        self.children = try await reader.readBoxes(parentType: Self.self)
+        self.children = try await reader.readBoxes(boxTypeMap: Self.supportedChildBoxTypes)
         
-        self.reserved2 = try await reader.readAllData()
+        self.reserved3 = try await reader.readAllData()
     }
 
     public func writeContent(to writer: any MP4Writer) async throws {
@@ -92,7 +95,8 @@ public class MP4Hvc1Box: MP4ParsableBox {
         
         try await writer.write(horizontalResolution, byteOrder: .bigEndian)
         try await writer.write(verticalResolution, byteOrder: .bigEndian)
-        try await writer.write(entryDataSize, byteOrder: .bigEndian)
+        
+        try await writer.write(reserved2, byteOrder: .bigEndian)
         
         try await writer.write(framesPerSample, byteOrder: .bigEndian)
         
@@ -103,35 +107,66 @@ public class MP4Hvc1Box: MP4ParsableBox {
         
         try await writer.write(children)
         
-        try await writer.write(reserved2)
+        try await writer.write(reserved3)
     }
 }
 
 
-extension MP4Hvc1Box {
-    public func makeFormatDescription() throws -> CMFormatDescription {
+extension MP4VideoSampleEntryBox {
+    public var videoCodecType: CMFormatDescription.MediaSubType? {
+        switch typeName {
+        case "avc1":
+            return .h264
+        case "hvc1":
+            return .hevc
+        default:
+            return nil
+        }
+    }
+    
+    public func makeFormatDescription() async throws -> CMFormatDescription {
         // TODO: Missing Extensions:
         // Do i need them all?
         // CVImageBufferChromaLocationBottomField, VerbatimISOSampleEntry, CVImageBufferChromaLocationTopField, CVFieldCount, CVPixelAspectRatio
         
         var extensions: CMFormatDescription.Extensions = .init()
         
-        extensions[.formatName] = .string("HEVC")
+        
+        guard let videoCodecType = videoCodecType else {
+            throw MP4Error.internalError("unknown format: \(typeName.description)")
+        }
+        
+        switch videoCodecType {
+        case .h264:
+            extensions[.formatName] = .string("avc1")
+            if let avcCBox = firstChild(ofType: "avcC") as? MP4SimpleDataBox {
+                let sampleDescriptionExtensionAtoms: NSDictionary = [
+                    "avcC": try await avcCBox.data as NSData
+                ]
+                extensions[.sampleDescriptionExtensionAtoms] = .init(sampleDescriptionExtensionAtoms)
+            }
+        case .hevc:
+            extensions[.formatName] = .string("HEVC")
+            if let avcCBox = firstChild(ofType: "hvcC") as? MP4SimpleDataBox {
+                let sampleDescriptionExtensionAtoms: NSDictionary = [
+                    "hvcC": try await avcCBox.data as NSData
+                ]
+                extensions[.sampleDescriptionExtensionAtoms] = .init(sampleDescriptionExtensionAtoms)
+            }
+        default:
+            throw MP4Error.internalError("unknown format: \(typeName.description)")
+        }
+        
+        
         extensions[.version] = .number(version)
         extensions[.revisionLevel] = .number(revisionLevel)
         extensions[.temporalQuality] = .number(temporalQuality)
         extensions[.spatialQuality] = .number(spatialQuality)
         extensions[.depth] = .number(bitDepth)
 
-        if let hvcCBox = firstChild(ofType: MP4HvcCBox.self) {
-            let sampleDescriptionExtensionAtoms: NSDictionary = [
-                "hvcC": hvcCBox.data as NSData
-            ]
-            extensions[.sampleDescriptionExtensionAtoms] = .init(sampleDescriptionExtensionAtoms)
-        }
-        
+
         firstChild(ofType: MP4ColorParameterBox.self)?.extensions(updating: &extensions)
         
-        return try .init(videoCodecType: .hevc, width: Int(width), height: Int(height), extensions: extensions)
+        return try .init(videoCodecType: videoCodecType, width: Int(width), height: Int(height), extensions: extensions)
     }
 }

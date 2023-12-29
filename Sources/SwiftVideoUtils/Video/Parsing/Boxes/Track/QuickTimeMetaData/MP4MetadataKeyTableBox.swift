@@ -7,7 +7,7 @@
 
 import Foundation
 
-public class MP4MetadataKeyTableBox: MP4ParsableBox {
+public class MP4MetadataKeyTableBox: MP4ConcreteBox {
     public static let typeName: MP4FourCC = "keys"
     public static let supportedChildBoxTypes: MP4BoxTypeMap = []
     
@@ -16,7 +16,7 @@ public class MP4MetadataKeyTableBox: MP4ParsableBox {
         public static let supportedChildBoxTypes: MP4BoxTypeMap = [MP4MetadataKeyDeclarationBox.self, MP4MetadataDatatypeDefinitionBox.self]
         public var children: [MP4Box]
         
-        public required init(reader: MP4SequentialReader) async throws {
+        public required init(contentReader reader: MP4SequentialReader) async throws {
             let size: UInt32 = try await reader.readInteger(byteOrder: .bigEndian)
             self.typeName = try await reader.read()
             self.children = try await MP4SequentialReader(sequentialReader: reader, count: Int(size)-8).readBoxes(boxTypeMap: Self.supportedChildBoxTypes)
@@ -41,11 +41,11 @@ public class MP4MetadataKeyTableBox: MP4ParsableBox {
     public var children: [MP4MetaDataKeyBox]
 
     
-    public required init(reader: MP4SequentialReader) async throws {
+    public required init(contentReader reader: MP4SequentialReader) async throws {
         self.children = []
         
         while reader.remainingCount > 0 {
-            self.children.append(try await MP4MetaDataKeyBox(reader: reader))
+            self.children.append(try await MP4MetaDataKeyBox(contentReader: reader))
         }
     }
     

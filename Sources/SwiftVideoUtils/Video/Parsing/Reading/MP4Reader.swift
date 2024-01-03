@@ -10,7 +10,7 @@ import Foundation
 
 public protocol MP4Reader: AnyObject {
     var totalSize: Int { get }
-    var context: MP4IOContext { get }
+    var context: MP4IOContext { set get }
 
     func prepareToRead(byteRange: Range<Int>) async throws
     func isPreparedToRead(byteRange: Range<Int>) async throws -> Bool
@@ -19,29 +19,27 @@ public protocol MP4Reader: AnyObject {
     
     func readInteger<T: FixedWidthInteger>(startingAt: Int, _ type: T.Type, byteOrder: ByteOrder) async throws -> T
     
-    func readFixedPoint<T: FixedWidthInteger & UnsignedInteger>(startingAt: Int, underlyingType: T.Type, fractionBits: Int, byteOrder: ByteOrder) async throws -> Double
+    func readSignedFixedPoint<T: FixedWidthInteger & SignedInteger>(startingAt: Int, fractionBits: UInt8, byteOrder: ByteOrder) async throws -> FixedPointNumber<T>
+    
+    func readUnsignedFixedPoint<T: FixedWidthInteger & UnsignedInteger>(startingAt: Int, fractionBits: UInt8, byteOrder: ByteOrder) async throws -> FixedPointNumber<T>
 }
 
 
 public extension MP4Reader {
     func readInteger<T: FixedWidthInteger>(startingAt: Int, _ type: T.Type, byteOrder: ByteOrder) async throws  -> T {
-        switch byteOrder {
-        case .native:
-            guard startingAt + MemoryLayout<T>.size <= totalSize else {
-                throw MP4Error.tooFewBytes
-            }
-            return try await self.readData(byteRange: startingAt..<startingAt+MemoryLayout<T>.size).withUnsafeBytes { rawBuffer in
-                rawBuffer.loadUnaligned(as: T.self)
-            }
-        case .littleEndian:
-            return try await T(littleEndian: self.readInteger(startingAt: startingAt, T.self, byteOrder: .native))
-        case .bigEndian:
-            return try await T(bigEndian: self.readInteger(startingAt: startingAt, T.self, byteOrder: .native))
+        guard startingAt + MemoryLayout<T>.size <= totalSize else {
+            throw MP4Error.tooFewBytes
         }
+        return try await self.readData(byteRange: startingAt..<startingAt+MemoryLayout<T>.size).asFixedInteger(byteOrder: byteOrder)
     }
     
-    func readFixedPoint<T: FixedWidthInteger & UnsignedInteger>(startingAt: Int, underlyingType: T.Type, fractionBits: Int, byteOrder: ByteOrder) async throws -> Double {
+    func readSignedFixedPoint<T: FixedWidthInteger & SignedInteger>(startingAt: Int, fractionBits: UInt8, byteOrder: ByteOrder) async throws -> FixedPointNumber<T> {
         let underlyingInteger: T = try await self.readInteger(startingAt: startingAt, T.self, byteOrder: byteOrder)
-        return Double(fixedPoint: underlyingInteger, fractionBits: fractionBits)
+        return .init(underlyingInteger, fractionBits: fractionBits)
+    }
+    
+    func readUnsignedFixedPoint<T: FixedWidthInteger & UnsignedInteger>(startingAt: Int, fractionBits: UInt8, byteOrder: ByteOrder) async throws -> FixedPointNumber<T> {
+        let underlyingInteger: T = try await self.readInteger(startingAt: startingAt, T.self, byteOrder: byteOrder)
+        return .init(underlyingInteger, fractionBits: fractionBits)
     }
 }

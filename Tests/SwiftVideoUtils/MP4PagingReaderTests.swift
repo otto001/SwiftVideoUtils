@@ -64,5 +64,4 @@ final class MP4PagingReaderTests: XCTestCase {
         XCTAssertEqual(reader.pagesInMemory, 8)
         XCTAssertEqual(readCount, 10)
     }
-
 }

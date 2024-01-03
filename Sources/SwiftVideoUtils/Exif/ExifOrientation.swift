@@ -39,7 +39,7 @@ private let epsilon: CGFloat = 0.00001
 
 extension ExifOrientation {
     public init?(matrix: MP4TransformationMatrix) {
-        guard abs(matrix.u) < epsilon && abs(matrix.v) < epsilon && abs(matrix.w-1) < epsilon else { return nil }
+        guard abs(matrix.u.double) < epsilon && abs(matrix.v.double) < epsilon && abs(matrix.w.double-1) < epsilon else { return nil }
         guard let orientation = ExifOrientation(transform: matrix.affineTransform) else { return nil }
         self = orientation
     }

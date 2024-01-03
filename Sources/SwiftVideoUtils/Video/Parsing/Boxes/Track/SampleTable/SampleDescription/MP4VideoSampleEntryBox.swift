@@ -154,7 +154,7 @@ extension MP4VideoSampleEntryBox {
                 extensions[.sampleDescriptionExtensionAtoms] = .init(sampleDescriptionExtensionAtoms)
             }
         default:
-            throw MP4Error.internalError("unknown format: \(typeName.description)")
+            throw MP4Error.internalError("unsupported format: \(typeName.description)")
         }
         
         

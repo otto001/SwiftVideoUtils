@@ -20,8 +20,11 @@ public class MP4SequentialReader {
     public var offset: Int = 0
     public let baseOffset: Int
     public let limit: Int
+    public var readOffset: Int {
+        self.baseOffset + self.offset
+    }
     public var remainingCount: Int {
-        limit - baseOffset - offset
+        self.limit - self.readOffset
     }
     
     public init(reader: any MP4Reader) {
@@ -57,7 +60,7 @@ public class MP4SequentialReader {
         guard self.remainingCount >= count else {
             throw MP4Error.tooFewBytes
         }
-        return baseOffset+offset..<baseOffset+offset+count
+        return self.readOffset..<self.readOffset+count
     }
 
     public func prepareToRead(count readCount: Int) async throws {
@@ -81,15 +84,23 @@ public class MP4SequentialReader {
             throw MP4Error.tooFewBytes
         }
         defer { offset += MemoryLayout<T>.size }
-        return try await self.reader.readInteger(startingAt: baseOffset+offset, type.self, byteOrder: byteOrder)
+        return try await self.reader.readInteger(startingAt: self.readOffset, type.self, byteOrder: byteOrder)
     }
     
-    public func readFixedPoint<T: FixedWidthInteger & UnsignedInteger>(underlyingType: T.Type, fractionBits: Int, byteOrder: ByteOrder) async throws -> Double {
+    public func readSignedFixedPoint<T: FixedWidthInteger & SignedInteger>(fractionBits: UInt8, byteOrder: ByteOrder) async throws -> FixedPointNumber<T> {
         guard MemoryLayout<T>.size <= remainingCount else {
             throw MP4Error.tooFewBytes
         }
         defer { offset += MemoryLayout<T>.size }
-        return try await self.reader.readFixedPoint(startingAt: baseOffset+offset, underlyingType: underlyingType.self, fractionBits: fractionBits, byteOrder: byteOrder)
+        return try await self.reader.readSignedFixedPoint(startingAt: self.readOffset, fractionBits: fractionBits, byteOrder: byteOrder)
+    }
+    
+    public func readUnsignedFixedPoint<T: FixedWidthInteger & UnsignedInteger>(fractionBits: UInt8, byteOrder: ByteOrder) async throws -> FixedPointNumber<T> {
+        guard MemoryLayout<T>.size <= remainingCount else {
+            throw MP4Error.tooFewBytes
+        }
+        defer { offset += MemoryLayout<T>.size }
+        return try await self.reader.readUnsignedFixedPoint(startingAt: self.readOffset, fractionBits: fractionBits, byteOrder: byteOrder)
     }
 }
 
@@ -185,6 +196,10 @@ public extension MP4SequentialReader {
         
         let typeName: MP4FourCC = try await self.read()
         
+        if self.context.fileType == nil && typeName != "ftyp" {
+            throw MP4Error.failedToParseBox(description: "Attempted to parse a box besides ftyp without context.fileType set.")
+        }
+        
         if size == 1 {
             size = Int(try await self.readInteger(UInt64.self, byteOrder: .bigEndian))
         }
@@ -206,7 +221,7 @@ public extension MP4SequentialReader {
         var result: [any MP4Box] = []
         
         do {
-            while self.remainingCount >= 8 {
+            while self.remainingCount > 0 {
                 result.append(try await readBox(boxTypeMap: boxTypeMap))
             }
         } catch MP4Error.endOfFile {

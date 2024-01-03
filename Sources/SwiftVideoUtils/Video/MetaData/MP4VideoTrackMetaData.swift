@@ -49,8 +49,8 @@ public struct MP4VideoTrackMetaData: MP4TrackMetaData {
         let mediaHeader = try mediaBox.mediaHeaderBox.unwrapOrFail()
         let stblBox = try mediaBox.mediaInformationBox.unwrapOrFail().sampleTableBox.unwrapOrFail()
         
-        self.trackWidth = trackHeader.trackWidth
-        self.trackHeight = trackHeader.trackHeight
+        self.trackWidth = trackHeader.trackWidth.double
+        self.trackHeight = trackHeader.trackHeight.double
         let orientation = trackHeader.displayMatrix.exifOrientation
         self.orientation = orientation
         

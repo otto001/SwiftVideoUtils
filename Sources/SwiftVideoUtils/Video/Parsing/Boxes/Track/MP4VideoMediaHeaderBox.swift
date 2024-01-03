@@ -8,7 +8,7 @@
 import Foundation
 
 
-public class MP4VideoMediaHeaderBox: MP4VersionedBox {
+public class MP4VideoMediaHeaderBox: MP4FullBox {
     public static let typeName: MP4FourCC = "vmhd"
 
     public var version:  MP4BoxVersion

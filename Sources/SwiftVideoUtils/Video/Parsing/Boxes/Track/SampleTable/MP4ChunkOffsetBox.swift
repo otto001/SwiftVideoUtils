@@ -7,7 +7,7 @@
 
 import Foundation
 
-public protocol MP4ChunkOffsetBox: MP4VersionedBox {
+public protocol MP4ChunkOffsetBox: MP4FullBox {
     func chunkOffset(of chunk: MP4Index<UInt32>) -> Int
 }
 

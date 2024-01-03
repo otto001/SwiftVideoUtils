@@ -7,7 +7,7 @@
 
 import Foundation
 
-public protocol MP4SampleSizeBox: MP4VersionedBox {
+public protocol MP4SampleSizeBox: MP4FullBox {
     var sampleCount: UInt32 { get }
     func sampleSize(for sample: MP4Index<UInt32>) -> UInt32?
 }

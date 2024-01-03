@@ -8,7 +8,7 @@
 import Foundation
 import CoreMedia
 
-public class MP4MetadataItemKeysBox: MP4VersionedBox {
+public class MP4MetadataItemKeysBox: MP4FullBox {
     public static let typeName: MP4FourCC = "keys"
 
     public var version:  MP4BoxVersion

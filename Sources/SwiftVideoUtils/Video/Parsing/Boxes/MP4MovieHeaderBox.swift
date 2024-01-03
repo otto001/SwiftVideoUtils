@@ -14,7 +14,7 @@ private let referenceDate: Date = {
 }()
 
 
-public class MP4MovieHeaderBox: MP4VersionedBox {
+public class MP4MovieHeaderBox: MP4FullBox {
     public static let typeName: MP4FourCC = "mvhd"
 
     public var version:  MP4BoxVersion
@@ -26,8 +26,8 @@ public class MP4MovieHeaderBox: MP4VersionedBox {
     public var timescale: UInt32
     public var duration: UInt32
     
-    public var rate: Double
-    public var volume: Double
+    public var rate: FixedPointNumber<Int32>
+    public var volume: FixedPointNumber<Int16>
     
     /// 10-bytes of reserved data
     public var reserved: Data
@@ -56,8 +56,8 @@ public class MP4MovieHeaderBox: MP4VersionedBox {
         self.timescale = try await reader.readInteger(UInt32.self, byteOrder: .bigEndian)
         self.duration = try await reader.readInteger(UInt32.self, byteOrder: .bigEndian)
         
-        self.rate = try await reader.readFixedPoint(underlyingType: UInt32.self, fractionBits: 16, byteOrder: .bigEndian)
-        self.volume = try await reader.readFixedPoint(underlyingType: UInt16.self, fractionBits: 8, byteOrder: .bigEndian)
+        self.rate = try await reader.readSignedFixedPoint(fractionBits: 16, byteOrder: .bigEndian)
+        self.volume = try await reader.readSignedFixedPoint(fractionBits: 8, byteOrder: .bigEndian)
         
         self.reserved = try await reader.readData(count: 10)
         
@@ -86,8 +86,8 @@ public class MP4MovieHeaderBox: MP4VersionedBox {
         try await writer.write(timescale, byteOrder: .bigEndian)
         try await writer.write(duration, byteOrder: .bigEndian)
         
-        try await writer.write(fixedPoint: rate, UInt32.self, fractionBits: 16, byteOrder: .bigEndian)
-        try await writer.write(fixedPoint: volume, UInt16.self, fractionBits: 8, byteOrder: .bigEndian)
+        try await writer.write(rate, byteOrder: .bigEndian)
+        try await writer.write(volume, byteOrder: .bigEndian)
         
         try await writer.write(reserved)
         

@@ -11,7 +11,7 @@ import Foundation
 
 public struct MP4IOContext {
     public enum FileType {
-        case mp4
+        case isoMp4
         case quicktime
     }
     

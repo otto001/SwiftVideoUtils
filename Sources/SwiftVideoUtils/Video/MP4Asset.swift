@@ -17,8 +17,8 @@ open class MP4Asset {
     private var _boxes: [any MP4Box] = []
     public var boxes: [any MP4Box] {
         get async throws {
-            if self.sequentialReader.remainingCount > 0 {
-                self._boxes.append(contentsOf: try await self.sequentialReader.readBoxes(boxTypeMap: Self.supportedTopLevelBoxTypes))
+            while self.sequentialReader.remainingCount > 0 {
+                _ = try await self.readNextBox()
             }
             return self._boxes
         }
@@ -60,16 +60,33 @@ open class MP4Asset {
         self.reader = reader
     }
     
-    public convenience init(url: URL) async throws {
-        try await self.init(reader: try MP4FileReader(url: url))
+    public convenience init(url: URL, context: MP4IOContext) async throws {
+        try await self.init(reader: try MP4FileReader(url: url, context: context))
     }
     
-    public convenience init(data: Data) async throws {
-        try await self.init(reader: MP4BufferReader(data: data))
+    public convenience init(data: Data, context: MP4IOContext) async throws {
+        try await self.init(reader: MP4BufferReader(data: data, context: context))
     }
     
     public func metaData() async throws -> MP4MetaData {
         try await MP4MetaData(asset: self)
+    }
+    
+    private func readNextBox() async throws -> any MP4Box {
+        let box = try await self.sequentialReader.readBox(boxTypeMap: Self.supportedTopLevelBoxTypes)
+        self._boxes.append(box)
+        
+        switch box.typeName {
+        case "moov":
+            self._moovBox = box as? MP4MovieBox
+        case "ftyp":
+            if let ftypBox = box as? MP4FileTypeBox, self.reader.context.fileType == nil {
+                self.reader.context.fileType = ftypBox.majorBrand == "qt  " ? .quicktime : .isoMp4
+            }
+        default:
+            break
+        }
+        return box
     }
     
     private func findMoovBox() async throws -> MP4MovieBox {
@@ -77,17 +94,15 @@ open class MP4Asset {
             return moovBox as! MP4MovieBox
         }
         
-        while true {
-            let box = try await self.sequentialReader.readBox(boxTypeMap: Self.supportedTopLevelBoxTypes)
-            self._boxes.append(box)
-            if box.typeName == "moov" {
-                if let moovBox = box as? MP4MovieBox {
-                    return moovBox
-                } else {
-                    throw (box as? MP4ParsingErrorBox)?.error ?? MP4Error.internalError("moov box parsed as \(box.self)")
-                }
-            }
+        while self._moovBox == nil && self.sequentialReader.remainingCount > 0 {
+            _ = try await self.readNextBox()
         }
+        
+        guard let moovBox = self._moovBox else {
+            throw MP4Error.endOfFile  // TODO: Better error
+        }
+        
+        return moovBox
     }
     
     public func makeStreamable() async throws -> Bool {

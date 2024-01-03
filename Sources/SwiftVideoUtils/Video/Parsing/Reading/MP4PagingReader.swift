@@ -12,9 +12,7 @@ public class MP4PagingReader: MP4Reader {
     public let underlyingReader: any MP4Reader
     public var totalSize: Int { self.underlyingReader.totalSize }
     
-    public var context: MP4IOContext {
-        underlyingReader.context
-    }
+    public var context: MP4IOContext
     
     struct Page {
         let index: Int
@@ -36,6 +34,7 @@ public class MP4PagingReader: MP4Reader {
     
     public init(reader: any MP4Reader, maxPagesInMemory: Int = 16, pageSize: Int = 4096) {
         self.underlyingReader = reader
+        self.context = underlyingReader.context
         self.pageSize = pageSize
         self.maxPagesInMemory = maxPagesInMemory
     }

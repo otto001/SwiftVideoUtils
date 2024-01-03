@@ -8,7 +8,7 @@
 import Foundation
 
 
-public class MP4CompositionTimeToSampleBox: MP4VersionedBox {
+public class MP4CompositionTimeToSampleBox: MP4FullBox {
     public static let typeName: MP4FourCC = "ctts"
     
     public var version:  MP4BoxVersion
@@ -44,7 +44,7 @@ public class MP4CompositionTimeToSampleBox: MP4VersionedBox {
         for _ in 0..<entryCount {
             var entry = Entry(sampleCount: try await reader.readInteger(byteOrder: .bigEndian), offset: 0)
             
-            if self.version == .mp4(0){
+            if self.version == .isoMp4(0){
                 let offset: UInt32 = try await reader.readInteger(byteOrder: .bigEndian)
                 entry.offset = Int32(offset)
             } else {
@@ -64,7 +64,7 @@ public class MP4CompositionTimeToSampleBox: MP4VersionedBox {
         for entry in entries {
             try await writer.write(entry.sampleCount, byteOrder: .bigEndian)
             
-            if self.version == .mp4(0) {
+            if self.version == .isoMp4(0) {
                 try await writer.write(UInt32(entry.offset), byteOrder: .bigEndian)
             } else {
                 try await writer.write(entry.offset, byteOrder: .bigEndian)

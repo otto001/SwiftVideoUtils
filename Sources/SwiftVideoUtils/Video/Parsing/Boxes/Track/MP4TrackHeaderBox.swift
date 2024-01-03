@@ -8,7 +8,7 @@
 import Foundation
 
 
-public class MP4TrackHeaderBox: MP4VersionedBox {
+public class MP4TrackHeaderBox: MP4FullBox {
     public static let typeName: MP4FourCC = "tkhd"
 
     
@@ -38,8 +38,8 @@ public class MP4TrackHeaderBox: MP4VersionedBox {
     
     public var displayMatrix: MP4TransformationMatrix
     
-    public var trackWidth: Double
-    public var trackHeight: Double
+    public var trackWidth: FixedPointNumber<Int32>
+    public var trackHeight: FixedPointNumber<Int32>
 
    public required init(contentReader reader: MP4SequentialReader) async throws {
         let version:  MP4BoxVersion = try await reader.read()
@@ -80,8 +80,8 @@ public class MP4TrackHeaderBox: MP4VersionedBox {
         
         self.displayMatrix = try await .init(reader: reader)
         
-        self.trackWidth = try await reader.readFixedPoint(underlyingType: UInt32.self, fractionBits: 16, byteOrder: .bigEndian)
-        self.trackHeight = try await reader.readFixedPoint(underlyingType: UInt32.self, fractionBits: 16, byteOrder: .bigEndian)
+        self.trackWidth = try await reader.readSignedFixedPoint(fractionBits: 16, byteOrder: .bigEndian)
+        self.trackHeight = try await reader.readSignedFixedPoint(fractionBits: 16, byteOrder: .bigEndian)
     }
     
     public func writeContent(to writer: MP4Writer) async throws {
@@ -121,7 +121,7 @@ public class MP4TrackHeaderBox: MP4VersionedBox {
         
         try await writer.write(displayMatrix)
         
-        try await writer.write(fixedPoint: trackWidth, UInt32.self, fractionBits: 16, byteOrder: .bigEndian)
-        try await writer.write(fixedPoint: trackHeight, UInt32.self, fractionBits: 16, byteOrder: .bigEndian)
+        try await writer.write(trackWidth, byteOrder: .bigEndian)
+        try await writer.write(trackHeight, byteOrder: .bigEndian)
     }
 }

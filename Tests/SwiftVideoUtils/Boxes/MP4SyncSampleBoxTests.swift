@@ -11,7 +11,7 @@ import XCTest
 final class MP4SyncSampleBoxTests: XCTestCase {
 
     func testSyncSampleBeforeSample() throws {
-        let box = MP4SyncSampleBox(version: .mp4(0), flags: .init(), syncSamples: [0, 10, 20, 100].map {.init(index0: $0)})
+        let box = MP4SyncSampleBox(version: .isoMp4(0), flags: .init(), syncSamples: [0, 10, 20, 100].map {.init(index0: $0)})
         
         XCTAssertEqual(box.syncSample(before: .init(index0: 0)), .init(index0: 0))
         XCTAssertEqual(box.syncSample(before: .init(index0: 9)), .init(index0: 0))

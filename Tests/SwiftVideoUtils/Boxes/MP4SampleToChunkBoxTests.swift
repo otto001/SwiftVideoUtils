@@ -12,7 +12,7 @@ import XCTest
 final class MP4SampleToChunkBoxTests: XCTestCase {
     
     func testSamplePosition1() throws {
-        let box = MP4SampleToChunkBox(version: .mp4(0), flags: .init(),
+        let box = MP4SampleToChunkBox(version: .isoMp4(0), flags: .init(),
                                       entries: [.init(firstChunk: .init(index0: 0), sampleCount: 30, sampleDescriptionID: 0),
                                                 .init(firstChunk: .init(index0: 5), sampleCount: 29, sampleDescriptionID: 0)])
         // 30 samples per chunk (first group)
@@ -33,7 +33,7 @@ final class MP4SampleToChunkBoxTests: XCTestCase {
     }
     
     func testSamplePosition2() throws {
-        let box = MP4SampleToChunkBox(version: .mp4(0), flags: .init(), entries: [.init(firstChunk: .init(index0: 0), sampleCount: 4, sampleDescriptionID: 0),
+        let box = MP4SampleToChunkBox(version: .isoMp4(0), flags: .init(), entries: [.init(firstChunk: .init(index0: 0), sampleCount: 4, sampleDescriptionID: 0),
                                                                             .init(firstChunk: .init(index0: 1), sampleCount: 3, sampleDescriptionID: 0),
                                                                             .init(firstChunk: .init(index0: 2), sampleCount: 4, sampleDescriptionID: 0)])
         

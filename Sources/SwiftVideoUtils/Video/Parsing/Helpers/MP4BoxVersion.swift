@@ -25,8 +25,8 @@ public struct MP4BoxVersion: MP4Readable, MP4Writeable, Equatable {
         try await writer.write(version)
     }
     
-    static func mp4(_ version: UInt8) -> MP4BoxVersion {
-        .init(version, fileType: .mp4)
+    static func isoMp4(_ version: UInt8) -> MP4BoxVersion {
+        .init(version, fileType: .isoMp4)
     }
     
     static func quicktime(_ version: UInt8) -> MP4BoxVersion {

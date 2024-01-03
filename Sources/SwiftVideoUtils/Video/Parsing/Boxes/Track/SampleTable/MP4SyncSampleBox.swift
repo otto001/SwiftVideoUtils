@@ -8,7 +8,7 @@
 import Foundation
 
 
-public class MP4SyncSampleBox: MP4VersionedBox {
+public class MP4SyncSampleBox: MP4FullBox {
     public static let typeName: MP4FourCC = "stss"
 
     

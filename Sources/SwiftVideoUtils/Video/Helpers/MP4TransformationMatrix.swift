@@ -1,6 +1,6 @@
 //
-//  File.swift
-//  
+//  MP4TransformationMatrix.swift
+//
 //
 //  Created by Matteo Ludwig on 30.11.23.
 //
@@ -9,19 +9,21 @@ import Foundation
 import CoreGraphics
 
 public struct MP4TransformationMatrix {
-    public var a: Double
-    public var b: Double
-    public var c: Double
-    public var d: Double
+    public var a: FixedPointNumber<Int32>
+    public var b: FixedPointNumber<Int32>
+    public var c: FixedPointNumber<Int32>
+    public var d: FixedPointNumber<Int32>
     
-    public var x: Double
-    public var y: Double
+    public var x: FixedPointNumber<Int32>
+    public var y: FixedPointNumber<Int32>
     
-    public var u: Double
-    public var v: Double
-    public var w: Double
+    public var u: FixedPointNumber<Int32>
+    public var v: FixedPointNumber<Int32>
+    public var w: FixedPointNumber<Int32>
     
-    public init(a: Double, b: Double, c: Double, d: Double, x: Double, y: Double, u: Double, v: Double, w: Double) {
+    public init(a: FixedPointNumber<Int32>, b: FixedPointNumber<Int32>, c: FixedPointNumber<Int32>,
+                d: FixedPointNumber<Int32>, x: FixedPointNumber<Int32>, y: FixedPointNumber<Int32>,
+                u: FixedPointNumber<Int32>, v: FixedPointNumber<Int32>, w: FixedPointNumber<Int32>) {
         self.a = a
         self.b = b
         self.c = c
@@ -34,34 +36,34 @@ public struct MP4TransformationMatrix {
     }
     
     public init(reader: MP4SequentialReader) async throws {
-        self.a = try await reader.readFixedPoint(underlyingType: UInt32.self, fractionBits: 16, byteOrder: .bigEndian)
-        self.b = try await reader.readFixedPoint(underlyingType: UInt32.self, fractionBits: 16, byteOrder: .bigEndian)
-        self.u = try await reader.readFixedPoint(underlyingType: UInt32.self, fractionBits: 30, byteOrder: .bigEndian)
+        self.a = try await reader.readSignedFixedPoint(fractionBits: 16, byteOrder: .bigEndian)
+        self.b = try await reader.readSignedFixedPoint(fractionBits: 16, byteOrder: .bigEndian)
+        self.u = try await reader.readSignedFixedPoint(fractionBits: 30, byteOrder: .bigEndian)
         
-        self.c = try await reader.readFixedPoint(underlyingType: UInt32.self, fractionBits: 16, byteOrder: .bigEndian)
-        self.d = try await reader.readFixedPoint(underlyingType: UInt32.self, fractionBits: 16, byteOrder: .bigEndian)
-        self.v = try await reader.readFixedPoint(underlyingType: UInt32.self, fractionBits: 30, byteOrder: .bigEndian)
+        self.c = try await reader.readSignedFixedPoint(fractionBits: 16, byteOrder: .bigEndian)
+        self.d = try await reader.readSignedFixedPoint(fractionBits: 16, byteOrder: .bigEndian)
+        self.v = try await reader.readSignedFixedPoint(fractionBits: 30, byteOrder: .bigEndian)
         
-        self.x = try await reader.readFixedPoint(underlyingType: UInt32.self, fractionBits: 16, byteOrder: .bigEndian)
-        self.y = try await reader.readFixedPoint(underlyingType: UInt32.self, fractionBits: 16, byteOrder: .bigEndian)
-        self.w = try await reader.readFixedPoint(underlyingType: UInt32.self, fractionBits: 30, byteOrder: .bigEndian)
+        self.x = try await reader.readSignedFixedPoint(fractionBits: 16, byteOrder: .bigEndian)
+        self.y = try await reader.readSignedFixedPoint(fractionBits: 16, byteOrder: .bigEndian)
+        self.w = try await reader.readSignedFixedPoint(fractionBits: 30, byteOrder: .bigEndian)
     }
     
     public var affineTransform: CGAffineTransform {
         get {
-            .init(CGFloat(a), CGFloat(b), CGFloat(c), CGFloat(d), CGFloat(x), CGFloat(y))
+            .init(CGFloat(a.double), CGFloat(b.double), CGFloat(c.double), CGFloat(d.double), CGFloat(x.double), CGFloat(y.double))
         }
         set {
-            a = newValue.a
-            b = newValue.b
-            c = newValue.c
-            d = newValue.d
-            x = newValue.tx
-            y = newValue.ty
+            a.double = newValue.a
+            b.double = newValue.b
+            c.double = newValue.c
+            d.double = newValue.d
+            x.double = newValue.tx
+            y.double = newValue.ty
             
-            u = 0
-            v = 0
-            w = 0
+            u.double = 0
+            v.double = 0
+            w.double = 0
         }
     }
     
@@ -72,22 +74,22 @@ public struct MP4TransformationMatrix {
 
 extension MP4TransformationMatrix: MP4Writeable {
     public func write(to writer: MP4Writer) async throws {
-        try await writer.write(fixedPoint: a, UInt32.self, fractionBits: 16, byteOrder: .bigEndian)
-        try await writer.write(fixedPoint: b, UInt32.self, fractionBits: 16, byteOrder: .bigEndian)
-        try await writer.write(fixedPoint: u, UInt32.self, fractionBits: 30, byteOrder: .bigEndian)
+        try await writer.write(self.a, byteOrder: .bigEndian)
+        try await writer.write(self.b, byteOrder: .bigEndian)
+        try await writer.write(self.u, byteOrder: .bigEndian)
         
-        try await writer.write(fixedPoint: c, UInt32.self, fractionBits: 16, byteOrder: .bigEndian)
-        try await writer.write(fixedPoint: d, UInt32.self, fractionBits: 16, byteOrder: .bigEndian)
-        try await writer.write(fixedPoint: v, UInt32.self, fractionBits: 30, byteOrder: .bigEndian)
+        try await writer.write(self.c, byteOrder: .bigEndian)
+        try await writer.write(self.d, byteOrder: .bigEndian)
+        try await writer.write(self.v, byteOrder: .bigEndian)
         
-        try await writer.write(fixedPoint: x, UInt32.self, fractionBits: 16, byteOrder: .bigEndian)
-        try await writer.write(fixedPoint: y, UInt32.self, fractionBits: 16, byteOrder: .bigEndian)
-        try await writer.write(fixedPoint: w, UInt32.self, fractionBits: 30, byteOrder: .bigEndian)
+        try await writer.write(self.x, byteOrder: .bigEndian)
+        try await writer.write(self.y, byteOrder: .bigEndian)
+        try await writer.write(self.w, byteOrder: .bigEndian)
     }
 }
 
 extension MP4TransformationMatrix: CustomDebugStringConvertible {
     public var debugDescription: String {
-        String(format: "%.3f  %.3f  %.3f\n%.3f  %.3f  %.3f\n%.3f  %.3f  %.3f", a, b, u, c, d, v, x, y, w)
+        String(format: "%.3f  %.3f  %.3f\n%.3f  %.3f  %.3f\n%.3f  %.3f  %.3f", a.double, b.double, u.double, c.double, d.double, v.double, x.double, y.double, w.double)
     }
 }

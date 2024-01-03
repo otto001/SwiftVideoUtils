@@ -33,6 +33,8 @@ public class MP4BlockReader: MP4Reader {
     
     public func readData(byteRange: Range<Int>) async throws -> Data {
         try await prepareToRead(byteRange: byteRange)
-        return try await self.closure(byteRange)
+        let result = try await self.closure(byteRange)
+        assert(result.count == byteRange.count, "The closure did not return the correct amount of bytes!")
+        return result
     }
 }

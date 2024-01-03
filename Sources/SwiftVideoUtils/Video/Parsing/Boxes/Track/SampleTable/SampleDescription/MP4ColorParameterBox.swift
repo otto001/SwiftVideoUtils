@@ -43,7 +43,7 @@ public class MP4ColorParameterBox: MP4ConcreteBox {
         self.transferFunctionIndex = try await reader.readInteger(byteOrder: .bigEndian)
         self.matrixIndex = try await reader.readInteger(byteOrder: .bigEndian)
         
-        if reader.context.fileType == .mp4 {
+        if reader.context.fileType == .isoMp4 {
             self.flags = try await reader.read()
         }
     }
@@ -55,7 +55,7 @@ public class MP4ColorParameterBox: MP4ConcreteBox {
         try await writer.write(transferFunctionIndex, byteOrder: .bigEndian)
         try await writer.write(matrixIndex, byteOrder: .bigEndian)
         
-        if writer.context.fileType == .mp4 {
+        if writer.context.fileType == .isoMp4 {
             try await writer.write(flags ?? 0)
         }
     }

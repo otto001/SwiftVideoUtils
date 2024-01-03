@@ -17,7 +17,7 @@ public class MP4PagingReader: MP4Reader {
     struct Page {
         let index: Int
         let data: Data
-        let lastAccessed: Date
+        var lastAccessed: Date
     }
     
     private var pages: [Int: Page] = [:]
@@ -102,6 +102,7 @@ public class MP4PagingReader: MP4Reader {
     
     private func dataFromPage(page: Int, byteRange: Range<Int>) -> Data? {
         let pageBegin = page*self.pageSize
+        self.pages[page]?.lastAccessed = Date()
         return self.pages[page]?.data[max(0, byteRange.lowerBound - pageBegin)..<min(self.pageSize, byteRange.upperBound-pageBegin)]
     }
     

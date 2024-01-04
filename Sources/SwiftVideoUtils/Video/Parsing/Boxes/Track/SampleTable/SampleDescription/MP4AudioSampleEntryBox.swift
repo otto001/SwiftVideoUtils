@@ -94,6 +94,7 @@ public class MP4AudioSampleEntryBoxIso: MP4SampleEntryBox {
     public var children: [MP4Box]
     
     public required init(format: MP4FourCC, contentReader reader: MP4SequentialReader) async throws {
+        
         self.typeName = format
         self.reserved1 = try await reader.readData(count: 6)
         self.dataReferenceIndex = try await reader.readInteger(byteOrder: .bigEndian)
@@ -121,11 +122,16 @@ public class MP4AudioSampleEntryBoxIso: MP4SampleEntryBox {
     }
     
     public func audioStreamBasicDescription() throws -> AudioStreamBasicDescription {
-        throw MP4Error.internalError("unsupported format: \(typeName.description)")
-    }
-    
-    public func makeFormatDescription() async throws -> CMFormatDescription {
-        return try .init(audioStreamBasicDescription: try self.audioStreamBasicDescription())
+        switch self.typeName {
+        case "mp4a":
+            return .init(mSampleRate: Double(self.sampleRate),
+                         mFormatID: kAudioFormatMPEG4AAC, mFormatFlags: 0,
+                         mBytesPerPacket: 0, mFramesPerPacket: 1024,
+                         mBytesPerFrame: 0, mChannelsPerFrame: UInt32(self.channelCount),
+                         mBitsPerChannel: UInt32(self.sampleSize), mReserved: 0)
+        default:
+            throw MP4Error.internalError("unsupported format: \(typeName.description)")
+        }
     }
 }
 
@@ -256,14 +262,15 @@ public class MP4AudioSampleEntryBoxQuicktimeV1: MP4SampleEntryBox {
     }
     
     public func audioStreamBasicDescription() throws -> AudioStreamBasicDescription {
-        guard self.typeName == "mp4a" else {
+        switch self.typeName {
+        case "mp4a":
+            return .init(mSampleRate: self.sampleRate.double,
+                         mFormatID: kAudioFormatMPEG4AAC, mFormatFlags: 0,
+                         mBytesPerPacket: 0, mFramesPerPacket: self.framesPerPacket,
+                         mBytesPerFrame: self.bytesPerFrame, mChannelsPerFrame: UInt32(self.channelCount),
+                         mBitsPerChannel: UInt32(self.sampleSize), mReserved: 0)
+        default:
             throw MP4Error.internalError("unsupported format: \(typeName.description)")
         }
-        
-        return .init(mSampleRate: self.sampleRate.double,
-                     mFormatID: kAudioFormatMPEG4AAC, mFormatFlags: 0,
-                     mBytesPerPacket: self.bytesPerPacket, mFramesPerPacket: self.framesPerPacket,
-                     mBytesPerFrame: self.bytesPerFrame, mChannelsPerFrame: UInt32(self.channelCount),
-                     mBitsPerChannel: UInt32(self.sampleSize), mReserved: 0)
     }
 }

@@ -67,6 +67,8 @@ open class MP4Track {
         
         if let videoSampleEntryBox = sampleDescriptionBox.firstChild(ofType: MP4VideoSampleEntryBox.self) {
             return try await videoSampleEntryBox.makeFormatDescription()
+        } else if let audioSampleEntryBox = sampleDescriptionBox.firstChild(ofType: MP4AudioSampleEntry.self) {
+            return try await audioSampleEntryBox.makeFormatDescription()
         } else {
             throw MP4Error.unsupportedTrackFormat
         }

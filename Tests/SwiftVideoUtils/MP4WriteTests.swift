@@ -38,7 +38,7 @@ final class MP4WriteTests: XCTestCase {
         
         
         
-        let boxes = try await asset.boxes
+        //let boxes = try await asset.boxes
 //        
 //        var allBoxes: [any MP4Box] = boxes.flatMap { $0.allChildrenRecursive() }
 //        

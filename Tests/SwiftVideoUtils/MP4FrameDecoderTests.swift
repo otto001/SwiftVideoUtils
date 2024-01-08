@@ -75,5 +75,8 @@ final class MP4FrameDecoderTests: XCTestCase {
         let asset = try await MP4Asset(reader: bufferedReader)
         let generator = try await MP4FrameDecoder(asset: asset)
         let thumbnail = try await generator.cgImage(for: generator.track.syncSample(for: 0)!)
+        
+        XCTAssertEqual(thumbnail.width, 3840)
+        XCTAssertEqual(thumbnail.height, 2160)
     }
 }

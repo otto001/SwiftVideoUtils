@@ -78,6 +78,7 @@ public class MP4PagingReader: MP4Reader {
         }
         let missingPages: [Int] = neededPages.filter {  self.pages[$0] == nil }
         guard !missingPages.isEmpty else { return }
+        
         let pages = try await withThrowingTaskGroup(of: Page.self) { group in
             for page in missingPages {
                 group.addTask {

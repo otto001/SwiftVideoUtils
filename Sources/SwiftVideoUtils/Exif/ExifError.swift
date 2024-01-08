@@ -8,6 +8,6 @@
 import Foundation
 
 
-enum ExifError: Error {
+public enum ExifError: Error {
     case failedToFindExifData
 }

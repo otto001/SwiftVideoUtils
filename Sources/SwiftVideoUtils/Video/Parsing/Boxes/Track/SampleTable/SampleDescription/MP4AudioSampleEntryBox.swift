@@ -48,14 +48,6 @@ public enum MP4AudioSampleEntry: MP4BoxProxy {
                 throw MP4Error.failedToParseBox(description: "Version \(version) of stsd is not supported")
             }
         }
-        
-        do {
-            let format = try await self.makeFormatDescription()
-            print(format)
-        } catch {
-            print(error)
-            print()
-        }
     }
     
     public func audioStreamBasicDescription() throws -> AudioStreamBasicDescription {

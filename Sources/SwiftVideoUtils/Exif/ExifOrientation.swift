@@ -45,9 +45,6 @@ extension ExifOrientation {
     }
     
     public init?(transform: CGAffineTransform) {
-        // TODO: check that translation matches image size
-        
-        
         let rotationCos = transform.d
         let rotationSin = -transform.c
         

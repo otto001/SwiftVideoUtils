@@ -44,7 +44,7 @@ public class MP4ColorParameterBox: MP4ConcreteBox {
         self.transferFunctionIndex = try await reader.readInteger(byteOrder: .bigEndian)
         self.matrixIndex = try await reader.readInteger(byteOrder: .bigEndian)
         
-        if reader.context.fileType == .isoMp4 {
+        if reader.context.fileType == .isoMp4 && reader.remainingCount >= 1 {
             self.flags = try await reader.read()
         }
     }

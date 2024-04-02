@@ -72,6 +72,10 @@ public class MP4CompositionTimeToSampleBox: MP4FullBox {
         }
     }
     
+    public var overestimatedContentByteSize: Int {
+        8 + entries.count * 8
+    }
+    
     public func offsets(for samples: Range<MP4Index<UInt32>>) -> [Int32] {
         var currentSample: MP4Index<UInt32> = .zero
         var result: [Int32] = []

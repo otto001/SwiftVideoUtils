@@ -109,6 +109,10 @@ public class MP4VideoSampleEntryBox: MP4SampleEntryBox {
         
         try await writer.write(reserved3)
     }
+    
+    public var overestimatedContentByteSize: Int {
+        78 + reserved3.count + self.children.map {$0.overestimatedByteSize}.reduce(0, +)
+    }
 }
 
 

@@ -38,4 +38,8 @@ public class MP4SampleDescriptionBox: MP4ConcreteBox {
         try await writer.write(UInt32(children.count), byteOrder: .bigEndian)
         try await writer.write(children)
     }
+    
+    public var overestimatedContentByteSize: Int {
+        8 + self.children.map {$0.overestimatedByteSize}.reduce(0, +)
+    }
 }

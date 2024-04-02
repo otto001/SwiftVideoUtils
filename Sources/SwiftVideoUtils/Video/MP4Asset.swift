@@ -131,4 +131,8 @@ extension MP4Asset: MP4Writeable {
     public func write(to writer: MP4Writer) async throws {
         try await writer.write(try await boxes)
     }
+    
+    public var overestimatedByteSize: Int {
+        0
+    }
 }

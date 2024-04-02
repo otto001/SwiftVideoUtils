@@ -11,6 +11,7 @@ import Foundation
 public class MP4MetadataItemListBox: MP4ConcreteBox {
     public static let typeName: MP4FourCC = "ilst"
     public static let supportedChildBoxTypes: MP4BoxTypeMap = []
+    public var children: [MP4Box] { [] }
     
     public struct Item: MP4Writeable {
         /// https://developer.apple.com/documentation/quicktime-file-format/well-known_types
@@ -95,6 +96,10 @@ public class MP4MetadataItemListBox: MP4ConcreteBox {
             try await writer.write(data)
         }
         
+        public var overestimatedByteSize: Int {
+            reserved.count + 4 + data.count + 16
+        }
+        
         public func asString() -> String? {
             switch typeIndicator {
             case .utf8:
@@ -149,6 +154,10 @@ public class MP4MetadataItemListBox: MP4ConcreteBox {
     
     public func writeContent(to writer: any MP4Writer) async throws {
         try await writer.write(Array(items.values).sorted(by: {$0.index < $1.index}))
+    }
+    
+    public var overestimatedContentByteSize: Int {
+        items.values.map {$0.overestimatedByteSize}.reduce(0, +)
     }
     
     public func items(metadataItemKeysBox: MP4MetadataItemKeysBox) -> [MP4MetadataItemKeysBox.Key: Item] {

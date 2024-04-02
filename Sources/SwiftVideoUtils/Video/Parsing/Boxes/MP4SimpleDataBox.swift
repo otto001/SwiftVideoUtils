@@ -9,6 +9,7 @@ import Foundation
 
 public class MP4SimpleDataBox: MP4Box {
     public var typeName: MP4FourCC
+    public var children: [MP4Box] { [] }
     
     public var lazy: Bool {
         reader != nil
@@ -54,9 +55,13 @@ public class MP4SimpleDataBox: MP4Box {
     
     public func write(to writer: any MP4Writer) async throws {
         reader?.offset = 0
-        let size = reader?.remainingCount ?? _data!.count
+        let size = reader?.count ?? _data!.count
         try await writeSizeAndTypename(to: writer, contentSize: size)
         try await writeContent(to: writer)
+    }
+    
+    public var overestimatedContentByteSize: Int {
+        (reader?.count ?? _data!.count)
     }
     
     public func writeContent(to writer: MP4Writer) async throws {

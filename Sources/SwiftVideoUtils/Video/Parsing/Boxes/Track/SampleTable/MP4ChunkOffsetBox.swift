@@ -48,6 +48,10 @@ public class MP4ChunkOffset32Box: MP4ChunkOffsetBox {
         }
     }
     
+    public var overestimatedContentByteSize: Int {
+        8 + chunkOffsets.count * 4
+    }
+    
     public func chunkOffset(of chunk: MP4Index<UInt32>) -> Int {
         return Int(chunkOffsets[chunk])
     }
@@ -89,6 +93,10 @@ public class MP4ChunkOffset64Box: MP4ChunkOffsetBox {
         for chunkOffset in chunkOffsets {
             try await writer.write(chunkOffset, byteOrder: .bigEndian)
         }
+    }
+    
+    public var overestimatedContentByteSize: Int {
+        8 + chunkOffsets.count * 8
     }
     
     public func chunkOffset(of chunk: MP4Index<UInt32>) -> Int {

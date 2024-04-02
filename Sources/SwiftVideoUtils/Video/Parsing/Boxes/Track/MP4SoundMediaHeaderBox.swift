@@ -11,7 +11,7 @@ import Foundation
 public class MP4SoundMediaHeaderBox: MP4FullBox {
     public static let typeName: MP4FourCC = "smhd"
 
-    public var version:  MP4BoxVersion
+    public var version: MP4BoxVersion
     public var flags: MP4BoxFlags
     
     public var balance: FixedPointNumber<Int16>
@@ -31,5 +31,9 @@ public class MP4SoundMediaHeaderBox: MP4FullBox {
         
         try await writer.write(self.balance, byteOrder: .bigEndian)
         try await writer.write(self.reserved, byteOrder: .bigEndian)
+    }
+    
+    public var overestimatedContentByteSize: Int {
+        8
     }
 }

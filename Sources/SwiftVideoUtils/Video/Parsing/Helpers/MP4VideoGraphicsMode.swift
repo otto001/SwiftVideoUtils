@@ -35,4 +35,8 @@ extension MP4VideoGraphicsMode: MP4Writeable {
     public func write(to writer: MP4Writer) async throws {
         try await writer.write(rawValue, byteOrder: .bigEndian)
     }
+    
+    public var overestimatedByteSize: Int {
+        2
+    }
 }

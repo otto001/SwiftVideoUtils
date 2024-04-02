@@ -50,4 +50,8 @@ public class MP4MediaHeaderBox: MP4FullBox {
         try await writer.write(language)
         try await writer.write(quality, byteOrder: .bigEndian)
     }
+    
+    public var overestimatedContentByteSize: Int {
+        24
+    }
 }

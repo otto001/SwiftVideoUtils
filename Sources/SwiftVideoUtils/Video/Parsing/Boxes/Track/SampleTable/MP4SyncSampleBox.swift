@@ -45,6 +45,10 @@ public class MP4SyncSampleBox: MP4FullBox {
         }
     }
     
+    public var overestimatedContentByteSize: Int {
+        8 + syncSamples.count * 4
+    }
+    
     public func syncSample(before sample: MP4Index<UInt32>) -> MP4Index<UInt32>? {
         syncSamples.last { syncSample in
             syncSample <= sample

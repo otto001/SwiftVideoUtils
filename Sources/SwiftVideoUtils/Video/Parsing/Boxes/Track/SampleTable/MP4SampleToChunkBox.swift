@@ -38,6 +38,8 @@ public class MP4SampleToChunkBox: MP4FullBox {
             try await writer.write(sampleCount, byteOrder: .bigEndian)
             try await writer.write(sampleDescriptionID, byteOrder: .bigEndian)
         }
+        
+        public var overestimatedByteSize: Int { 12 }
     }
 
     public var entries: [Entry]
@@ -69,6 +71,10 @@ public class MP4SampleToChunkBox: MP4FullBox {
         for entry in entries {
             try await writer.write(entry)
         }
+    }
+    
+    public var overestimatedContentByteSize: Int {
+        8 + entries.count * 12
     }
     
     public struct SamplePosition: Equatable, Hashable {

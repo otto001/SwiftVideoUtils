@@ -37,8 +37,12 @@ public class MP4MetadataKeyTableBox: MP4ConcreteBox {
         public func writeContent(to writer: MP4Writer) async throws {
             try await writer.write(children)
         }
+        
+        public var overestimatedContentByteSize: Int {
+            self.children.map {$0.overestimatedByteSize}.reduce(0, +)
+        }
     }
-    public var children: [MP4MetaDataKeyBox]
+    public var children: [MP4Box]
 
     
     public required init(contentReader reader: MP4SequentialReader) async throws {
@@ -51,5 +55,9 @@ public class MP4MetadataKeyTableBox: MP4ConcreteBox {
     
     public func writeContent(to writer: any MP4Writer) async throws {
         try await writer.write(children)
+    }
+    
+    public var overestimatedContentByteSize: Int {
+        return self.children.map {$0.overestimatedByteSize}.reduce(0, +)
     }
 }

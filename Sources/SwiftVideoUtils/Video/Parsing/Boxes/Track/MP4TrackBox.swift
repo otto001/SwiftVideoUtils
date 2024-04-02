@@ -28,4 +28,8 @@ public class MP4TrackBox: MP4ConcreteBox {
     public func writeContent(to writer: MP4Writer) async throws {
         try await writer.write(children)
     }
+    
+    public var overestimatedContentByteSize: Int {
+        self.children.map {$0.overestimatedByteSize}.reduce(0, +)
+    }
 }

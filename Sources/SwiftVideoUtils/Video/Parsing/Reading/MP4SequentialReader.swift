@@ -26,6 +26,9 @@ public class MP4SequentialReader {
     public var remainingCount: Int {
         self.limit - self.readOffset
     }
+    public var count: Int {
+        self.limit - self.baseOffset
+    }
     
     public init(reader: any MP4Reader) {
         self.reader = reader

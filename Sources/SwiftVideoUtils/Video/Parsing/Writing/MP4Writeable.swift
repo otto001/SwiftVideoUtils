@@ -10,5 +10,6 @@ import Foundation
 
 public protocol MP4Writeable {
     func write(to writer: any MP4Writer) async throws
+    var overestimatedByteSize: Int { get }
 }
 

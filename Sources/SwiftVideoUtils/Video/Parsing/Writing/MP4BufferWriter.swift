@@ -23,4 +23,8 @@ public class MP4BufferWriter: MP4Writer {
     public init(context: MP4IOContext = .init()) {
         self.context = context
     }
+    
+    public func reserveCapacity(bytes: Int) {
+        self.data.reserveCapacity(bytes)
+    }
 }

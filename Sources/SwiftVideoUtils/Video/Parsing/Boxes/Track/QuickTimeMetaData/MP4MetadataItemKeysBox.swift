@@ -39,6 +39,10 @@ public class MP4MetadataItemKeysBox: MP4FullBox {
             try await writer.write(namespace, encoding: .ascii, length: 4)
             try await writer.write(value, encoding: .ascii)
         }
+        
+        public var overestimatedByteSize: Int {
+            8 + value.count
+        }
     }
     
     public var keys: [Key]
@@ -66,6 +70,10 @@ public class MP4MetadataItemKeysBox: MP4FullBox {
         try await writer.write(keys)
         
         try await writer.write(endPadding)
+    }
+    
+    public var overestimatedContentByteSize: Int {
+        8 + self.keys.map {$0.overestimatedByteSize}.reduce(0, +) + self.endPadding.count
     }
     
     public func index(of key: Key) -> MP4Index<UInt32>? {

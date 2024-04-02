@@ -30,6 +30,10 @@ public extension MP4BoxProxy {
         try await wrappedBox.writeContent(to: writer)
     }
     
+    var overestimatedContentByteSize: Int {
+        wrappedBox.overestimatedContentByteSize
+    }
+    
     func write(to writer: MP4Writer) async throws {
         try await wrappedBox.write(to: writer)
     }

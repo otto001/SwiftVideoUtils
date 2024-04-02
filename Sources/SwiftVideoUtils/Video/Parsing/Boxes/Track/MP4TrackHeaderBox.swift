@@ -40,7 +40,7 @@ public class MP4TrackHeaderBox: MP4FullBox {
     
     public var trackWidth: FixedPointNumber<Int32>
     public var trackHeight: FixedPointNumber<Int32>
-
+    
    public required init(contentReader reader: MP4SequentialReader) async throws {
         let version:  MP4BoxVersion = try await reader.read()
         self.version = version
@@ -123,5 +123,15 @@ public class MP4TrackHeaderBox: MP4FullBox {
         
         try await writer.write(trackWidth, byteOrder: .bigEndian)
         try await writer.write(trackHeight, byteOrder: .bigEndian)
+    }
+    
+    public var overestimatedContentByteSize: Int {
+        if self.version.version == 0 {
+            return 36+self.displayMatrix.overestimatedByteSize+3*4
+        } else if self.version.version == 1 {
+            return 36+self.displayMatrix.overestimatedByteSize+3*8
+        } else {
+            return 0
+        }
     }
 }

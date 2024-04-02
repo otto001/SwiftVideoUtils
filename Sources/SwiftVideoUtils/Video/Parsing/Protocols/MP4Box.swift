@@ -17,12 +17,12 @@ public protocol MP4Box: CustomStringConvertible, MP4Writeable {
     
     func write(to writer: any MP4Writer) async throws
     func writeContent(to writer: any MP4Writer) async throws
+    
+    var overestimatedContentByteSize: Int { get }
 }
 
 // MARK: Child accessors
 public extension MP4Box {
-    var children: [MP4Box] { [] }
-    
     func children(ofType typeName: MP4FourCC) -> [MP4Box] {
         children.filter { $0.typeName == typeName }
     }
@@ -128,11 +128,21 @@ public extension MP4Box {
     }
     
     func write(to writer: any MP4Writer) async throws {
-        let contentWriter = MP4BufferWriter()
+        let contentWriter = MP4BufferWriter(context: writer.context)
+        contentWriter.reserveCapacity(bytes: self.overestimatedContentByteSize)
         try await writeContent(to: contentWriter)
         
         try await self.writeSizeAndTypename(to: writer, contentSize: contentWriter.data.count)
         
         try await writer.write(contentWriter.data)
+    }
+    
+    var overestimatedByteSize: Int {
+        let contentSize = self.overestimatedContentByteSize
+        if contentSize <= UInt32.max {
+            return contentSize + 8
+        } else {
+            return contentSize + 16
+        }
     }
 }

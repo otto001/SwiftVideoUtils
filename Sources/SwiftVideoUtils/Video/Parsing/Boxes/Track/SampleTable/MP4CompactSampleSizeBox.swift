@@ -95,6 +95,19 @@ public class MP4CompactSampleSizeBox: MP4SampleSizeBox {
         }
     }
     
+    public var overestimatedContentByteSize: Int {
+        switch self.fieldSize {
+        case 4:
+            return 8 + (sampleSizes.count+1)/2
+        case 8:
+            return 8 + sampleSizes.count * 1
+        case 16:
+            return 8 + sampleSizes.count * 2
+        default:
+            return 0
+        }
+    }
+    
     public func sampleSize(for sample: MP4Index<UInt32>) -> UInt32? {
         if self.sampleSizes.contains(index: sample) {
             return UInt32(self.sampleSizes[sample])

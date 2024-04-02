@@ -28,4 +28,8 @@ extension MP4BoxFlags: MP4Writeable {
         try await writer.write(inner.1)
         try await writer.write(inner.2)
     }
+    
+    public var overestimatedByteSize: Int {
+        return 3
+    }
 }

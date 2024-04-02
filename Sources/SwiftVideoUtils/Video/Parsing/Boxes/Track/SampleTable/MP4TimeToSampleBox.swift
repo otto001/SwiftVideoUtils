@@ -58,6 +58,10 @@ public class MP4TimeToSampleBox: MP4FullBox {
         }
     }
     
+    public var overestimatedContentByteSize: Int {
+        8 + entries.count * 8
+    }
+    
     public func totalSampleCount() -> Int {
         entries.map { Int($0.sampleCount) }.reduce(0, +)
     }

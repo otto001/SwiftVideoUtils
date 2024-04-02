@@ -80,6 +80,10 @@ extension MP4FourCC: MP4Writeable {
     public func write(to writer: MP4Writer) async throws {
         try await writer.write(value, byteOrder: .bigEndian)
     }
+    
+    public var overestimatedByteSize: Int {
+        4
+    }
 }
 
 extension MP4FourCC: Equatable {

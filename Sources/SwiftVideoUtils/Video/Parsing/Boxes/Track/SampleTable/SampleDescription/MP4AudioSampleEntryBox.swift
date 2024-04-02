@@ -113,6 +113,10 @@ public class MP4AudioSampleEntryBoxIso: MP4SampleEntryBox {
         try await writer.write(self.children)
     }
     
+    public var overestimatedContentByteSize: Int {
+        28 + self.children.map {$0.overestimatedByteSize}.reduce(0, +)
+    }
+    
     public func audioStreamBasicDescription() throws -> AudioStreamBasicDescription {
         switch self.typeName {
         case "mp4a":
@@ -179,6 +183,10 @@ public class MP4AudioSampleEntryBoxQuicktimeV0: MP4SampleEntryBox {
         try await writer.write(self.sampleRate, byteOrder: .bigEndian)
         
         try await writer.write(self.children)
+    }
+    
+    public var overestimatedContentByteSize: Int {
+        28 + self.children.map {$0.overestimatedByteSize}.reduce(0, +)
     }
     
     public func audioStreamBasicDescription() throws -> AudioStreamBasicDescription {
@@ -251,6 +259,10 @@ public class MP4AudioSampleEntryBoxQuicktimeV1: MP4SampleEntryBox {
         try await writer.write(self.bytesPerSample, byteOrder: .bigEndian)
         
         try await writer.write(self.children)
+    }
+    
+    public var overestimatedContentByteSize: Int {
+        44 + self.children.map {$0.overestimatedByteSize}.reduce(0, +)
     }
     
     public func audioStreamBasicDescription() throws -> AudioStreamBasicDescription {

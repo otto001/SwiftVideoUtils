@@ -50,5 +50,9 @@ public class MP4HandlerReferenceBox: MP4FullBox {
         
         try await writer.write(componentName, encoding: .ascii)
     }
+    
+    public var overestimatedContentByteSize: Int {
+        24 + componentName.utf8.count + 10
+    }
 }
 

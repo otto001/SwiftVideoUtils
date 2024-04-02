@@ -24,7 +24,7 @@ public class MP4MovieHeaderBox: MP4FullBox {
     public var modificationTime: Date
     
     public var timescale: UInt32
-    public var duration: UInt32
+    public var duration: UInt64
     
     public var rate: FixedPointNumber<Int32>
     public var volume: FixedPointNumber<Int16>
@@ -47,14 +47,25 @@ public class MP4MovieHeaderBox: MP4FullBox {
     public var nextTrackID: UInt32
     
     public required init(contentReader reader: MP4SequentialReader) async throws {
-        self.version = try await reader.read()
+        let version:  MP4BoxVersion = try await reader.read()
+        self.version = version
         self.flags = try await reader.read()
         
-        self.creationTime = try await reader.readDate(UInt32.self)
-        self.modificationTime = try await reader.readDate(UInt32.self)
-        
-        self.timescale = try await reader.readInteger(UInt32.self, byteOrder: .bigEndian)
-        self.duration = try await reader.readInteger(UInt32.self, byteOrder: .bigEndian)
+        if version.version == 0 {
+            self.creationTime = try await reader.readDate(UInt32.self)
+            self.modificationTime = try await reader.readDate(UInt32.self)
+            
+            self.timescale = try await reader.readInteger(UInt32.self, byteOrder: .bigEndian)
+            self.duration = UInt64(try await reader.readInteger(UInt32.self, byteOrder: .bigEndian))
+        } else if version.version == 1 {
+            self.creationTime = try await reader.readDate(UInt64.self)
+            self.modificationTime = try await reader.readDate(UInt64.self)
+            
+            self.timescale = try await reader.readInteger(UInt32.self, byteOrder: .bigEndian)
+            self.duration = try await reader.readInteger(UInt64.self, byteOrder: .bigEndian)
+        } else {
+            throw MP4Error.failedToParseBox(description: "tkhd box version \(version) not supported")
+        }
         
         self.rate = try await reader.readSignedFixedPoint(fractionBits: 16, byteOrder: .bigEndian)
         self.volume = try await reader.readSignedFixedPoint(fractionBits: 8, byteOrder: .bigEndian)
@@ -80,11 +91,23 @@ public class MP4MovieHeaderBox: MP4FullBox {
         try await writer.write(version)
         try await writer.write(flags)
         
-        try await writer.write(creationTime, UInt32.self, byteOrder: .bigEndian)
-        try await writer.write(modificationTime, UInt32.self, byteOrder: .bigEndian)
-
-        try await writer.write(timescale, byteOrder: .bigEndian)
-        try await writer.write(duration, byteOrder: .bigEndian)
+        if self.version.version == 0 {
+            try await writer.write(creationTime, UInt32.self, byteOrder: .bigEndian)
+            try await writer.write(modificationTime, UInt32.self, byteOrder: .bigEndian)
+            
+            try await writer.write(timescale, byteOrder: .bigEndian)
+            try await writer.write(UInt32(duration), byteOrder: .bigEndian)
+            
+        } else if version.version == 1 {
+            try await writer.write(creationTime, UInt64.self, byteOrder: .bigEndian)
+            try await writer.write(modificationTime, UInt64.self, byteOrder: .bigEndian)
+            
+            try await writer.write(timescale, byteOrder: .bigEndian)
+            try await writer.write(duration, byteOrder: .bigEndian)
+            
+        } else {
+            throw MP4Error.failedToParseBox(description: "tkhd box version \(version) not supported")
+        }
         
         try await writer.write(rate, byteOrder: .bigEndian)
         try await writer.write(volume, byteOrder: .bigEndian)
@@ -104,6 +127,16 @@ public class MP4MovieHeaderBox: MP4FullBox {
         try await writer.write(currentTime, byteOrder: .bigEndian)
         
         try await writer.write(nextTrackID, byteOrder: .bigEndian)
+    }
+    
+    public var overestimatedContentByteSize: Int {
+        if self.version.version == 0 {
+            return 52+self.matrix.overestimatedByteSize+3*4
+        } else if self.version.version == 1 {
+            return 52+self.matrix.overestimatedByteSize+3*8
+        } else {
+            return 0
+        }
     }
     
     public var durationSeconds: TimeInterval {

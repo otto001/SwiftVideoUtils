@@ -86,6 +86,10 @@ extension MP4TransformationMatrix: MP4Writeable {
         try await writer.write(self.y, byteOrder: .bigEndian)
         try await writer.write(self.w, byteOrder: .bigEndian)
     }
+    
+    public var overestimatedByteSize: Int {
+        return 36
+    }
 }
 
 extension MP4TransformationMatrix: CustomDebugStringConvertible {

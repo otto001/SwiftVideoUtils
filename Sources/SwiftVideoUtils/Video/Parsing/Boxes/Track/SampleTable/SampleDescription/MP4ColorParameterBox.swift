@@ -12,6 +12,7 @@ import CoreMedia
 public class MP4ColorParameterBox: MP4ConcreteBox {
     public static let typeName: MP4FourCC = "colr"
     public static let supportedChildBoxTypes: MP4BoxTypeMap = []
+    public var children: [MP4Box] { [] }
     
     public var colorParameterType: String
     
@@ -58,6 +59,10 @@ public class MP4ColorParameterBox: MP4ConcreteBox {
         if writer.context.fileType == .isoMp4 {
             try await writer.write(flags ?? 0)
         }
+    }
+    
+    public var overestimatedContentByteSize: Int {
+        4 + 7
     }
     
     public var colorPrimaries: CFString? {

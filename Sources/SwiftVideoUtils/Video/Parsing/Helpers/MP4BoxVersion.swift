@@ -25,6 +25,10 @@ public struct MP4BoxVersion: MP4Readable, MP4Writeable, Equatable {
         try await writer.write(version)
     }
     
+    public var overestimatedByteSize: Int {
+        1
+    }
+    
     static func isoMp4(_ version: UInt8) -> MP4BoxVersion {
         .init(version, fileType: .isoMp4)
     }

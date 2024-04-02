@@ -38,17 +38,17 @@ final class MP4WriteTests: XCTestCase {
         
         
         
-        //let boxes = try await asset.boxes
-//        
-//        var allBoxes: [any MP4Box] = boxes.flatMap { $0.allChildrenRecursive() }
-//        
-//        for box in allBoxes.reversed() {
-//            let boxWriter = MP4BufferWriter()
-//            let boxData = try await box.write(to: boxWriter)
-//            
-//            let boxCopy = MP4SequentialReader(reader: MP4BufferReader(data: boxWriter.data)).readBox(boxTypeMap: [type(of: box)])
-//        }
-//        
+        let boxes = try await asset.boxes
+        
+        let allBoxes: [any MP4Box] = boxes.flatMap { $0.allChildrenRecursive() }
+        
+        for box in allBoxes.reversed() {
+            let boxWriter = MP4BufferWriter()
+            try await box.write(to: boxWriter)
+            
+            XCTAssertGreaterThanOrEqual(box.overestimatedByteSize, boxWriter.count)
+        }
+        
         let writer = MP4BufferWriter(context: .init(fileType: .quicktime))
         var lastOffset = 0
         for box in try await asset.boxes {

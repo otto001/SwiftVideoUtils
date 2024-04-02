@@ -36,4 +36,8 @@ public class MP4VideoMediaHeaderBox: MP4FullBox {
         try await writer.write(self.opColor.1, byteOrder: .bigEndian)
         try await writer.write(self.opColor.2, byteOrder: .bigEndian)
     }
+    
+    public var overestimatedContentByteSize: Int {
+        return 4 + 4*2
+    }
 }

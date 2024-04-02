@@ -68,6 +68,10 @@ public class MP4SampleTableBox: MP4ConcreteBox {
         try await writer.write(children)
     }
     
+    public var overestimatedContentByteSize: Int {
+        self.children.map {$0.overestimatedByteSize}.reduce(0, +)
+    }
+    
     public func byteRange(for sample: MP4Index<UInt32>) throws -> Range<Int> {
         return try self.byteRanges(for: sample..<sample+1).first!
     }

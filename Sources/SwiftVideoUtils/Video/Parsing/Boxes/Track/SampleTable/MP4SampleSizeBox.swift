@@ -61,6 +61,10 @@ public class MP4StandardSampleSizeBox: MP4SampleSizeBox {
         }
     }
     
+    public var overestimatedContentByteSize: Int {
+        12 + sampleSizes.count * 4
+    }
+    
     public func sampleSize(for sample: MP4Index<UInt32>) -> UInt32? {
         if self.sampleSizes.isEmpty {
             return self.sampleUniformSize

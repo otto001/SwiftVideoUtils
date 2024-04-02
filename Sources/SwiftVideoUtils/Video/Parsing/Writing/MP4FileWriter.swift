@@ -32,6 +32,21 @@ public class MP4FileWriter: MP4Writer {
             Self.fileWriterQueue.async {
                 do {
                     try self.fileHandle.write(contentsOf: data)
+                    self.offset += data.count
+                    continuation.resume()
+                } catch {
+                    continuation.resume(throwing: error)
+                }
+            }
+        }
+    }
+    
+    public func close() async throws {
+        try await withCheckedThrowingContinuation { continuation in
+            Self.fileWriterQueue.async {
+                do {
+                    try self.fileHandle.synchronize()
+                    try self.fileHandle.close()
                     continuation.resume()
                 } catch {
                     continuation.resume(throwing: error)

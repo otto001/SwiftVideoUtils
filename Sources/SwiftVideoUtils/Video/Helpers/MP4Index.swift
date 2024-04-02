@@ -94,9 +94,14 @@ extension MP4Index: Strideable {
     }
 }
 
-public extension RandomAccessCollection where Index == Int {
+public extension MutableCollection where Index == Int {
     subscript<T: BinaryInteger>(position: MP4Index<T>) -> Self.Element {
-        self[Int(position.index0)]
+        get {
+            self[Int(position.index0)]
+        }
+        set {
+            self[Int(position.index0)] = newValue
+        }
     }
     
     func contains<T: BinaryInteger>(index: MP4Index<T>) -> Bool {

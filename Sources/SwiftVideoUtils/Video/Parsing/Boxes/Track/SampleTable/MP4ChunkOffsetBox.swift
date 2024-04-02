@@ -9,6 +9,8 @@ import Foundation
 
 public protocol MP4ChunkOffsetBox: MP4FullBox {
     func chunkOffset(of chunk: MP4Index<UInt32>) -> Int
+    func setChunkOffset(of chunk: MP4Index<UInt32>, to offset: Int)
+    func moveChunks(by offset: Int)
 }
 
 public class MP4ChunkOffset32Box: MP4ChunkOffsetBox {
@@ -54,6 +56,15 @@ public class MP4ChunkOffset32Box: MP4ChunkOffsetBox {
     
     public func chunkOffset(of chunk: MP4Index<UInt32>) -> Int {
         return Int(chunkOffsets[chunk])
+    }
+    
+    public func setChunkOffset(of chunk: MP4Index<UInt32>, to offset: Int) {
+        chunkOffsets[chunk] = UInt32(offset)
+    }
+    
+    public func moveChunks(by offset: Int) {
+        let offset = UInt32(offset)
+        chunkOffsets = chunkOffsets.map { $0 + offset }
     }
 }
 
@@ -101,5 +112,14 @@ public class MP4ChunkOffset64Box: MP4ChunkOffsetBox {
     
     public func chunkOffset(of chunk: MP4Index<UInt32>) -> Int {
         return Int(chunkOffsets[chunk])
+    }
+    
+    public func setChunkOffset(of chunk: MP4Index<UInt32>, to offset: Int) {
+        chunkOffsets[chunk] = UInt64(offset)
+    }
+    
+    public func moveChunks(by offset: Int) {
+        let offset = UInt64(offset)
+        chunkOffsets = chunkOffsets.map { $0 + offset }
     }
 }

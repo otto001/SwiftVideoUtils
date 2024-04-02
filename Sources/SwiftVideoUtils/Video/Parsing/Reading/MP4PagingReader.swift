@@ -45,7 +45,7 @@ public class MP4PagingReader: MP4Reader {
     }
     
     private func byteRange(for page: Int) -> Range<Int> {
-        return (page*pageSize)..<((page+1)*pageSize)
+        return (page*pageSize)..<min(((page+1)*pageSize), self.underlyingReader.totalSize)
     }
     
     private func pages(for byteRange: Range<Int>) throws -> Range<Int> {

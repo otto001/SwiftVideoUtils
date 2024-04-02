@@ -47,7 +47,7 @@ open class MP4Asset {
     private var initialMDatByteOffset: Int? = nil
     private var assumedMDatByteOffset: Int? = nil
     
-    var isStreamable: Bool? {
+    public var isStreamable: Bool? {
         get async throws {
             let boxes = try await self.boxes
             let moovBoxIndex = boxes.firstIndex { $0.typeName == "moov" }

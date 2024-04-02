@@ -21,6 +21,9 @@ final class MP4StreamableTests: XCTestCase {
         let isStreamable2 = try await asset.isStreamable
         XCTAssertEqual(isStreamable2, true)
         
+        let writer = try MP4FileWriter(url: urlForFileName("TestVideo_iPhone_FHD_Streamable.MOV"))
+        try await writer.write(asset)
+        try await writer.close()
     }
 
 }

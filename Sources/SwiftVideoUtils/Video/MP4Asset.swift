@@ -44,6 +44,9 @@ open class MP4Asset {
         }
     }
     
+    private var initialMDatByteOffset: Int? = nil
+    private var assumedMDatByteOffset: Int? = nil
+    
     var isStreamable: Bool? {
         get async throws {
             let boxes = try await self.boxes
@@ -73,6 +76,8 @@ open class MP4Asset {
     }
     
     private func readNextBox() async throws -> any MP4Box {
+        let currentReadOffset = self.sequentialReader.readOffset
+        
         let box = try await self.sequentialReader.readBox(boxTypeMap: Self.supportedTopLevelBoxTypes)
         self._boxes.append(box)
         
@@ -83,6 +88,8 @@ open class MP4Asset {
             if let ftypBox = box as? MP4FileTypeBox, self.reader.context.fileType == nil {
                 self.reader.context.fileType = ftypBox.majorBrand == "qt  " ? .quicktime : .isoMp4
             }
+        case "mdat":
+            self.initialMDatByteOffset = currentReadOffset
         default:
             break
         }
@@ -105,6 +112,31 @@ open class MP4Asset {
         return moovBox
     }
     
+    public func repairChunkOffsets() async throws {
+        let boxes = try await self.boxes.filter { $0.typeName != "free" }
+        
+        guard let currentMDatByteOffset = self.assumedMDatByteOffset ?? self.initialMDatByteOffset else { return }
+        
+        var newMDatByteOffset = 0
+        for box in boxes {
+            guard box.typeName != "mdat" else { break }
+            newMDatByteOffset += box.overestimatedByteSize
+        }
+        newMDatByteOffset += 8
+        
+        let byteOffsetDiff = newMDatByteOffset - currentMDatByteOffset
+        
+        for track in try await tracks {
+            if let chunkOffsetBox = track.box.mediaBox?.mediaInformationBox?.sampleTableBox?.chunkOffsetBox {
+                chunkOffsetBox.moveChunks(by: byteOffsetDiff)
+            }
+        }
+        
+        self.assumedMDatByteOffset = newMDatByteOffset
+        
+        self._boxes = boxes
+    }
+    
     public func makeStreamable() async throws -> Bool {
         guard try await self.isStreamable == false else {
             return false
@@ -118,6 +150,9 @@ open class MP4Asset {
         let moovBox = boxes.remove(at: moovBoxIndex)
         boxes.insert(moovBox, at: mdatBoxIndex)
         self._boxes = boxes
+        
+        try await self.repairChunkOffsets()
+        
         return true
     }
     
@@ -129,7 +164,23 @@ open class MP4Asset {
 
 extension MP4Asset: MP4Writeable {
     public func write(to writer: MP4Writer) async throws {
-        try await writer.write(try await boxes)
+        try await self.repairChunkOffsets()
+        
+        for box in try await boxes {
+            if box.typeName == "mdat", let assumedMDatByteOffset = self.assumedMDatByteOffset {
+                let offsetDiff = assumedMDatByteOffset - writer.offset
+                if offsetDiff >= 8 {
+                    let fillerBox = MP4SimpleDataBox(typeName: "free", data: Data(repeating: 0, count: offsetDiff - 8))
+                    try await writer.write(fillerBox)
+                } else if offsetDiff > 0 {
+                    throw MP4Error.internalError("Did not leave enough headroom for moov atom, aborting write operations.")
+                }
+            }
+            
+            
+            try await writer.write(box)
+        }
+        
     }
     
     public var overestimatedByteSize: Int {

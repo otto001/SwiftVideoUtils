@@ -181,4 +181,9 @@ open class MP4Track {
         guard let syncSampleBox = self.box.mediaBox?.mediaInformationBox?.sampleTableBox?.syncSamplesBox else { return sample }
         return syncSampleBox.syncSample(before: sample)
     }
+    
+    public func syncSample(_ index: Int) throws -> MP4Index<UInt32>? {
+        guard let syncSampleBox = self.box.mediaBox?.mediaInformationBox?.sampleTableBox?.syncSamplesBox else { return nil }
+        return syncSampleBox.syncSamples[index]
+    }
 }

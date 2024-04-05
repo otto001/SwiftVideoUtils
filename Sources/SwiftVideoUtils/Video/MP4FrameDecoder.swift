@@ -21,6 +21,22 @@ public class MP4FrameDecoder {
         decompressionSession.formatDescription
     }
     
+    public var suggestedThumbnailSample: MP4Index<UInt32> {
+        get async throws {
+            var result = MP4Index<UInt32>(index0: 0)
+            
+            if let secondSecond = try self.track.syncSample(for: max(1, try self.track.duration)) {
+                result = max(result, secondSecond)
+            }
+            
+            if try self.track.nSyncSamples >= 2, let secondSyncSample = try? self.track.syncSample(1) {
+                result = max(result, secondSyncSample)
+            }
+            
+            return result
+        }
+    }
+    
     public init(asset: MP4Asset) async throws {
         self.asset = asset
         
@@ -63,7 +79,7 @@ public class MP4FrameDecoder {
     public func cgImage(for sample: MP4Index<UInt32>) async throws -> CGImage {
         let imageBuffer = try await self.cvImageBuffer(for: sample)
         
-        if let cgImage: CGImage = .from(cvImageBuffer: imageBuffer, affineTransform: self.videoTransform) {
+        if let cgImage: CGImage = .from(cvImageBuffer: imageBuffer, affineTransform: self.videoTransform?.inverted()) {
             return cgImage
         } else {
             throw MP4Error.failedToCreateCGImage
@@ -74,7 +90,7 @@ public class MP4FrameDecoder {
     public func uiImage(for sample: MP4Index<UInt32>) async throws -> UIImage {
         var ciImage = CIImage(cvImageBuffer: try await cvImageBuffer(for: sample))
         if let videoTransform = self.videoTransform {
-            ciImage = ciImage.transformed(by: videoTransform)
+            ciImage = ciImage.transformed(by: videoTransform.inverted())
         }
         return UIImage(ciImage: ciImage)
     }

@@ -12,6 +12,8 @@ public class MP4TimedMetadataMediaBox: MP4ConcreteBox {
     public static let typeName: MP4FourCC = "mebx"
     public static let supportedChildBoxTypes: MP4BoxTypeMap = [MP4MetadataKeyTableBox.self]
     
+    public var readByteRange: Range<Int>?
+    
     /// 6-bytes of reserved data
     public var reserved1: Data
     public var dataReferenceIndex: UInt16

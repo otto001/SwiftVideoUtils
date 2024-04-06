@@ -26,6 +26,15 @@ public extension MP4BoxProxy {
     var typeName: MP4FourCC { wrappedBox.typeName }
     var children: [MP4Box] { wrappedBox.children }
     
+    var readByteRange: Range<Int>? {
+        get {
+            wrappedBox.readByteRange
+        }
+        set {
+            
+        }
+    }
+    
     func writeContent(to writer: MP4Writer) async throws {
         try await wrappedBox.writeContent(to: writer)
     }

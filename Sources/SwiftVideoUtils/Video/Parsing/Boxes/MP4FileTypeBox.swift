@@ -11,14 +11,16 @@ import Foundation
 public class MP4FileTypeBox: MP4ConcreteBox {
     public static let typeName: MP4FourCC = "ftyp"
     public static let supportedChildBoxTypes: MP4BoxTypeMap = []
+    
+    public var readByteRange: Range<Int>?
+    
     public var children: [MP4Box] { [] }
     
     public var majorBrand: String
     public var minorBrand: UInt32
     public var compatibleBrands: [String]
     
-    
-   public required init(contentReader reader: MP4SequentialReader) async throws {
+    public required init(contentReader reader: MP4SequentialReader) async throws {
         self.majorBrand = try await reader.readAscii(byteCount: 4)
         self.minorBrand = try await reader.readInteger(byteOrder: .bigEndian)
         self.compatibleBrands = []

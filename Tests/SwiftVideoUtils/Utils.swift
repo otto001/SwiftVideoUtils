@@ -12,7 +12,7 @@ func WriteReadBox<Box: MP4ConcreteBox>(box: Box, file: StaticString = #filePath,
     let writer1 = MP4BufferWriter(context: .init(fileType: .isoMp4))
     try await writer1.write(box)
     
-    let reader = MP4SequentialReader(reader: MP4BufferReader(data: writer1.data, context: writer1.context))
+    let reader = MP4SequentialReader(reader: MP4BufferReader(data: writer1.buffer, context: writer1.context), readBox: nil)
     let reReadBox = try await reader.readBox(boxTypeMap: [Box.self])
     
     XCTAssertNotNil(reReadBox as? Box, file: file, line: line)
@@ -24,7 +24,7 @@ func AssertBoxReadWriteStability<Box: MP4ConcreteBox>(box: Box, file: StaticStri
     let writer1 = MP4BufferWriter(context: .init(fileType: .isoMp4))
     try await writer1.write(box)
     
-    let reader = MP4SequentialReader(reader: MP4BufferReader(data: writer1.data, context: writer1.context))
+    let reader = MP4SequentialReader(reader: MP4BufferReader(data: writer1.buffer, context: writer1.context), readBox: nil)
     let reReadBox = try await reader.readBox(boxTypeMap: [Box.self])
     
     XCTAssertEqual(reReadBox.typeName, box.typeName, file: file, line: line)
@@ -33,5 +33,5 @@ func AssertBoxReadWriteStability<Box: MP4ConcreteBox>(box: Box, file: StaticStri
     let writer2 = MP4BufferWriter(context: writer1.context)
     try await writer2.write(reReadBox)
     
-    XCTAssertEqual(writer1.data, writer2.data, file: file, line: line)
+    XCTAssertEqual(writer1.buffer, writer2.buffer, file: file, line: line)
 }

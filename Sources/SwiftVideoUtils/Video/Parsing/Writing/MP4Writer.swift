@@ -7,9 +7,9 @@
 
 import Foundation
 
-public protocol MP4Writer {
+public protocol MP4Writer: AnyObject {
     var count: Int { get }
-    var offset: Int { get }
+    var offset: Int { get set }
     
     var context: MP4IOContext { get }
     

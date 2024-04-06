@@ -10,7 +10,9 @@ import CoreMedia
 
 public class MP4MetadataItemKeysBox: MP4FullBox {
     public static let typeName: MP4FourCC = "keys"
-
+    
+    public var readByteRange: Range<Int>?
+    
     public var version:  MP4BoxVersion
     public var flags: MP4BoxFlags
     

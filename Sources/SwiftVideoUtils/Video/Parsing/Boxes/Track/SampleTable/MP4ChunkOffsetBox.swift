@@ -16,6 +16,7 @@ public protocol MP4ChunkOffsetBox: MP4FullBox {
 public class MP4ChunkOffset32Box: MP4ChunkOffsetBox {
     public static let typeName: MP4FourCC = "stco"
 
+    public var readByteRange: Range<Int>?
     
     public var version:  MP4BoxVersion
     public var flags: MP4BoxFlags
@@ -72,6 +73,7 @@ public class MP4ChunkOffset32Box: MP4ChunkOffsetBox {
 public class MP4ChunkOffset64Box: MP4ChunkOffsetBox {
     public static let typeName: MP4FourCC = "co64"
 
+    public var readByteRange: Range<Int>?
     
     public var version:  MP4BoxVersion
     public var flags: MP4BoxFlags

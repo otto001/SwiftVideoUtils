@@ -10,6 +10,9 @@ import Foundation
 public class MP4MetadataDatatypeDefinitionBox: MP4ConcreteBox {
     public static let typeName: MP4FourCC = "dtyp"
     public static let supportedChildBoxTypes: MP4BoxTypeMap = []
+    
+    public var readByteRange: Range<Int>?
+    
     public var children: [MP4Box] { [] }
     
     public var namespace: String

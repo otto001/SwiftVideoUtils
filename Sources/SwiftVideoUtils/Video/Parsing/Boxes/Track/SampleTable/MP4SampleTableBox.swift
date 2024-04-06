@@ -20,6 +20,8 @@ public class MP4SampleTableBox: MP4ConcreteBox {
                                                                MP4ChunkOffset64Box.self,
                                                                MP4SyncSampleBox.self,]
     
+    public var readByteRange: Range<Int>?
+    
     public var children: [any MP4Box]
     
     public var sampleDescriptionBox: MP4SampleDescriptionBox? {

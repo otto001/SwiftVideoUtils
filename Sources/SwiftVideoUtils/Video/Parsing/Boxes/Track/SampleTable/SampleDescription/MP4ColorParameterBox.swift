@@ -12,6 +12,8 @@ import CoreMedia
 public class MP4ColorParameterBox: MP4ConcreteBox {
     public static let typeName: MP4FourCC = "colr"
     public static let supportedChildBoxTypes: MP4BoxTypeMap = []
+    public var readByteRange: Range<Int>?
+    
     public var children: [MP4Box] { [] }
     
     public var colorParameterType: String

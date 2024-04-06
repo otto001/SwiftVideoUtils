@@ -11,6 +11,7 @@ import Foundation
 public class MP4SampleToChunkBox: MP4FullBox {
     public static let typeName: MP4FourCC = "stsc"
 
+    public var readByteRange: Range<Int>?
     
     public var version:  MP4BoxVersion
     public var flags: MP4BoxFlags

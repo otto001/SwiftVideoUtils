@@ -13,6 +13,8 @@ public class MP4VideoSampleEntryBox: MP4SampleEntryBox {
     public static let supportedFormats: [MP4FourCC] = ["avc1", "hvc1"]
     public static let supportedChildBoxTypes: MP4BoxTypeMap = [MP4ColorParameterBox.self]
     
+    public var readByteRange: Range<Int>?
+    
     public var typeName: MP4FourCC
     
     public var reserved1: Data

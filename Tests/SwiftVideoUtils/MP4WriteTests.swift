@@ -53,21 +53,21 @@ final class MP4WriteTests: XCTestCase {
         var lastOffset = 0
         for box in try await asset.boxes {
             try await writer.write(box)
-            XCTAssertEqual(originalData[lastOffset..<writer.data.count], writer.data[lastOffset..<writer.data.count], "failed to re-encode box of type \(box.typeName)")
-            if originalData[lastOffset..<writer.data.count] != writer.data[lastOffset..<writer.data.count] {
-                for i in lastOffset..<writer.data.count {
-                    if originalData[i] != writer.data[i] {
-                        print(Data(originalData[i-100..<min(i+100, writer.data.count-1)]).debugString(mode: .both))
+            XCTAssertEqual(originalData[lastOffset..<writer.buffer.count], writer.buffer[lastOffset..<writer.buffer.count], "failed to re-encode box of type \(box.typeName)")
+            if originalData[lastOffset..<writer.buffer.count] != writer.buffer[lastOffset..<writer.buffer.count] {
+                for i in lastOffset..<writer.buffer.count {
+                    if originalData[i] != writer.buffer[i] {
+                        print(Data(originalData[i-100..<min(i+100, writer.buffer.count-1)]).debugString(mode: .both))
                         print()
-                        print(Data(writer.data[i-100..<min(i+100, writer.data.count-1)]).debugString(mode: .both))
+                        print(Data(writer.buffer[i-100..<min(i+100, writer.buffer.count-1)]).debugString(mode: .both))
                         
                         print()
                         print()
                     }
                 }
             }
-            lastOffset = writer.data.count
+            lastOffset = writer.buffer.count
         }
-        XCTAssertEqual(originalData, writer.data)
+        XCTAssertEqual(originalData, writer.buffer)
     }
 }

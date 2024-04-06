@@ -14,6 +14,8 @@ import Foundation
 public class MP4SampleDescriptionBox: MP4ConcreteBox {
     public static let typeName: MP4FourCC = "stsd"
     public static let supportedChildBoxTypes: MP4BoxTypeMap = [MP4VideoSampleEntryBox.self, MP4TimedMetadataMediaBox.self, MP4AudioSampleEntry.self]
+
+    public var readByteRange: Range<Int>?
     
     public var version:  MP4BoxVersion
     public var flags: MP4BoxFlags

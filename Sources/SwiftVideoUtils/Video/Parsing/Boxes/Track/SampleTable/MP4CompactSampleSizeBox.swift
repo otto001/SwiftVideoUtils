@@ -11,6 +11,7 @@ import Foundation
 public class MP4CompactSampleSizeBox: MP4SampleSizeBox {
     public static let typeName: MP4FourCC = "stz2"
 
+    public var readByteRange: Range<Int>?
     
     public var version:  MP4BoxVersion
     public var flags: MP4BoxFlags

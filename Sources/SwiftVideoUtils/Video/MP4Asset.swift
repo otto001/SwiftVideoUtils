@@ -11,7 +11,7 @@ import CoreMedia
 
 open class MP4Asset {
     public let reader: any MP4Reader
-    public lazy var sequentialReader: MP4SequentialReader = .init(reader: self.reader)
+    public lazy var sequentialReader: MP4SequentialReader = .init(reader: self.reader, readBox: self.didReadBox)
     static var supportedTopLevelBoxTypes: MP4BoxTypeMap = [MP4FileTypeBox.self, MP4MovieBox.self, MP4MetaBox.self]
     
     private var _boxes: [any MP4Box] = []
@@ -44,8 +44,11 @@ open class MP4Asset {
         }
     }
     
+    private var boxByteRangeMap: [ObjectIdentifier: Range<Int>] = [:]
     private var initialMDatByteOffset: Int? = nil
     private var assumedMDatByteOffset: Int? = nil
+    
+    public private(set) var canBeEditedInplace: Bool = true
     
     public var isStreamable: Bool? {
         get async throws {
@@ -73,6 +76,9 @@ open class MP4Asset {
     
     public func metaData() async throws -> MP4MetaData {
         try await MP4MetaData(asset: self)
+    }
+    
+    private func didReadBox(_ box: any MP4Box, _ byteRange: Range<Int>) {
     }
     
     private func readNextBox() async throws -> any MP4Box {
@@ -134,6 +140,7 @@ open class MP4Asset {
         
         self.assumedMDatByteOffset = newMDatByteOffset
         
+        self.canBeEditedInplace = false
         self._boxes = boxes
     }
     
@@ -150,6 +157,8 @@ open class MP4Asset {
         let moovBox = boxes.remove(at: moovBoxIndex)
         boxes.insert(moovBox, at: mdatBoxIndex)
         self._boxes = boxes
+        
+        self.canBeEditedInplace = false
         
         try await self.repairChunkOffsets()
         
@@ -185,5 +194,56 @@ extension MP4Asset: MP4Writeable {
     
     public var overestimatedByteSize: Int {
         0
+    }
+}
+
+extension MP4Asset {
+    private func writeBoxInplace(_ box: any MP4Box, to writer: MP4Writer) async throws {
+        guard self.canBeEditedInplace else { throw MP4Error.assetCannotBeEditedInplace }
+        guard let byteRange = box.readByteRange else { throw MP4Error.internalError("Cannot write box inplace: Box does not contain a byte range") }
+        
+        let bufferWriter = MP4BufferWriter(context: self.reader.context)
+        try await bufferWriter.write(box)
+        
+        guard bufferWriter.count == byteRange.count else {
+            throw MP4Error.internalError("Cannot write box inplace: Box did change size")
+        }
+        
+        writer.offset = byteRange.lowerBound
+        
+        try await writer.write(bufferWriter.buffer)
+    }
+}
+
+extension MP4Asset {
+    public func overwriteCreationTimeInplace(creationTime: Date, modificationTime: Date) async throws {
+        guard self.canBeEditedInplace else { throw MP4Error.assetCannotBeEditedInplace }
+        guard let fileUrl = (self.reader as? MP4FileReader)?.fileURL else {
+            throw MP4Error.featureNotSupported("Writing inplace is only supported for file based assets")
+        }
+        
+        let writer = try MP4FileWriter(url: fileUrl, context: self.reader.context)
+        
+        let moovBox = try await self.moovBox
+        if let moovieHeaderBox = moovBox.moovieHeaderBox {
+            moovieHeaderBox.creationTime = creationTime
+            moovieHeaderBox.modificationTime = modificationTime
+            try await self.writeBoxInplace(moovieHeaderBox, to: writer)
+        }
+        for trackBox in moovBox.tracks {
+            if let trackHeaderBox = trackBox.trackHeaderBox {
+                trackHeaderBox.creationTime = creationTime
+                trackHeaderBox.modificationTime = modificationTime
+                try await self.writeBoxInplace(trackHeaderBox, to: writer)
+            }
+            
+            if let mediaHeaderBox = trackBox.mediaBox?.mediaHeaderBox {
+                mediaHeaderBox.creationTime = creationTime
+                mediaHeaderBox.modificationTime = modificationTime
+                try await self.writeBoxInplace(mediaHeaderBox, to: writer)
+            }
+        }
+        
+        try await writer.close()
     }
 }

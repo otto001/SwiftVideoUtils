@@ -11,7 +11,7 @@ import Foundation
 public protocol MP4Box: CustomStringConvertible, MP4Writeable {
     var typeName: MP4FourCC { get }
     
-    var children: [MP4Box] { get }
+    var children: [any MP4Box] { get }
     
     func indentedString(level: Int) -> String
     
@@ -19,11 +19,13 @@ public protocol MP4Box: CustomStringConvertible, MP4Writeable {
     func writeContent(to writer: any MP4Writer) async throws
     
     var overestimatedContentByteSize: Int { get }
+    
+    var readByteRange: Range<Int>? { get set }
 }
 
 // MARK: Child accessors
 public extension MP4Box {
-    func children(ofType typeName: MP4FourCC) -> [MP4Box] {
+    func children(ofType typeName: MP4FourCC) -> [any MP4Box] {
         children.filter { $0.typeName == typeName }
     }
     
@@ -31,7 +33,7 @@ public extension MP4Box {
         children.compactMap { $0 as? T }
     }
     
-    func firstChild(ofType typeName: MP4FourCC) -> MP4Box? {
+    func firstChild(ofType typeName: MP4FourCC) -> (any MP4Box)? {
         children.first { $0.typeName == typeName }
     }
     
@@ -132,9 +134,9 @@ public extension MP4Box {
         contentWriter.reserveCapacity(bytes: self.overestimatedContentByteSize)
         try await writeContent(to: contentWriter)
         
-        try await self.writeSizeAndTypename(to: writer, contentSize: contentWriter.data.count)
+        try await self.writeSizeAndTypename(to: writer, contentSize: contentWriter.buffer.count)
         
-        try await writer.write(contentWriter.data)
+        try await writer.write(contentWriter.buffer)
     }
     
     var overestimatedByteSize: Int {

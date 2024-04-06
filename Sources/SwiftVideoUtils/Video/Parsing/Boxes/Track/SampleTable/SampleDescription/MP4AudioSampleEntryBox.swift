@@ -27,13 +27,14 @@ public enum MP4AudioSampleEntry: MP4BoxProxy {
         }
     }
     
+    
     public init(typeName: MP4FourCC, contentReader: MP4SequentialReader) async throws {
         if contentReader.context.fileType == .isoMp4 {
             self = .iso(try await MP4AudioSampleEntryBoxIso(format: typeName, contentReader: contentReader))
         } else {
             let data = try await contentReader.readAllData()
             let bufferReader = MP4BufferReader(data: data, context: contentReader.context)
-            let bufferedContentReader = MP4SequentialReader(reader: bufferReader)
+            let bufferedContentReader = MP4SequentialReader(reader: bufferReader, readBox: nil)
             
             let version = try await bufferReader.readInteger(startingAt: 8, UInt16.self, byteOrder: .bigEndian)
             
@@ -69,6 +70,8 @@ public enum MP4AudioSampleEntry: MP4BoxProxy {
 public class MP4AudioSampleEntryBoxIso: MP4SampleEntryBox {
     public static var supportedFormats: [MP4FourCC] = MP4AudioSampleEntry.supportedTypeNames
     public static var supportedChildBoxTypes: MP4BoxTypeMap = []
+    
+    public var readByteRange: Range<Int>?
     
     public var typeName: MP4FourCC
     
@@ -136,6 +139,8 @@ public class MP4AudioSampleEntryBoxQuicktimeV0: MP4SampleEntryBox {
     public static var supportedFormats: [MP4FourCC] = MP4AudioSampleEntry.supportedTypeNames
     public static var supportedChildBoxTypes: MP4BoxTypeMap = []
     
+    public var readByteRange: Range<Int>?
+    
     public var typeName: MP4FourCC
     
     public var reserved1: Data
@@ -198,6 +203,8 @@ public class MP4AudioSampleEntryBoxQuicktimeV0: MP4SampleEntryBox {
 public class MP4AudioSampleEntryBoxQuicktimeV1: MP4SampleEntryBox {
     public static var supportedFormats: [MP4FourCC] = MP4AudioSampleEntry.supportedTypeNames
     public static var supportedChildBoxTypes: MP4BoxTypeMap = []
+    
+    public var readByteRange: Range<Int>?
     
     public var typeName: MP4FourCC
     

@@ -19,9 +19,12 @@ public class MP4FileReader: MP4Reader {
     
     public var context: MP4IOContext
     
+    public let fileURL: URL
+    
     
     public init(url: URL, context: MP4IOContext = .init()) throws {
         self.fileHandle = try .init(forReadingFrom: url)
+        self.fileURL = url
         self.totalSize = Int(try FileManager.default.attributesOfItem(atPath: url.relativePath)[.size] as! UInt64)
         self.context = context
     }

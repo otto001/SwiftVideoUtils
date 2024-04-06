@@ -11,6 +11,8 @@ public class MP4MediaBox: MP4ConcreteBox {
     public static let typeName: MP4FourCC = "mdia"
     public static let supportedChildBoxTypes: MP4BoxTypeMap = [MP4MediaHeaderBox.self, MP4HandlerReferenceBox.self, MP4MediaInformationBox.self]
     
+    public var readByteRange: Range<Int>?
+    
     public var children: [any MP4Box]
     
     public var mediaHeaderBox: MP4MediaHeaderBox? { firstChild(ofType: MP4MediaHeaderBox.self) }

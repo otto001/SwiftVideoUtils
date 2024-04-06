@@ -16,6 +16,7 @@ public enum MP4Error: Error {
     case failedToCreateCGImage
     
     case internalError(String)
+    case featureNotSupported(String)
     
     case stringEncodingError
     
@@ -30,4 +31,6 @@ public enum MP4Error: Error {
     case tooFewBytes
     
     case inconsistentSampleTableBox
+    
+    case assetCannotBeEditedInplace
 }

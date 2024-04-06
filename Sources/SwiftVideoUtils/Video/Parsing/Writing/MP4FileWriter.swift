@@ -16,7 +16,8 @@ public class MP4FileWriter: MP4Writer {
     public var context: MP4IOContext
     
     public var count: Int { offset }
-    public private(set) var offset: Int = 0
+    public var offset: Int = 0
+    public private(set) var fileHandleOffset: Int = 0
     
     init(url: URL, context: MP4IOContext = .init()) throws {
         if !FileManager.default.fileExists(atPath: url.relativePath) {
@@ -31,10 +32,16 @@ public class MP4FileWriter: MP4Writer {
         try await withCheckedThrowingContinuation { continuation in
             Self.fileWriterQueue.async {
                 do {
+                    if self.fileHandleOffset != self.offset {
+                        try self.fileHandle.seek(toOffset: UInt64(self.offset))
+                    }
                     try self.fileHandle.write(contentsOf: data)
-                    self.offset += data.count
+                    self.fileHandleOffset += data.count
+                    self.offset = self.fileHandleOffset
+                    
                     continuation.resume()
                 } catch {
+                    self.fileHandleOffset = (try? self.fileHandle.offset()).map {Int($0)} ?? -1
                     continuation.resume(throwing: error)
                 }
             }

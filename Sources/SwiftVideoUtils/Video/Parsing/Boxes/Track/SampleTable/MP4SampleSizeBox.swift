@@ -14,6 +14,8 @@ public protocol MP4SampleSizeBox: MP4FullBox {
 
 public class MP4StandardSampleSizeBox: MP4SampleSizeBox {
     public static let typeName: MP4FourCC = "stsz"
+    
+    public var readByteRange: Range<Int>?
 
     public var version:  MP4BoxVersion
     public var flags: MP4BoxFlags

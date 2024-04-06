@@ -12,6 +12,8 @@ public class MP4MovieBox: MP4ConcreteBox {
     public static let typeName: MP4FourCC = "moov"
     public static let supportedChildBoxTypes: MP4BoxTypeMap = [MP4MovieHeaderBox.self, MP4TrackBox.self, MP4MetaBox.self]
     
+    public var readByteRange: Range<Int>?
+    
     public var children: [any MP4Box]
     
     public var tracks: [MP4TrackBox] { children(ofType: MP4TrackBox.self) }

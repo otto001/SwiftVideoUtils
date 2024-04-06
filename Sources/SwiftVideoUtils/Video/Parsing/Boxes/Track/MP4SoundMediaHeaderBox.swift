@@ -10,7 +10,8 @@ import Foundation
 
 public class MP4SoundMediaHeaderBox: MP4FullBox {
     public static let typeName: MP4FourCC = "smhd"
-
+    public var readByteRange: Range<Int>?
+    
     public var version: MP4BoxVersion
     public var flags: MP4BoxFlags
     

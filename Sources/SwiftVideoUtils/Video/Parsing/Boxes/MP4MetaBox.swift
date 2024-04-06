@@ -11,6 +11,8 @@ public class MP4MetaBox: MP4ConcreteBox {
     public static let typeName: MP4FourCC = "meta"
     public static let supportedChildBoxTypes: MP4BoxTypeMap = [MP4HandlerReferenceBox.self, MP4MetadataItemKeysBox.self, MP4MetadataItemListBox.self]
     
+    public var readByteRange: Range<Int>?
+    
     public var children: [any MP4Box]
     
     public init(children: [any MP4Box]) throws {

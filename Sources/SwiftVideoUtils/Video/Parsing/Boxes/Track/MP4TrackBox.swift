@@ -12,6 +12,8 @@ public class MP4TrackBox: MP4ConcreteBox {
     public static let typeName: MP4FourCC = "trak"
     public static let supportedChildBoxTypes: MP4BoxTypeMap = [MP4VideoMediaHeaderBox.self, MP4TrackHeaderBox.self, MP4MediaBox.self, MP4MetaBox.self]
     
+    public var readByteRange: Range<Int>?
+    
     public var children: [any MP4Box]
     
     public var mediaBox: MP4MediaBox? { firstChild(ofType: MP4MediaBox.self) }

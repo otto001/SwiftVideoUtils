@@ -11,13 +11,22 @@ public class MP4MetadataKeyTableBox: MP4ConcreteBox {
     public static let typeName: MP4FourCC = "keys"
     public static let supportedChildBoxTypes: MP4BoxTypeMap = []
     
+    public var readByteRange: Range<Int>?
+    
     public class MP4MetaDataKeyBox: MP4Box {
-        public var typeName: MP4FourCC
         public static let supportedChildBoxTypes: MP4BoxTypeMap = [MP4MetadataKeyDeclarationBox.self, MP4MetadataDatatypeDefinitionBox.self]
+        
+        public var typeName: MP4FourCC
+       
+        public var readByteRange: Range<Int>?
+        
         public var children: [MP4Box]
         
         public required init(contentReader reader: MP4SequentialReader) async throws {
             let size: UInt32 = try await reader.readInteger(byteOrder: .bigEndian)
+            
+            self.readByteRange = (reader.readOffset - 4)..<(reader.readOffset - 4 + Int(size))
+            
             self.typeName = try await reader.read()
             self.children = try await MP4SequentialReader(sequentialReader: reader, count: Int(size)-8).readBoxes(boxTypeMap: Self.supportedChildBoxTypes)
             
@@ -31,7 +40,7 @@ public class MP4MetadataKeyTableBox: MP4ConcreteBox {
             try await writer.write(UInt32(contentWriter.count) + 8, byteOrder: .bigEndian)
             try await writer.write(typeName)
             
-            try await writer.write(contentWriter.data)
+            try await writer.write(contentWriter.buffer)
         }
         
         public func writeContent(to writer: MP4Writer) async throws {

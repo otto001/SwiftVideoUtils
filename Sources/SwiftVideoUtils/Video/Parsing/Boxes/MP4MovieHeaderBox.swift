@@ -16,6 +16,8 @@ private let referenceDate: Date = {
 
 public class MP4MovieHeaderBox: MP4FullBox {
     public static let typeName: MP4FourCC = "mvhd"
+    
+    public var readByteRange: Range<Int>?
 
     public var version:  MP4BoxVersion
     public var flags: MP4BoxFlags

@@ -12,6 +12,8 @@ public class MP4MediaInformationBox: MP4ConcreteBox {
     public static let supportedChildBoxTypes: MP4BoxTypeMap = [MP4VideoMediaHeaderBox.self, MP4SoundMediaHeaderBox.self,
                                                                MP4SampleTableBox.self, MP4HandlerReferenceBox.self]
     
+    public var readByteRange: Range<Int>?
+    
     public var children: [any MP4Box]
     
     public var sampleTableBox: MP4SampleTableBox? { firstChild(ofType: MP4SampleTableBox.self) }

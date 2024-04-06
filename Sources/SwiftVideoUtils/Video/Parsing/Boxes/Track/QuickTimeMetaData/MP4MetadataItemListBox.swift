@@ -11,6 +11,9 @@ import Foundation
 public class MP4MetadataItemListBox: MP4ConcreteBox {
     public static let typeName: MP4FourCC = "ilst"
     public static let supportedChildBoxTypes: MP4BoxTypeMap = []
+    
+    public var readByteRange: Range<Int>?
+    
     public var children: [MP4Box] { [] }
     
     public struct Item: MP4Writeable {

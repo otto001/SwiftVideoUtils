@@ -11,6 +11,8 @@ public class MP4SimpleDataBox: MP4Box {
     public var typeName: MP4FourCC
     public var children: [MP4Box] { [] }
     
+    public var readByteRange: Range<Int>?
+    
     public var lazy: Bool {
         reader != nil
     }

@@ -15,7 +15,7 @@ public class MP4BufferReader: MP4Reader {
     public var context: MP4IOContext
     
     public init(data: Data, context: MP4IOContext = .init()) {
-        self.data = data
+        self.data = Data(data)
         self.context = context
     }
     

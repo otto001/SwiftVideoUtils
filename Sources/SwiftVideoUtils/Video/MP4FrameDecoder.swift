@@ -25,7 +25,7 @@ public class MP4FrameDecoder {
         get async throws {
             var result = MP4Index<UInt32>(index0: 0)
             
-            if let secondSecond = try self.track.syncSample(for: max(1, try self.track.duration)) {
+            if let secondSecond = try self.track.syncSample(for: min(1, try self.track.duration)) {
                 result = max(result, secondSecond)
             }
             

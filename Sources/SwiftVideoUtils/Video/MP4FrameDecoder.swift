@@ -6,10 +6,6 @@ import Foundation
 import CoreMedia
 import CoreVideo
 
-#if os(iOS)
-import UIKit
-#endif
-
 public class MP4FrameDecoder {
     public let asset: MP4Asset
     public let track: MP4Track
@@ -85,15 +81,4 @@ public class MP4FrameDecoder {
             throw MP4Error.failedToCreateCGImage
         }
     }
-    
-#if os(iOS)
-    public func uiImage(for sample: MP4Index<UInt32>) async throws -> UIImage {
-        var ciImage = CIImage(cvImageBuffer: try await cvImageBuffer(for: sample))
-        if let videoTransform = self.videoTransform {
-            ciImage = ciImage.transformed(by: videoTransform.inverted())
-        }
-        return UIImage(ciImage: ciImage)
-    }
-#endif
-    
 }

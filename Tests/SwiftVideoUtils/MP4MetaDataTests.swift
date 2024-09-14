@@ -11,7 +11,12 @@ import CoreLocation
 
 @testable import SwiftVideoUtils
 
-private var dateFormatter: ISO8601DateFormatter = .init()
+private var dateFormatter = {
+    let formatter = ISO8601DateFormatter()
+    formatter.timeZone = .init(abbreviation: "UTC")!
+    return formatter
+}()
+
 extension Date {
     var isoString: String {
         dateFormatter.string(from: self)

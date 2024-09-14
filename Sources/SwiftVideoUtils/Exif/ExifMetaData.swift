@@ -13,6 +13,7 @@ import CoreLocation
 private var exifDateFormatter = {
     let dateFormatter = DateFormatter()
     dateFormatter.locale = Locale(identifier: "en_US_POSIX") // set locale to reliable US_POSIX
+    dateFormatter.timeZone = .init(abbreviation: "UTC")!
     dateFormatter.dateFormat = "yyyy:MM:dd HH:mm:ss"
     return dateFormatter
 }()
@@ -121,9 +122,15 @@ public struct ExifMetaData {
             self.dateTimeOriginal = (exifData["DateTimeOriginal"] as? String).flatMap {
                 exifDateFormatter.date(from: $0)
             }
+            if let dateTimeOriginal, let subsecTime = (exifData["SubsecTimeOriginal"] as? String).flatMap({Double("0.\($0)")}) {
+                self.dateTimeOriginal = dateTimeOriginal.addingTimeInterval(subsecTime)
+            }
             
             self.dateTimeDigitized = (exifData["DateTimeDigitized"] as? String).flatMap {
                 exifDateFormatter.date(from: $0)
+            }
+            if let dateTimeDigitized, let subsecTime = (exifData["SubsecTimeDigitized"] as? String).flatMap({Double("0.\($0)")}) {
+                self.dateTimeDigitized = dateTimeDigitized.addingTimeInterval(subsecTime)
             }
             
             if self.lensMake == nil {

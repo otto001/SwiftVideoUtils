@@ -16,9 +16,9 @@ final class ExifMetaDataTests: XCTestCase {
         let metaData = try ExifMetaData(imageData: data)
         
         
-        XCTAssertEqual(metaData.dateTimeOriginal?.isoString, "2012-08-08T12:55:30Z")
-        XCTAssertEqual(metaData.dateTimeDigitized?.isoString, "2012-08-08T12:55:30Z")
-        XCTAssertEqual(metaData.dateTimeTiff?.isoString, "2012-08-08T12:55:30Z")
+        XCTAssertEqual(metaData.dateTimeOriginal?.isoString, "2012-08-08T14:55:30Z")
+        XCTAssertEqual(metaData.dateTimeDigitized?.isoString, "2012-08-08T14:55:30Z")
+        XCTAssertEqual(metaData.dateTimeTiff?.isoString, "2012-08-08T14:55:30Z")
         
         XCTAssertEqual(metaData.make, "NIKON CORPORATION")
         XCTAssertEqual(metaData.model, "NIKON D800E")
@@ -62,9 +62,9 @@ final class ExifMetaDataTests: XCTestCase {
         let metaData = try ExifMetaData(imageData: data)
         
         
-        XCTAssertEqual(metaData.dateTimeOriginal?.isoString, "2018-03-30T10:14:19Z")
-        XCTAssertEqual(metaData.dateTimeDigitized?.isoString, "2018-03-30T10:14:19Z")
-        XCTAssertEqual(metaData.dateTimeTiff?.isoString, "2018-03-30T10:14:19Z")
+        XCTAssertEqual(metaData.dateTimeOriginal?.isoString, "2018-03-30T12:14:19Z")
+        XCTAssertEqual(metaData.dateTimeDigitized?.isoString, "2018-03-30T12:14:19Z")
+        XCTAssertEqual(metaData.dateTimeTiff?.isoString, "2018-03-30T12:14:19Z")
         
         XCTAssertEqual(metaData.make, "Apple")
         XCTAssertEqual(metaData.model, "iPhone X")

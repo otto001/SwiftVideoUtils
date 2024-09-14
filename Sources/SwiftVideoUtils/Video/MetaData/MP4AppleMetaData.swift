@@ -10,7 +10,11 @@ import CoreLocation
 
 
 public struct MP4AppleMetaData {
-    static private var dateFormatter = ISO8601DateFormatter()
+    static private var dateFormatter = {
+        let formatter = ISO8601DateFormatter()
+        formatter.timeZone = .init(abbreviation: "UTC")!
+        return formatter
+    }()
     
     public var cameraLensModel: String?
     public var focalLength35mm: Int?

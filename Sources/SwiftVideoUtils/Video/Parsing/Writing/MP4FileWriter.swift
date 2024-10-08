@@ -19,7 +19,7 @@ public class MP4FileWriter: MP4Writer {
     public var offset: Int = 0
     public private(set) var fileHandleOffset: Int = 0
     
-    init(url: URL, context: MP4IOContext = .init()) throws {
+    public init(url: URL, context: MP4IOContext = .init()) throws {
         if !FileManager.default.fileExists(atPath: url.relativePath) {
             FileManager.default.createFile(atPath: url.relativePath, contents: nil)
         }

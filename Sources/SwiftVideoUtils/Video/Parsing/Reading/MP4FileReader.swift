@@ -29,6 +29,23 @@ public class MP4FileReader: MP4Reader {
         self.context = context
     }
     
+    deinit {
+        try? self.fileHandle.close()
+    }
+    
+    public func close() async throws {
+        try await withCheckedThrowingContinuation { continuation in
+            Self.fileReaderQueue.async {
+                do {
+                    try self.fileHandle.close()
+                    continuation.resume()
+                } catch {
+                    continuation.resume(throwing: error)
+                }
+            }
+        }
+    }
+    
     public func prepareToRead(byteRange: Range<Int>) throws {
         if byteRange.upperBound > self.totalSize {
             throw MP4Error.tooFewBytes

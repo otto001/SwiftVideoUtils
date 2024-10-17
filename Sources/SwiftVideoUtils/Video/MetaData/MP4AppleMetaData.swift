@@ -10,11 +10,7 @@ import CoreLocation
 
 
 public struct MP4AppleMetaData {
-    static private var dateFormatter = {
-        let formatter = ISO8601DateFormatter()
-        formatter.timeZone = .init(abbreviation: "UTC")!
-        return formatter
-    }()
+
     
     public var cameraLensModel: String?
     public var focalLength35mm: Int?
@@ -22,7 +18,7 @@ public struct MP4AppleMetaData {
     public var make: String?
     public var model: String?
     public var software: String?
-    public var creationDate: Date?
+    public var creationDate: DateTime?
     public var location: CLLocation?
     
     public struct OrientationEntry: Equatable, Hashable {
@@ -85,8 +81,9 @@ public struct MP4AppleMetaData {
             self.model = items[MP4MetadataItemKeysBox.Key(namespace: "mdta", value: "com.apple.quicktime.model")]?.asString()
             self.software = items[MP4MetadataItemKeysBox.Key(namespace: "mdta", value: "com.apple.quicktime.software")]?.asString()
             
+
             self.creationDate = items[MP4MetadataItemKeysBox.Key(namespace: "mdta", value: "com.apple.quicktime.creationdate")]?.asString().flatMap {
-                Self.dateFormatter.date(from: $0)
+                DateTime(iso8601: $0)
             }
 
             let locationHorizontalAccuracy = items[MP4MetadataItemKeysBox.Key(namespace: "mdta", value: "com.apple.quicktime.location.accuracy.horizontal")]?.asDouble()
@@ -94,7 +91,7 @@ public struct MP4AppleMetaData {
             
             self.location = items[MP4MetadataItemKeysBox.Key(namespace: "mdta", value: "com.apple.quicktime.location.ISO6709")]?.asString().flatMap {
                 CLLocation(iso6709: $0, horizontalAccuracy: locationHorizontalAccuracy, verticalAccuracy: nil,
-                           timestamp: self.creationDate)
+                           timestamp: self.creationDate?.utcTime)
             }
         }
     }

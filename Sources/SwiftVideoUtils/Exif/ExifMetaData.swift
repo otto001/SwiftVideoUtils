@@ -10,19 +10,12 @@ import ImageIO
 import CoreLocation
 
 
-private var exifDateFormatter = {
-    let dateFormatter = DateFormatter()
-    dateFormatter.locale = Locale(identifier: "en_US_POSIX") // set locale to reliable US_POSIX
-    dateFormatter.timeZone = .init(abbreviation: "UTC")!
-    dateFormatter.dateFormat = "yyyy:MM:dd HH:mm:ss"
-    return dateFormatter
-}()
-
-
 public struct ExifMetaData {
-    public var dateTimeOriginal: Date?
-    public var dateTimeDigitized: Date?
-    public var dateTimeTiff: Date?
+    public var dateTimeOriginal: DateTime?
+    
+    public var dateTimeDigitized: DateTime?
+    
+    public var dateTimeTiff: DateTime?
     
     public var make: String?
     public var model: String?
@@ -78,11 +71,11 @@ public struct ExifMetaData {
         guard let coordinate = coordinate else { return nil }
         return .init(coordinate: coordinate, altitude: altitude ?? 0,
                      horizontalAccuracy: 0, verticalAccuracy: 0,
-                     timestamp: dateTime ?? Date())
+                     timestamp: dateTime?.utcTime ?? Date())
     }
     
     
-    public var dateTime: Date? {
+    public var dateTime: DateTime? {
         dateTimeOriginal ?? dateTimeTiff
     }
     
@@ -109,9 +102,7 @@ public struct ExifMetaData {
             self.horizontalResolution = tiffData["XResolution"] as? Double
             self.verticalResolution = tiffData["YResolution"] as? Double
             
-            self.dateTimeTiff = (tiffData["DateTime"] as? String).flatMap {
-                exifDateFormatter.date(from: $0)
-            }
+            self.dateTimeTiff = Self.extractDateTime(data: tiffData, dateTimeKey: "DateTime", subsecKey: nil, timeOffsetKeys: nil)
             
             if self.orientation == nil {
                 self.orientation = (tiffData["Orientation"] as? Int32).flatMap { .init(rawValue: Int16(truncatingIfNeeded: $0)) }
@@ -119,27 +110,15 @@ public struct ExifMetaData {
         }
         
         if let exifData = imageProperties["{Exif}"] as? [String: AnyObject] {
-            self.dateTimeOriginal = (exifData["DateTimeOriginal"] as? String).flatMap {
-                exifDateFormatter.date(from: $0)
-            }
-            if let dateTimeOriginal, let subsecTime = (exifData["SubsecTimeOriginal"] as? String).flatMap({Double("0.\($0)")}) {
-                self.dateTimeOriginal = dateTimeOriginal.addingTimeInterval(subsecTime)
-            }
-            
-            self.dateTimeDigitized = (exifData["DateTimeDigitized"] as? String).flatMap {
-                exifDateFormatter.date(from: $0)
-            }
-            if let dateTimeDigitized, let subsecTime = (exifData["SubsecTimeDigitized"] as? String).flatMap({Double("0.\($0)")}) {
-                self.dateTimeDigitized = dateTimeDigitized.addingTimeInterval(subsecTime)
-            }
-            
+            self.dateTimeOriginal = Self.extractDateTime(data: exifData, dateTimeKey: "DateTimeOriginal", subsecKey: "SubsecTimeOriginal", timeOffsetKeys: ["OffsetTimeOriginal", "OffsetTime"])
+            self.dateTimeDigitized = Self.extractDateTime(data: exifData, dateTimeKey: "DateTimeDigitized", subsecKey: "SubsecTimeDigitized", timeOffsetKeys: ["OffsetTimeDigitized", "OffsetTime"])
+           
             if self.lensMake == nil {
                 self.lensMake = exifData["LensMake"] as? String
             }
             if self.lensModel == nil {
                 self.lensModel = exifData["LensModel"] as? String
             }
-            
             
             self.focalLength = exifData["FocalLength"] as? Double
             self.focalLength35mm = exifData["FocalLenIn35mmFilm"] as? Double

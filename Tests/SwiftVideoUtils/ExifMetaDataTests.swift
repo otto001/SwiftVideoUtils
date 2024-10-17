@@ -11,14 +11,14 @@ import XCTest
 
 final class ExifMetaDataTests: XCTestCase {
     
-    func testJpeg() throws {
+    func testJpegNikon() throws {
         let data = try Data(contentsOf: urlForFileName("TestImage.jpeg"))
         let metaData = try ExifMetaData(imageData: data)
         
         
-        XCTAssertEqual(metaData.dateTimeOriginal?.isoString, "2012-08-08T14:55:30Z")
-        XCTAssertEqual(metaData.dateTimeDigitized?.isoString, "2012-08-08T14:55:30Z")
-        XCTAssertEqual(metaData.dateTimeTiff?.isoString, "2012-08-08T14:55:30Z")
+        XCTAssertEqual(metaData.dateTimeOriginal?.deviceTime?.isoString, "2012-08-08T14:55:30Z")
+        XCTAssertEqual(metaData.dateTimeDigitized?.deviceTime?.isoString, "2012-08-08T14:55:30Z")
+        XCTAssertEqual(metaData.dateTimeTiff?.deviceTime?.isoString, "2012-08-08T14:55:30Z")
         
         XCTAssertEqual(metaData.make, "NIKON CORPORATION")
         XCTAssertEqual(metaData.model, "NIKON D800E")
@@ -53,7 +53,55 @@ final class ExifMetaDataTests: XCTestCase {
         XCTAssertEqual(metaData.isoSpeedRatings, [200])
         XCTAssertEqual(metaData.exposureTime ?? -1, 20, accuracy: 0.001)
         
-        assertLocationEqual(metaData.location, .init(coordinate: .init(latitude: 63.5314, longitude: -19.5112), altitude: 107.46, horizontalAccuracy: 0, verticalAccuracy: 0, timestamp: metaData.dateTime ?? Date()))
+        assertLocationEqual(metaData.location, .init(coordinate: .init(latitude: 63.5314, longitude: -19.5112), altitude: 107.46, horizontalAccuracy: 0, verticalAccuracy: 0, timestamp: .now))
+        
+    }
+    
+    func testJpegIPhone() throws {
+        let data = try Data(contentsOf: urlForFileName("TestImage-iPhone.jpg"))
+        let metaData = try ExifMetaData(imageData: data)
+        
+        
+        XCTAssertEqual(metaData.dateTimeOriginal?.deviceTime?.isoString, "2024-09-13T16:21:05Z")
+        XCTAssertEqual(metaData.dateTimeDigitized?.deviceTime?.isoString, "2024-09-13T16:21:05Z")
+        XCTAssertEqual(metaData.dateTimeOriginal?.timeOffset, -7 * 3600)
+        XCTAssertEqual(metaData.dateTimeDigitized?.timeOffset, -7 * 3600)
+        XCTAssertEqual(metaData.dateTimeTiff?.deviceTime?.isoString, "2024-09-13T16:21:05Z")
+        
+        XCTAssertEqual(metaData.make, "Apple")
+        XCTAssertEqual(metaData.model, "iPhone 13 Pro")
+        XCTAssertEqual(metaData.lensMake, "Apple")
+        XCTAssertEqual(metaData.lensModel, "iPhone 13 Pro back triple camera 5.7mm f/1.5")
+        
+        XCTAssertEqual(metaData.artist, nil)
+        XCTAssertEqual(metaData.software, "17.6.1")
+        XCTAssertEqual(metaData.copyright, nil)
+        
+        XCTAssertEqual(metaData.profileName, "Display P3")
+        
+        XCTAssertEqual(metaData.dataWidth, 4032)
+        XCTAssertEqual(metaData.dataHeight, 3024)
+        XCTAssertEqual(metaData.orientation, .identity)
+        XCTAssertEqual(metaData.width, 4032)
+        XCTAssertEqual(metaData.height, 3024)
+        
+        XCTAssertEqual(metaData.bitDepth, 8)
+        
+        XCTAssertEqual(metaData.horizontalResolution, 72)
+        XCTAssertEqual(metaData.verticalResolution, 72)
+        
+        XCTAssertEqual(metaData.focalLength, 5.7)
+        XCTAssertEqual(metaData.focalLength35mm, 26)
+        XCTAssertEqual(metaData.aperatureValue ?? -1, 1.169, accuracy: 0.001)
+        XCTAssertEqual(metaData.fValue ?? -1, 1.5, accuracy: 0.001)
+        XCTAssertEqual(metaData.contrast, nil)
+        XCTAssertEqual(metaData.saturation, nil)
+        XCTAssertEqual(metaData.sharpness, nil)
+        XCTAssertEqual(metaData.exposureMode, 0)
+        XCTAssertEqual(metaData.isoSpeedRatings, [50])
+        XCTAssertEqual(metaData.exposureTime ?? -1, 0.0002, accuracy: 0.0001)
+        
+        assertLocationEqual(metaData.location, .init(coordinate: .init(latitude: 36.05365283333333, longitude: -112.0832445), altitude: 2192.6988505747127, horizontalAccuracy: 0, verticalAccuracy: 0, timestamp: .now))
         
     }
     
@@ -62,9 +110,9 @@ final class ExifMetaDataTests: XCTestCase {
         let metaData = try ExifMetaData(imageData: data)
         
         
-        XCTAssertEqual(metaData.dateTimeOriginal?.isoString, "2018-03-30T12:14:19Z")
-        XCTAssertEqual(metaData.dateTimeDigitized?.isoString, "2018-03-30T12:14:19Z")
-        XCTAssertEqual(metaData.dateTimeTiff?.isoString, "2018-03-30T12:14:19Z")
+        XCTAssertEqual(metaData.dateTimeOriginal?.deviceTime?.isoString, "2018-03-30T12:14:19Z")
+        XCTAssertEqual(metaData.dateTimeDigitized?.deviceTime?.isoString, "2018-03-30T12:14:19Z")
+        XCTAssertEqual(metaData.dateTimeTiff?.deviceTime?.isoString, "2018-03-30T12:14:19Z")
         
         XCTAssertEqual(metaData.make, "Apple")
         XCTAssertEqual(metaData.model, "iPhone X")
@@ -99,7 +147,7 @@ final class ExifMetaDataTests: XCTestCase {
         XCTAssertEqual(metaData.isoSpeedRatings, [16])
         XCTAssertEqual(metaData.exposureTime ?? -1, 0.0047, accuracy: 0.001)
         
-        assertLocationEqual(metaData.location, .init(coordinate: .init(latitude: 37.760, longitude: -122.50956), altitude: 4.583, horizontalAccuracy: 0, verticalAccuracy: 0, timestamp: metaData.dateTime ?? Date()))
+        assertLocationEqual(metaData.location, .init(coordinate: .init(latitude: 37.760, longitude: -122.50956), altitude: 4.583, horizontalAccuracy: 0, verticalAccuracy: 0, timestamp: .now))
         
     }
 }

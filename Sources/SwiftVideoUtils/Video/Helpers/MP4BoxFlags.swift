@@ -14,6 +14,20 @@ public struct MP4BoxFlags {
     public init(_ inner: (UInt8, UInt8, UInt8) = (0, 0, 0)) {
         self.inner = inner
     }
+    
+    public init(combined: UInt32) {
+        self.inner = (UInt8((combined & 0xFF0000) >> 16),
+                      UInt8((combined & 0x00FF00) >> 8),
+                      UInt8(combined & 0x0000FF))
+    }
+    
+    public var combined: UInt32 {
+        return UInt32(inner.2) | (UInt32(inner.1) << 8) | (UInt32(inner.0) << 16)
+    }
+    
+    public func has(_ flag: UInt32) -> Bool {
+        (combined & flag) != 0
+    }
 }
 
 extension MP4BoxFlags: MP4Readable {

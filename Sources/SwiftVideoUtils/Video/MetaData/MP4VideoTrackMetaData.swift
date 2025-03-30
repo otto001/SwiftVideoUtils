@@ -61,9 +61,12 @@ public struct MP4VideoTrackMetaData: MP4TrackMetaData {
             self.bitDepth = Int(videoSampleEntryBox.bitDepth)
         }
         
-        self.averageFrameRate = (stblBox.timeToSampleBox?.averageSampleDuration()).map {
-            Double(mediaHeader.timescale)/$0
+        self.averageFrameRate = (stblBox.timeToSampleBox?.averageSampleDuration()).map { averageSampleDuration in
+            if averageSampleDuration > 0 {
+                return Double(mediaHeader.timescale)/averageSampleDuration
+            } else {
+                return 0
+            }
         }
-        
     }
 }

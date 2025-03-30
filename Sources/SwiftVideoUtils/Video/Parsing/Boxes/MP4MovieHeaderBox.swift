@@ -8,12 +8,6 @@
 import Foundation
 
 
-private let referenceDate: Date = {
-    //DateComponents(calendar: .init(identifier: .gregorian), year: 1904, month: 1, day: 1, hour: 0, minute: 0, second: 0).date!.timeIntervalSince1970).date!
-    return Date(timeIntervalSince1970: -2082848400.0)
-}()
-
-
 public class MP4MovieHeaderBox: MP4FullBox {
     public static let typeName: MP4FourCC = "mvhd"
     
@@ -66,7 +60,7 @@ public class MP4MovieHeaderBox: MP4FullBox {
             self.timescale = try await reader.readInteger(UInt32.self, byteOrder: .bigEndian)
             self.duration = try await reader.readInteger(UInt64.self, byteOrder: .bigEndian)
         } else {
-            throw MP4Error.failedToParseBox(description: "tkhd box version \(version) not supported")
+            throw MP4Error.failedToParseBox(description: "mvhd box version \(version) not supported")
         }
         
         self.rate = try await reader.readSignedFixedPoint(fractionBits: 16, byteOrder: .bigEndian)

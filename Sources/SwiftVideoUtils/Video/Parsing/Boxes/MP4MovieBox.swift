@@ -10,7 +10,7 @@ import Foundation
 
 public class MP4MovieBox: MP4ConcreteBox {
     public static let typeName: MP4FourCC = "moov"
-    public static let supportedChildBoxTypes: MP4BoxTypeMap = [MP4MovieHeaderBox.self, MP4TrackBox.self, MP4MetaBox.self]
+    public static let supportedChildBoxTypes: MP4BoxTypeMap = [MP4MovieHeaderBox.self, MP4TrackBox.self, MP4MetaBox.self, MP4MovieExtendsBox.self]
     
     public var readByteRange: Range<Int>?
     
@@ -24,6 +24,7 @@ public class MP4MovieBox: MP4ConcreteBox {
     }
 
     public var moovieHeaderBox: MP4MovieHeaderBox? { firstChild(ofType: MP4MovieHeaderBox.self) }
+    public var moovieExtendsBox: MP4MovieExtendsBox? { firstChild(ofType: MP4MovieExtendsBox.self) }
     
     public init(children: [any MP4Box]) throws {
         self.children = children

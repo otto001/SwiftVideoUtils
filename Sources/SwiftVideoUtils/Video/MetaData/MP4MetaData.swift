@@ -36,7 +36,7 @@ public struct MP4MetaData {
 
         self.creationTime = movieHeaderBox.creationTime
         self.modificationTime = movieHeaderBox.modificationTime
-        self.duration = movieHeaderBox.durationSeconds
+        self.duration = try await asset.totalDuration().seconds
         self.nextTrackID = Int(movieHeaderBox.nextTrackID)
         
         self.tracksMetaData = []

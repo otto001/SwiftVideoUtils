@@ -12,7 +12,7 @@ import CoreMedia
 open class MP4Asset {
     public let reader: any MP4Reader
     public lazy var sequentialReader: MP4SequentialReader = .init(reader: self.reader, readBox: self.didReadBox)
-    static var supportedTopLevelBoxTypes: MP4BoxTypeMap = [MP4FileTypeBox.self, MP4MovieBox.self, MP4MetaBox.self]
+    static var supportedTopLevelBoxTypes: MP4BoxTypeMap = [MP4FileTypeBox.self, MP4MovieBox.self, MP4MetaBox.self, MP4MovieFragmentBox.self]
     
     private var _boxes: [any MP4Box] = []
     public var boxes: [any MP4Box] {
@@ -59,6 +59,12 @@ open class MP4Asset {
                 return nil
             }
             return moovBoxIndex < mdatBoxIndex
+        }
+    }
+    
+    public var isFragmented: Bool? {
+        get async throws {
+            return try await self.moovBox.moovieExtendsBox != nil
         }
     }
     
@@ -148,6 +154,10 @@ open class MP4Asset {
         guard try await self.isStreamable == false else {
             return false
         }
+        if try await self.isFragmented == true {
+            throw MP4Error.featureNotSupported("Cannot make fragmented files streamable (yet).")
+        }
+        // TODO: Ensure that we can safely do so (check that all top level boxes are supported)
         var boxes = try await self.boxes
         let moovBoxIndex = boxes.firstIndex { $0.typeName == "moov" }
         let mdatBoxIndex = boxes.firstIndex { $0.typeName == "mdat" }
@@ -194,6 +204,30 @@ extension MP4Asset: MP4Writeable {
     
     public var overestimatedByteSize: Int {
         0
+    }
+}
+
+extension MP4Asset {
+    func totalDuration() async throws -> CMTime {
+        let moovBox = try await self.moovBox
+        guard let moovieHeaderBox = moovBox.moovieHeaderBox else {
+            throw MP4Error.failedToFindBox(path: "moov.mvhd")
+        }
+        if try await self.isFragmented == false {
+            return CMTime(value: CMTimeValue(moovieHeaderBox.duration), timescale: CMTimeScale(moovieHeaderBox.timescale))
+        } else if let moovieExtendsHeaderBox = moovBox.moovieExtendsBox?.moovieExtendsHeaderBox {
+            return CMTime(value: CMTimeValue(moovieExtendsHeaderBox.fragmentDuration), timescale: CMTimeScale(moovieHeaderBox.timescale))
+
+        } else {
+            let moofBoxes = try await boxes.compactMap {$0 as? MP4MovieFragmentBox }
+            var result: Int = 0
+            for moofBox in moofBoxes {
+                for trackFragment in moofBox.trackFragments {
+                    result += trackFragment.totalSampleDuration()
+                }
+            }
+            return CMTime(value: CMTimeValue(result), timescale: CMTimeScale(moovieHeaderBox.timescale))
+        }
     }
 }
 

@@ -17,6 +17,8 @@ public enum MP4Error: Error {
     
     case internalError(String)
     case featureNotSupported(String)
+
+    case trackNotFound(UInt32)
     
     case stringEncodingError
     

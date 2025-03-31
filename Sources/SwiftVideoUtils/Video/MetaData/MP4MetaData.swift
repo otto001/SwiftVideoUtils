@@ -31,12 +31,12 @@ public struct MP4MetaData {
     
     public init(asset: MP4Asset) async throws {
         let moovBox = try await asset.moovBox
-        let movieHeaderBox = try moovBox.moovieHeaderBox.unwrapOrFail()
+        let movieHeaderBox = try moovBox.movieHeaderBox.unwrapOrFail()
             
 
         self.creationTime = movieHeaderBox.creationTime
         self.modificationTime = movieHeaderBox.modificationTime
-        self.duration = try await asset.totalDuration().seconds
+        self.duration = try await asset.totalDuration()
         self.nextTrackID = Int(movieHeaderBox.nextTrackID)
         
         self.tracksMetaData = []

@@ -36,9 +36,10 @@ final class MP4WriteTests: XCTestCase {
         let originalData = try Data(contentsOf: urlForFileName("TestVideo_iPhone_FHD.MOV"))
         let asset = try await MP4Asset(reader: MP4BufferReader(data: originalData, context: .init(fileType: .quicktime)))
         
-        
-        
-        let boxes = try await asset.boxes
+        let boxes = try await asset.readAllBoxes()
+        for box in boxes {
+            print(box.description)
+        }
         
         let allBoxes: [any MP4Box] = boxes.flatMap { $0.allChildrenRecursive() }
         
@@ -51,15 +52,15 @@ final class MP4WriteTests: XCTestCase {
         
         let writer = MP4BufferWriter(context: .init(fileType: .quicktime))
         var lastOffset = 0
-        for box in try await asset.boxes {
+        for box in boxes {
             try await writer.write(box)
             XCTAssertEqual(originalData[lastOffset..<writer.buffer.count], writer.buffer[lastOffset..<writer.buffer.count], "failed to re-encode box of type \(box.typeName)")
             if originalData[lastOffset..<writer.buffer.count] != writer.buffer[lastOffset..<writer.buffer.count] {
                 for i in lastOffset..<writer.buffer.count {
                     if originalData[i] != writer.buffer[i] {
-                        print(Data(originalData[i-100..<min(i+100, writer.buffer.count-1)]).debugString(mode: .both))
+                        print(Data(originalData[max(0, i-100)..<min(i+100, writer.buffer.count-1)]).debugString(mode: .both))
                         print()
-                        print(Data(writer.buffer[i-100..<min(i+100, writer.buffer.count-1)]).debugString(mode: .both))
+                        print(Data(writer.buffer[max(0, i-100)..<min(i+100, writer.buffer.count-1)]).debugString(mode: .both))
                         
                         print()
                         print()

@@ -14,13 +14,53 @@ open class MP4Asset {
     public lazy var sequentialReader: MP4SequentialReader = .init(reader: self.reader, readBox: self.didReadBox)
     static var supportedTopLevelBoxTypes: MP4BoxTypeMap = [MP4FileTypeBox.self, MP4MovieBox.self, MP4MetaBox.self, MP4MovieFragmentBox.self]
     
-    private var _boxes: [any MP4Box] = []
-    public var boxes: [any MP4Box] {
-        get async throws {
-            while self.sequentialReader.remainingCount > 0 {
-                _ = try await self.readNextBox()
+    public struct BoxStream: AsyncSequence {
+        let asset: MP4Asset
+        
+        public func makeAsyncIterator() -> AsyncIterator {
+            .init(asset: asset)
+        }
+        
+        public struct AsyncIterator: AsyncIteratorProtocol {
+            private var nextIndex: Int = 0
+            let asset: MP4Asset
+            
+            init(asset: MP4Asset) {
+                self.asset = asset
             }
+            
+            public mutating func next() async throws -> (any MP4Box)? {
+                if nextIndex >= asset._boxes.count {
+                    do {
+                        try await asset.readNextBox()
+                    } catch MP4Error.endOfFile {
+                        return nil
+                    }
+                }
+                if nextIndex < asset._boxes.count {
+                    nextIndex += 1
+                    return self.asset._boxes[nextIndex - 1]
+                } else {
+                    return nil
+                }
+            }
+        }
+    }
+    
+    fileprivate var _boxes: [any MP4Box] = []
+    public var boxes: BoxStream {
+        .init(asset: self)
+    }
+    
+    func readAllBoxes() async throws -> [any MP4Box] {
+        if self.sequentialReader.remainingCount == 0 {
             return self._boxes
+        } else {
+            var result: [any MP4Box] = []
+            for try await box in self.boxes {
+                result.append(box)
+            }
+            return result
         }
     }
     
@@ -28,9 +68,16 @@ open class MP4Asset {
     public var moovBox: MP4MovieBox {
         get async throws {
             if self._moovBox == nil {
-                self._moovBox = try await self.findMoovBox()
+                for try await box in self.boxes {
+                    if let moovBox = box as? MP4MovieBox {
+                        return moovBox
+                    }
+                }
             }
-            return self._moovBox!
+            guard let moovBox = _moovBox else {
+                throw MP4Error.internalError("Did not find moov box")
+            }
+            return moovBox
         }
     }
     
@@ -38,7 +85,13 @@ open class MP4Asset {
     public var tracks: [MP4Track] {
         get async throws {
             if self._tracks == nil {
-                self._tracks = try await self.moovBox.tracks.map {MP4Track(box: $0, reader: reader)}
+                if try await self.isFragmented {
+                    self._tracks = try await self.moovBox.tracks.map {
+                        try MP4FragmentedTrack(asset: self, trackBox: $0, reader: reader)
+                    }
+                } else {
+                    self._tracks = try await self.moovBox.tracks.map {MP4Track(box: $0, reader: reader)}
+                }
             }
             return self._tracks!
         }
@@ -50,21 +103,23 @@ open class MP4Asset {
     
     public private(set) var canBeEditedInplace: Bool = true
     
-    public var isStreamable: Bool? {
+    public var isStreamable: Bool {
         get async throws {
-            let boxes = try await self.boxes
-            let moovBoxIndex = boxes.firstIndex { $0.typeName == "moov" }
-            let mdatBoxIndex = boxes.firstIndex { $0.typeName == "mdat" }
-            guard let moovBoxIndex = moovBoxIndex, let mdatBoxIndex = mdatBoxIndex else {
-                return nil
+            var foundMoovBox: Bool = false
+            for try await box in self.boxes {
+                if box.typeName == "moov" {
+                    foundMoovBox = true
+                } else if box.typeName == "mdat" {
+                    return foundMoovBox
+                }
             }
-            return moovBoxIndex < mdatBoxIndex
+            return false
         }
     }
     
-    public var isFragmented: Bool? {
+    public var isFragmented: Bool {
         get async throws {
-            return try await self.moovBox.moovieExtendsBox != nil
+            return try await self.moovBox.movieExtendsBox != nil
         }
     }
     
@@ -87,7 +142,7 @@ open class MP4Asset {
     private func didReadBox(_ box: any MP4Box, _ byteRange: Range<Int>) {
     }
     
-    private func readNextBox() async throws -> any MP4Box {
+    private func readNextBox() async throws {
         let currentReadOffset = self.sequentialReader.readOffset
         
         let box = try await self.sequentialReader.readBox(boxTypeMap: Self.supportedTopLevelBoxTypes)
@@ -105,27 +160,10 @@ open class MP4Asset {
         default:
             break
         }
-        return box
-    }
-    
-    private func findMoovBox() async throws -> MP4MovieBox {
-        if let moovBox = self._boxes.first(where: {$0.typeName == "moov"}) {
-            return moovBox as! MP4MovieBox
-        }
-        
-        while self._moovBox == nil && self.sequentialReader.remainingCount > 0 {
-            _ = try await self.readNextBox()
-        }
-        
-        guard let moovBox = self._moovBox else {
-            throw MP4Error.endOfFile  // TODO: Better error
-        }
-        
-        return moovBox
     }
     
     public func repairChunkOffsets() async throws {
-        let boxes = try await self.boxes.filter { $0.typeName != "free" }
+        let boxes = try await self.readAllBoxes().filter { $0.typeName != "free" }
         
         guard let currentMDatByteOffset = self.assumedMDatByteOffset ?? self.initialMDatByteOffset else { return }
         
@@ -158,7 +196,7 @@ open class MP4Asset {
             throw MP4Error.featureNotSupported("Cannot make fragmented files streamable (yet).")
         }
         // TODO: Ensure that we can safely do so (check that all top level boxes are supported)
-        var boxes = try await self.boxes
+        var boxes = try await self.readAllBoxes()
         let moovBoxIndex = boxes.firstIndex { $0.typeName == "moov" }
         let mdatBoxIndex = boxes.firstIndex { $0.typeName == "mdat" }
         guard let moovBoxIndex = moovBoxIndex, let mdatBoxIndex = mdatBoxIndex else {
@@ -185,7 +223,7 @@ extension MP4Asset: MP4Writeable {
     public func write(to writer: MP4Writer) async throws {
         try await self.repairChunkOffsets()
         
-        for box in try await boxes {
+        for try await box in self.boxes {
             if box.typeName == "mdat", let assumedMDatByteOffset = self.assumedMDatByteOffset {
                 let offsetDiff = assumedMDatByteOffset - writer.offset
                 if offsetDiff >= 8 {
@@ -208,25 +246,22 @@ extension MP4Asset: MP4Writeable {
 }
 
 extension MP4Asset {
-    func totalDuration() async throws -> CMTime {
+    func totalDuration() async throws -> TimeInterval {
         let moovBox = try await self.moovBox
-        guard let moovieHeaderBox = moovBox.moovieHeaderBox else {
+        guard let movieHeaderBox = moovBox.movieHeaderBox else {
             throw MP4Error.failedToFindBox(path: "moov.mvhd")
         }
         if try await self.isFragmented == false {
-            return CMTime(value: CMTimeValue(moovieHeaderBox.duration), timescale: CMTimeScale(moovieHeaderBox.timescale))
-        } else if let moovieExtendsHeaderBox = moovBox.moovieExtendsBox?.moovieExtendsHeaderBox {
-            return CMTime(value: CMTimeValue(moovieExtendsHeaderBox.fragmentDuration), timescale: CMTimeScale(moovieHeaderBox.timescale))
+            return Double(movieHeaderBox.duration)/Double(movieHeaderBox.timescale)
+        } else if let movieExtendsHeaderBox = moovBox.movieExtendsBox?.movieExtendsHeaderBox {
+            return Double(movieExtendsHeaderBox.fragmentDuration)/Double(movieHeaderBox.timescale)
 
         } else {
-            let moofBoxes = try await boxes.compactMap {$0 as? MP4MovieFragmentBox }
-            var result: Int = 0
-            for moofBox in moofBoxes {
-                for trackFragment in moofBox.trackFragments {
-                    result += trackFragment.totalSampleDuration()
-                }
+            var duration: TimeInterval = 0
+            for track in try await self.tracks {
+                duration = max(duration, try await track.duration())
             }
-            return CMTime(value: CMTimeValue(result), timescale: CMTimeScale(moovieHeaderBox.timescale))
+            return duration
         }
     }
 }
@@ -259,10 +294,10 @@ extension MP4Asset {
         let writer = try MP4FileWriter(url: fileUrl, context: self.reader.context)
         
         let moovBox = try await self.moovBox
-        if let moovieHeaderBox = moovBox.moovieHeaderBox {
-            moovieHeaderBox.creationTime = creationTime
-            moovieHeaderBox.modificationTime = modificationTime
-            try await self.writeBoxInplace(moovieHeaderBox, to: writer)
+        if let movieHeaderBox = moovBox.movieHeaderBox {
+            movieHeaderBox.creationTime = creationTime
+            movieHeaderBox.modificationTime = modificationTime
+            try await self.writeBoxInplace(movieHeaderBox, to: writer)
         }
         for trackBox in moovBox.tracks {
             if let trackHeaderBox = trackBox.trackHeaderBox {

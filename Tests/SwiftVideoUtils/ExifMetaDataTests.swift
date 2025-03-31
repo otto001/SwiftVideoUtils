@@ -53,7 +53,7 @@ final class ExifMetaDataTests: XCTestCase {
         XCTAssertEqual(metaData.isoSpeedRatings, [200])
         XCTAssertEqual(metaData.exposureTime ?? -1, 20, accuracy: 0.001)
         
-        assertLocationEqual(metaData.location, .init(coordinate: .init(latitude: 63.5314, longitude: -19.5112), altitude: 107.46, horizontalAccuracy: 0, verticalAccuracy: 0, timestamp: .now))
+        assertLocationEqual(metaData.location, .init(coordinate: .init(latitude: 63.5314, longitude: -19.5112), altitude: 107.46, horizontalAccuracy: 0, verticalAccuracy: 0, timestamp: Date()))
         
     }
     
@@ -101,7 +101,7 @@ final class ExifMetaDataTests: XCTestCase {
         XCTAssertEqual(metaData.isoSpeedRatings, [50])
         XCTAssertEqual(metaData.exposureTime ?? -1, 0.0002, accuracy: 0.0001)
         
-        assertLocationEqual(metaData.location, .init(coordinate: .init(latitude: 36.05365283333333, longitude: -112.0832445), altitude: 2192.6988505747127, horizontalAccuracy: 0, verticalAccuracy: 0, timestamp: .now))
+        assertLocationEqual(metaData.location, .init(coordinate: .init(latitude: 36.05365283333333, longitude: -112.0832445), altitude: 2192.6988505747127, horizontalAccuracy: 0, verticalAccuracy: 0, timestamp: Date()))
         
     }
     
@@ -147,7 +147,7 @@ final class ExifMetaDataTests: XCTestCase {
         XCTAssertEqual(metaData.isoSpeedRatings, [16])
         XCTAssertEqual(metaData.exposureTime ?? -1, 0.0047, accuracy: 0.001)
         
-        assertLocationEqual(metaData.location, .init(coordinate: .init(latitude: 37.760, longitude: -122.50956), altitude: 4.583, horizontalAccuracy: 0, verticalAccuracy: 0, timestamp: .now))
+        assertLocationEqual(metaData.location, .init(coordinate: .init(latitude: 37.760, longitude: -122.50956), altitude: 4.583, horizontalAccuracy: 0, verticalAccuracy: 0, timestamp: Date()))
         
     }
 }

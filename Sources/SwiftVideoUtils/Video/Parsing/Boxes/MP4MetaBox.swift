@@ -13,26 +13,30 @@ public class MP4MetaBox: MP4ConcreteBox {
     
     public var readByteRange: Range<Int>?
     
-    public var version: MP4BoxVersion
-    public var flags: MP4BoxFlags
+    public var writeVersionAndFlags: Bool
     
     public var children: [any MP4Box]
     
-    public init(children: [any MP4Box]) throws {
-        self.version = .isoMp4(0)
-        self.flags = .init()
-        self.children = children
-    }
-    
     required public init(contentReader reader: MP4SequentialReader) async throws {
-        self.version = try await reader.read()
-        self.flags = try await reader.read()
-        self.children = try await reader.readBoxes(parentType: Self.self)
+        if reader.remainingCount >= 4 {
+            let firstByte: UInt32 = try await reader.readInteger(byteOrder: .bigEndian)
+            let hasVersionAndFlags: Bool = firstByte == 0
+            self.writeVersionAndFlags = hasVersionAndFlags
+            if !hasVersionAndFlags {
+                reader.offset -= 4
+            }
+            self.children = try await reader.readBoxes(parentType: Self.self)
+        } else {
+            writeVersionAndFlags = false
+            self.children = []
+        }
     }
     
     public func writeContent(to writer: MP4Writer) async throws {
-        try await writer.write(version)
-        try await writer.write(flags)
+        
+        if self.writeVersionAndFlags {
+            try await writer.write(UInt32(0), byteOrder: .bigEndian)
+        }
         try await writer.write(children)
     }
     

@@ -14,7 +14,7 @@ final class MP4FrameDecoderTests: XCTestCase {
     func testiPhoneFHD() async throws {
         let asset = try await MP4Asset(reader: MP4FileReader(url: urlForFileName("TestVideo_iPhone_FHD.MOV")))
         let generator = try await MP4FrameDecoder(asset: asset)
-        let thumbnail = try await generator.cgImage(for: generator.track.syncSample(for: 0)!)
+        let thumbnail = try await generator.cgImage(for: generator.suggestedThumbnailSample)
         
         XCTAssertEqual(thumbnail.width, 1920)
         XCTAssertEqual(thumbnail.height, 1080)
@@ -30,7 +30,7 @@ final class MP4FrameDecoderTests: XCTestCase {
 //            // Fallback on earlier versions
 //        }
         let generator = try await MP4FrameDecoder(asset: asset)
-        let thumbnail = try await generator.cgImage(for: generator.track.syncSample(for: 0)!)
+        let thumbnail = try await generator.cgImage(for: generator.suggestedThumbnailSample)
         
         XCTAssertEqual(thumbnail.width, 3840)
         XCTAssertEqual(thumbnail.height, 2160)
@@ -39,7 +39,7 @@ final class MP4FrameDecoderTests: XCTestCase {
     func testiPhoneFHDPortait() async throws {
         let asset = try await MP4Asset(reader: MP4FileReader(url: urlForFileName("TestVideo_iPhone_FHD_Portrait.MOV")))
         let generator = try await MP4FrameDecoder(asset: asset)
-        let thumbnail = try await generator.cgImage(for: generator.track.syncSample(for: 0)!)
+        let thumbnail = try await generator.cgImage(for: generator.suggestedThumbnailSample)
 
         XCTAssertEqual(thumbnail.width, 1080)
         XCTAssertEqual(thumbnail.height, 1920)
@@ -48,7 +48,7 @@ final class MP4FrameDecoderTests: XCTestCase {
     func testGoProH8() async throws {
         let asset = try await MP4Asset(reader: MP4FileReader(url: urlForFileName("TestVideo_GoPro_H8.mp4")))
         let generator = try await MP4FrameDecoder(asset: asset)
-        let thumbnail = try await generator.cgImage(for: generator.track.syncSample(for: 0)!)
+        let thumbnail = try await generator.cgImage(for: generator.suggestedThumbnailSample)
         
         XCTAssertEqual(thumbnail.width, 1920)
         XCTAssertEqual(thumbnail.height, 1080)
@@ -57,7 +57,7 @@ final class MP4FrameDecoderTests: XCTestCase {
     func testGooglePhotosAndroid10() async throws {
         let asset = try await MP4Asset(reader: MP4FileReader(url: urlForFileName("TestVideo_GooglePhotos_Android10.mp4")))
         let generator = try await MP4FrameDecoder(asset: asset)
-        let thumbnail = try await generator.cgImage(for: generator.track.syncSample(for: 0)!)
+        let thumbnail = try await generator.cgImage(for: generator.suggestedThumbnailSample)
         
         XCTAssertEqual(thumbnail.width, 3840)
         XCTAssertEqual(thumbnail.height, 2160)
@@ -74,9 +74,21 @@ final class MP4FrameDecoderTests: XCTestCase {
         
         let asset = try await MP4Asset(reader: bufferedReader)
         let generator = try await MP4FrameDecoder(asset: asset)
-        let thumbnail = try await generator.cgImage(for: generator.track.syncSample(for: 0)!)
+        let thumbnail = try await generator.cgImage(for: generator.suggestedThumbnailSample)
         
         XCTAssertEqual(thumbnail.width, 3840)
         XCTAssertEqual(thumbnail.height, 2160)
+    }
+    
+    
+    func testXY() async throws {
+        let asset = try await MP4Asset(reader: MP4FileReader(url: urlForFileName("F60D2EF3-D45D-4248-89A1-2B32EB50E635.MP4")))
+        //let boxex = try await asset.boxes
+        let generator = try await MP4FrameDecoder(asset: asset)
+        let thumbnail = try await generator.cgImage(for: generator.suggestedThumbnailSample)
+        
+        XCTAssertEqual(thumbnail.width, 1280)
+        XCTAssertEqual(thumbnail.height, 720)
+        print()
     }
 }

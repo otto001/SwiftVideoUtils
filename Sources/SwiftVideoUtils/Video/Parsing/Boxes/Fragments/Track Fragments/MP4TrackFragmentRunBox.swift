@@ -33,12 +33,12 @@ public class MP4TrackFragmentRunBox: MP4FullBox {
     public var sampleCount: UInt32
     
     public var dataOffset: Int32? = nil
-    public var firstSampleFlags: UInt32? = nil
+    public var firstSampleFlags: MP4SampleDepedencyFlags? = nil
     
     public struct Sample {
         public var duration: UInt32?
         public var size: UInt32?
-        public var flags: UInt32?
+        public var flags: MP4SampleDepedencyFlags?
         public var compositionTimeOffset: Int32?
     }
     
@@ -59,7 +59,7 @@ public class MP4TrackFragmentRunBox: MP4FullBox {
             self.dataOffset = try await reader.readInteger(Int32.self, byteOrder: .bigEndian)
         }
         if flagInterpretation.contains(.firstSampleFlagsPresent) {
-            self.firstSampleFlags = try await reader.readInteger(UInt32.self, byteOrder: .bigEndian)
+            self.firstSampleFlags = try await reader.read()
         }
         
         for _ in 0..<sampleCount {
@@ -71,7 +71,7 @@ public class MP4TrackFragmentRunBox: MP4FullBox {
                 sample.size = try await reader.readInteger(UInt32.self, byteOrder: .bigEndian)
             }
             if flagInterpretation.contains(.sampleFlagsPresent) {
-                sample.flags = try await reader.readInteger(UInt32.self, byteOrder: .bigEndian)
+                sample.flags = try await reader.read()
             }
             if flagInterpretation.contains(.sampleCompositionTimeOffsetPresent) {
                 if self.version == .isoMp4(0){
@@ -97,7 +97,7 @@ public class MP4TrackFragmentRunBox: MP4FullBox {
             try await writer.write(dataOffset, byteOrder: .bigEndian)
         }
         if let firstSampleFlags = self.firstSampleFlags, flagInterpretation.contains(.firstSampleFlagsPresent) {
-            try await writer.write(firstSampleFlags, byteOrder: .bigEndian)
+            try await writer.write(firstSampleFlags)
         }
         
         for sample in samples {
@@ -108,7 +108,7 @@ public class MP4TrackFragmentRunBox: MP4FullBox {
                 try await writer.write(sample.size ?? 0, byteOrder: .bigEndian)
             }
             if flagInterpretation.contains(.sampleFlagsPresent) {
-                try await writer.write(sample.flags ?? 0, byteOrder: .bigEndian)
+                try await writer.write(sample.flags ?? .init(rawValue: 0))
             }
             if flagInterpretation.contains(.sampleCompositionTimeOffsetPresent) {
                 if self.version == .isoMp4(0) {

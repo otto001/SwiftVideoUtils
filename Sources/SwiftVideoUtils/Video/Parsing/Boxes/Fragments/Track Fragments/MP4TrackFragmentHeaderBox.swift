@@ -35,7 +35,7 @@ public class MP4TrackFragmentHeaderBox: MP4FullBox {
     public var sampleDescriptionIndex: UInt32?
     public var defaultSampleDuration: UInt32?
     public var defaultSampleSize: UInt32?
-    public var defaultSampleFlags: UInt32?
+    public var defaultSampleFlags: MP4SampleDepedencyFlags?
     
     required public init(contentReader reader: MP4SequentialReader) async throws {
         let version: MP4BoxVersion = try await reader.read()
@@ -60,7 +60,7 @@ public class MP4TrackFragmentHeaderBox: MP4FullBox {
             self.defaultSampleSize = try await reader.readInteger(UInt32.self, byteOrder: .bigEndian)
         }
         if flagInterpretation.contains(.defaultSampleFlagsPresent) {
-            self.defaultSampleFlags = try await reader.readInteger(UInt32.self, byteOrder: .bigEndian)
+            self.defaultSampleFlags = try await reader.read()
         }
     }
     
@@ -82,7 +82,7 @@ public class MP4TrackFragmentHeaderBox: MP4FullBox {
             try await writer.write(defaultSampleSize, byteOrder: .bigEndian)
         }
         if let defaultSampleFlags = defaultSampleFlags {
-            try await writer.write(defaultSampleFlags, byteOrder: .bigEndian)
+            try await writer.write(defaultSampleFlags)
         }
     }
     

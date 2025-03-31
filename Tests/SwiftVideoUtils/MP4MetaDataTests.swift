@@ -223,3 +223,12 @@ final class MP4MetaDataTests: XCTestCase {
         XCTAssertEqual(videoMetaData.averageFrameRate ?? -1, 60.02, accuracy: 0.01)
     }
 }
+
+
+//96    0000  ..mo    |    0  0  0  0   2d 7  6d 6f
+//104   ov00  0lmv    |    6f 76 0  0   0  6c 6d 76
+//112   hd00  ????    |    68 64 0  0   0  0  e1 85
+
+//96    0000  .ýmo    |    0  0  0  0   25 fd 6d 6f
+//104   ov00  0lmv    |    6f 76 0  0   0  6c 6d 76
+//112   hd00  00á.    |    68 64 0  0   0  0  e1 85

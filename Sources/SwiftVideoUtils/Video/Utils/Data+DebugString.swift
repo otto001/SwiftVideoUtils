@@ -41,7 +41,9 @@ extension Data {
     private func debugString(mode: DataDebugFormatMode) -> String {
         switch mode {
         case .ascii:
-            return String(data: self, encoding: .ascii)!.map {
+            return String(self.map {
+                return Character(UnicodeScalar($0))
+            }).map {
                 if $0.asciiValue == 0 {
                     return "0"
                 } else if $0.isLetter || $0.isNumber {

@@ -23,8 +23,8 @@ public class MP4MovieBox: MP4ConcreteBox {
         }
     }
 
-    public var moovieHeaderBox: MP4MovieHeaderBox? { firstChild(ofType: MP4MovieHeaderBox.self) }
-    public var moovieExtendsBox: MP4MovieExtendsBox? { firstChild(ofType: MP4MovieExtendsBox.self) }
+    public var movieHeaderBox: MP4MovieHeaderBox? { firstChild(ofType: MP4MovieHeaderBox.self) }
+    public var movieExtendsBox: MP4MovieExtendsBox? { firstChild(ofType: MP4MovieExtendsBox.self) }
     
     public init(children: [any MP4Box]) throws {
         self.children = children

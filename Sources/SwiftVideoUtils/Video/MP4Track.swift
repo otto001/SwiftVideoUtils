@@ -11,7 +11,7 @@ import CoreMedia
 
 open class MP4Track {
     public let box: MP4TrackBox
-    private var reader: any MP4Reader
+    public var reader: any MP4Reader
     
     private var _formatDescription: CMFormatDescription?
     public var formatDescription: CMFormatDescription {
@@ -35,30 +35,48 @@ open class MP4Track {
         }
     }
     
-    public var duration: TimeInterval {
-        get throws {
-            try self.box.mediaBox.unwrapOrFail().mediaHeaderBox.unwrapOrFail().duration
-        }
+    public func duration() async throws -> TimeInterval {
+        try self.box.mediaBox.unwrapOrFail().mediaHeaderBox.unwrapOrFail().duration
     }
     
-    public var nSamples: Int {
-        get throws {
-            Int(try self.box.mediaBox.unwrapOrFail().mediaInformationBox.unwrapOrFail().sampleTableBox.unwrapOrFail().sampleCount)
-        }
+    public func nSamples() async throws -> Int {
+        Int(try self.box.mediaBox.unwrapOrFail().mediaInformationBox.unwrapOrFail().sampleTableBox.unwrapOrFail().sampleCount)
     }
     
-    public var nSyncSamples: Int {
-        get throws {
-            if let syncSampleCount = self.box.mediaBox?.mediaInformationBox?.sampleTableBox?.syncSamplesBox?.syncSamples.count {
-                return syncSampleCount
-            }
-            return try self.nSamples
+    public func nSyncSamples() async throws -> Int {
+        if let syncSampleCount = self.box.mediaBox?.mediaInformationBox?.sampleTableBox?.syncSamplesBox?.syncSamples.count {
+            return syncSampleCount
         }
+        return try await self.nSamples()
     }
     
     public init(box: MP4TrackBox, reader: any MP4Reader) {
         self.box = box
         self.reader = reader
+    }
+    
+    public struct SampleInfo {
+        var index: MP4Index<UInt32>
+        var decodeTiming: Range<UInt32>
+        var dataRange: Range<Int>
+        var flags: MP4SampleDepedencyFlags?
+        var compositionTimeOffset: Int32?
+        
+        var duration: UInt32 {
+            return decodeTiming.upperBound - decodeTiming.lowerBound
+        }
+        
+        var displayTime: UInt32 {
+            if let compositionTimeOffset {
+                return UInt32(max(0, Int64(decodeTiming.lowerBound) + Int64(compositionTimeOffset)))
+            } else {
+                return decodeTiming.lowerBound
+            }
+        }
+        
+        var decodeTime: UInt32 {
+            decodeTiming.lowerBound
+        }
     }
     
     private func makeFormatDescription() async throws -> CMFormatDescription {
@@ -88,9 +106,11 @@ open class MP4Track {
         }
     }
     
-    public func sampleData(for samples: Range<MP4Index<UInt32>>) async throws -> ([Range<Int>], Data) {
+    public func sampleData(for samples: Range<MP4Index<UInt32>>) async throws -> ([SampleInfo], Data) {
         let sampleTableBox = try self.box.mediaBox.unwrapOrFail().mediaInformationBox.unwrapOrFail().sampleTableBox.unwrapOrFail()
+        
         let sampleRanges = try sampleTableBox.byteRanges(for: samples)
+        let timingInfo = try sampleTableBox.timingInfo(for: samples)
         
         guard !sampleRanges.isEmpty else { return ([], Data()) }
         
@@ -99,27 +119,43 @@ open class MP4Track {
         for readRange in readRanges {
             data.append(try await self.reader.readData(byteRange: readRange))
         }
-        return (sampleRanges, data)
+        guard samples.count == sampleRanges.count else {
+            throw MP4Error.inconsistentSampleTableBox
+        }
+        guard sampleRanges.count == timingInfo.count else {
+            throw MP4Error.inconsistentSampleTableBox
+        }
+        
+        let sampleInfo = zip(samples, zip(sampleRanges, timingInfo)).map {
+            SampleInfo(index: $0.0,
+                       decodeTiming: $0.1.1.decodeTiming,
+                       dataRange: $0.1.0)
+        }
+        
+        return (sampleInfo, data)
+    }
+    
+    public func hasCompositionOffsets() async throws -> Bool {
+        try self.box.mediaBox.unwrapOrFail().mediaInformationBox.unwrapOrFail().sampleTableBox.unwrapOrFail().compositionTimeToSampleBox != nil
     }
     
     public func sampleBuffers(for samples: Range<MP4Index<UInt32>>, combineIntoSingleBuffer: Bool) async throws -> [CMSampleBuffer] {
         let formatDescription = try await self.formatDescription
-        let sampleTableBox = try self.box.mediaBox.unwrapOrFail().mediaInformationBox.unwrapOrFail().sampleTableBox.unwrapOrFail()
         
-        let outOfOrderFrames = sampleTableBox.compositionTimeToSampleBox != nil
+        let outOfOrderFrames = try await self.hasCompositionOffsets()
         
         let timescale = CMTimeScale(try self.timescale)
         
-        let sampleTimings = try sampleTableBox.timingInfo(for: samples).map { timingInfo in
-            CMSampleTimingInfo(duration: .init(value: CMTimeValue(timingInfo.duration), timescale: timescale),
-                               presentationTimeStamp: .init(value: CMTimeValue(timingInfo.displayTime), timescale: timescale),
-                               decodeTimeStamp: outOfOrderFrames ? .init(value: CMTimeValue(timingInfo.decodeTime), timescale: timescale) : .invalid)
-        }
         
-        let (sampleRanges, samplesData) = try await self.sampleData(for: samples)
-        
-        guard sampleRanges.count == sampleTimings.count else {
-            throw MP4Error.inconsistentSampleTableBox
+        let (sampleInfo, samplesData) = try await self.sampleData(for: samples)
+        let sampleRanges = sampleInfo.map(\.dataRange)
+        let sampleTimings = sampleInfo.map { sampleInfo in
+            CMSampleTimingInfo(duration:
+                    .init(value: CMTimeValue(sampleInfo.duration), timescale: timescale),
+                               presentationTimeStamp:
+                    .init(value: CMTimeValue(sampleInfo.displayTime), timescale: timescale),
+                               decodeTimeStamp:
+                                outOfOrderFrames ? .init(value: CMTimeValue(sampleInfo.decodeTime), timescale: timescale) : .invalid)
         }
         
         if combineIntoSingleBuffer {
@@ -167,7 +203,7 @@ open class MP4Track {
     }
     
     // TODO: clarify that this is using decode times!
-    public func sample(at timeOffset: TimeInterval) throws -> MP4Index<UInt32>? {
+    public func sample(at timeOffset: TimeInterval) async throws -> MP4Index<UInt32>? {
         
         let time = UInt32(timeOffset * TimeInterval(try self.timescale))
         guard let timeToSampleBox = self.box.mediaBox?.mediaInformationBox?.sampleTableBox?.timeToSampleBox else {
@@ -176,14 +212,17 @@ open class MP4Track {
         return timeToSampleBox.sample(at: time)
     }
     
-    public func syncSample(for timeOffset: TimeInterval) throws -> MP4Index<UInt32>? {
-        guard let sample = try self.sample(at: timeOffset) else { return nil }
+    public func syncSample(closestBefore timeOffset: TimeInterval) async throws -> MP4Index<UInt32>? {
+        guard let sample = try await self.sample(at: timeOffset) else { return nil }
         guard let syncSampleBox = self.box.mediaBox?.mediaInformationBox?.sampleTableBox?.syncSamplesBox else { return sample }
         return syncSampleBox.syncSample(before: sample)
     }
     
-    public func syncSample(_ index: Int) throws -> MP4Index<UInt32>? {
+    public func syncSample(_ index: Int) async throws -> MP4Index<UInt32>? {
         guard let syncSampleBox = self.box.mediaBox?.mediaInformationBox?.sampleTableBox?.syncSamplesBox else { return nil }
+        if index >= syncSampleBox.syncSamples.count {
+            return nil
+        }
         return syncSampleBox.syncSamples[index]
     }
 }

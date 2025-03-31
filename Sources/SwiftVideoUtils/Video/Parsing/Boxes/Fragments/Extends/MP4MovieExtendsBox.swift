@@ -8,13 +8,13 @@
 
 public class MP4MovieExtendsBox: MP4ConcreteBox {
     public static let typeName: MP4FourCC = "mvex"
-    public static let supportedChildBoxTypes: MP4BoxTypeMap = [MP4MovieExtendsHeaderBox.self]
+    public static let supportedChildBoxTypes: MP4BoxTypeMap = [MP4MovieExtendsHeaderBox.self, MP4TrackExtendsBox.self]
     
     public var readByteRange: Range<Int>?
     
     public var children: [any MP4Box]
 
-    public var moovieExtendsHeaderBox: MP4MovieExtendsHeaderBox? {
+    public var movieExtendsHeaderBox: MP4MovieExtendsHeaderBox? {
         firstChild(ofType: MP4MovieExtendsHeaderBox.self)
     }
     

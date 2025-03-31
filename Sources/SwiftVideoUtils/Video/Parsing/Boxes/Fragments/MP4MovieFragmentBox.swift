@@ -16,7 +16,7 @@ public class MP4MovieFragmentBox: MP4ConcreteBox {
     
     public var trackFragments: [MP4TrackFragmentBox] { children(ofType: MP4TrackFragmentBox.self) }
 
-    public var moovieFragmentHeaderBox: MP4MovieFragmentHeaderBox? { firstChild(ofType: MP4MovieFragmentHeaderBox.self) }
+    public var movieFragmentHeaderBox: MP4MovieFragmentHeaderBox? { firstChild(ofType: MP4MovieFragmentHeaderBox.self) }
     
     public init(children: [any MP4Box]) throws {
         self.children = children

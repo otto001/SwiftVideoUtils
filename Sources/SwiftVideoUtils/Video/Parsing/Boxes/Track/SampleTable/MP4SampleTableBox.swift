@@ -133,6 +133,10 @@ public class MP4SampleTableBox: MP4ConcreteBox {
         public var decodeTime: UInt32
         public var displayTime: UInt32
         
+        public var decodeTiming: Range<UInt32> {
+            decodeTime..<(decodeTime+duration)
+        }
+        
         public init(duration: UInt32, decodeTime: UInt32, displayTime: UInt32) {
             self.duration = duration
             self.decodeTime = decodeTime

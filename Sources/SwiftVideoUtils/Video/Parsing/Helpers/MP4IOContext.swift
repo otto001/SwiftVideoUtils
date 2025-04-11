@@ -9,8 +9,8 @@ import Foundation
 
 
 
-public struct MP4IOContext {
-    public enum FileType {
+public struct MP4IOContext: Sendable {
+    public enum FileType: Sendable {
         case isoMp4
         case quicktime
     }

@@ -30,16 +30,14 @@ public class MP4SequentialReader {
         self.limit - self.baseOffset
     }
     
-    private let readBoxClosure: ((_ box: any MP4Box, _ byteRange: Range<Int>) async -> Void)?
-    
-    public init(reader: any MP4Reader, readBox: ((_ box: any MP4Box, _ byteRange: Range<Int>) async -> Void)? = nil) {
+
+    public init(reader: any MP4Reader) {
         self.reader = reader
         self.baseOffset = 0
         self.limit = reader.totalSize
-        self.readBoxClosure = readBox
     }
     
-    public init(reader: any MP4Reader, startingAt: Int, count: Int, readBox: ((_ box: any MP4Box, _ byteRange: Range<Int>) async -> Void)? = nil) throws {
+    public init(reader: any MP4Reader, startingAt: Int, count: Int) throws {
         self.reader = reader
         self.baseOffset = startingAt
 
@@ -47,7 +45,6 @@ public class MP4SequentialReader {
         if self.limit > reader.totalSize {
             throw MP4Error.tooFewBytes
         }
-        self.readBoxClosure = readBox
     }
     
     public init(sequentialReader: MP4SequentialReader, count: Int?) throws {
@@ -62,7 +59,6 @@ public class MP4SequentialReader {
             self.limit = reader.totalSize
         }
         
-        self.readBoxClosure = sequentialReader.readBoxClosure
     }
     
     private func byteRange(count: Int) throws -> Range<Int> {
@@ -225,7 +221,6 @@ public extension MP4SequentialReader {
         
         let boxReadByteRange = self.baseOffset+startOffset..<self.baseOffset+startOffset+size
         box.readByteRange = boxReadByteRange
-        await self.readBoxClosure?(box, boxReadByteRange)
         
         return box
     }

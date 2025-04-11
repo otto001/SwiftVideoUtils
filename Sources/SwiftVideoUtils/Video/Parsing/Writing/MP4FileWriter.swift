@@ -8,6 +8,7 @@
 import Foundation
 
 
+
 public class MP4FileWriter: MP4Writer {
     private static let fileWriterQueue = DispatchQueue(label: "de.mludwig.MP4Utils.MP4FileWriter")
     
@@ -17,7 +18,6 @@ public class MP4FileWriter: MP4Writer {
     
     public var count: Int { offset }
     public var offset: Int = 0
-    public private(set) var fileHandleOffset: Int = 0
     
     public init(url: URL, context: MP4IOContext = .init()) throws {
         if !FileManager.default.fileExists(atPath: url.relativePath) {
@@ -30,30 +30,33 @@ public class MP4FileWriter: MP4Writer {
     
     public func write(_ data: Data) async throws {
         try await withCheckedThrowingContinuation { continuation in
+            let fileHandle = self.fileHandle
+            let offset = self.offset
             Self.fileWriterQueue.async {
                 do {
-                    if self.fileHandleOffset != self.offset {
-                        try self.fileHandle.seek(toOffset: UInt64(self.offset))
+                    let fileHandleOffset = try fileHandle.offset()
+                    if fileHandleOffset != offset {
+                        try fileHandle.seek(toOffset: UInt64(offset))
                     }
-                    try self.fileHandle.write(contentsOf: data)
-                    self.fileHandleOffset += data.count
-                    self.offset = self.fileHandleOffset
+                    try fileHandle.write(contentsOf: data)
                     
                     continuation.resume()
                 } catch {
-                    self.fileHandleOffset = (try? self.fileHandle.offset()).map {Int($0)} ?? -1
                     continuation.resume(throwing: error)
                 }
             }
         }
+        
+        self.offset = Int(try self.fileHandle.offset())
     }
     
     public func close() async throws {
+        let fileHandle = self.fileHandle
         try await withCheckedThrowingContinuation { continuation in
             Self.fileWriterQueue.async {
                 do {
-                    try self.fileHandle.synchronize()
-                    try self.fileHandle.close()
+                    try fileHandle.synchronize()
+                    try fileHandle.close()
                     continuation.resume()
                 } catch {
                     continuation.resume(throwing: error)

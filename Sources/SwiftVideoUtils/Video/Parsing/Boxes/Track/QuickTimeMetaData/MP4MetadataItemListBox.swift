@@ -115,7 +115,7 @@ public class MP4MetadataItemListBox: MP4ConcreteBox {
         public func asFixedInteger<T: FixedWidthInteger>() -> T? {
             switch typeIndicator {
             case .signedIntegerBigEndian, .unsignedIntegerBigEndian:
-                return data.asFixedInteger<T>(byteOrder: .bigEndian)
+                return data.asFixedInteger(byteOrder: .bigEndian)
             default:
                 return nil
             }

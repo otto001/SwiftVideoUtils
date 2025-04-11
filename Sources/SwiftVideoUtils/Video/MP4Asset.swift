@@ -11,7 +11,7 @@ import CoreMedia
 
 open class MP4Asset {
     public let reader: any MP4Reader
-    public lazy var sequentialReader: MP4SequentialReader = .init(reader: self.reader, readBox: self.didReadBox)
+    public lazy var sequentialReader: MP4SequentialReader = .init(reader: self.reader)
     static var supportedTopLevelBoxTypes: MP4BoxTypeMap = [MP4FileTypeBox.self, MP4MovieBox.self, MP4MetaBox.self, MP4MovieFragmentBox.self]
     
     public struct BoxStream: AsyncSequence {
@@ -137,9 +137,6 @@ open class MP4Asset {
     
     public func metaData() async throws -> MP4MetaData {
         try await MP4MetaData(asset: self)
-    }
-    
-    private func didReadBox(_ box: any MP4Box, _ byteRange: Range<Int>) {
     }
     
     private func readNextBox() async throws {

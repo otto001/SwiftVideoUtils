@@ -34,7 +34,7 @@ public enum MP4AudioSampleEntry: MP4BoxProxy {
         } else {
             let data = try await contentReader.readAllData()
             let bufferReader = MP4BufferReader(data: data, context: contentReader.context)
-            let bufferedContentReader = MP4SequentialReader(reader: bufferReader, readBox: nil)
+            let bufferedContentReader = MP4SequentialReader(reader: bufferReader)
             
             let version = try await bufferReader.readInteger(startingAt: 8, UInt16.self, byteOrder: .bigEndian)
             

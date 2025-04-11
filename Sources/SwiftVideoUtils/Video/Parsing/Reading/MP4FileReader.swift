@@ -35,9 +35,11 @@ public class MP4FileReader: MP4Reader {
     
     public func close() async throws {
         try await withCheckedThrowingContinuation { continuation in
+            let fileHandle = self.fileHandle
+            
             Self.fileReaderQueue.async {
                 do {
-                    try self.fileHandle.close()
+                    try fileHandle.close()
                     continuation.resume()
                 } catch {
                     continuation.resume(throwing: error)
@@ -46,13 +48,17 @@ public class MP4FileReader: MP4Reader {
         }
     }
     
-    public func prepareToRead(byteRange: Range<Int>) throws {
-        if byteRange.upperBound > self.totalSize {
+    static private func prepareToRead(byteRange: Range<Int>, totalSize: Int, fileHandle: FileHandle) throws {
+        if byteRange.upperBound > totalSize {
             throw MP4Error.tooFewBytes
         }
         if try fileHandle.offset() != byteRange.lowerBound {
             try fileHandle.seek(toOffset: UInt64(byteRange.lowerBound))
         }
+    }
+    
+    public func prepareToRead(byteRange: Range<Int>) throws {
+        try Self.prepareToRead(byteRange: byteRange, totalSize: self.totalSize, fileHandle: self.fileHandle)
     }
     
     public func isPreparedToRead(byteRange: Range<Int>) throws -> Bool {
@@ -70,11 +76,13 @@ public class MP4FileReader: MP4Reader {
             throw MP4Error.tooFewBytes
         }
         
+        let fileHandle = self.fileHandle
+        let totalSize = self.totalSize
         return try await withCheckedThrowingContinuation { continuation in
             Self.fileReaderQueue.async {
                 do {
-                    try self.prepareToRead(byteRange: byteRange)
-                    guard let data = try self.fileHandle.read(upToCount: byteRange.count) else {
+                    try Self.prepareToRead(byteRange: byteRange, totalSize: totalSize, fileHandle: fileHandle)
+                    guard let data = try fileHandle.read(upToCount: byteRange.count) else {
                         throw MP4FileReaderError.noDataAvaliable
                     }
                     continuation.resume(returning: data)
